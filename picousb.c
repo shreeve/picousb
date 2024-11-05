@@ -28,13 +28,13 @@ int debug_mode = 1;               // Dynamically enables or disables printf()
 
 // ==[ PicoUSB ]================================================================
 
-#define USER_HUBS      0 // No hub support yet
 #define USER_DEVICES   4 // Not including dev0
 
 enum {
     MAX_DEVICES   =   1 + USER_DEVICES,
     MAX_ENDPOINTS =  16, // 1 EPX + 15 polled hardware endpoints
     MAX_TEMP      = 255, // Must be 255 or less
+    MAX_HUBS      =   1 +  0, // root +  0
 };
 
 #define MAKE_U16(x, y) (((x) << 8) | ((y)     ))
@@ -56,6 +56,14 @@ static uint8_t ctrl_buf[MAX_TEMP]; // Shared buffer for control transfers
 static uint8_t REMOVE_THIS[2048]; // FIXME: Remove this!
 
 void usb_task(); // Forward declaration
+
+// ==[ Hubs ]===================================================================
+
+typedef struct {
+    // Nothing yet
+} hub_t;
+
+static hub_t hubs[MAX_HUBS], *root = hubs;
 
 // ==[ Devices ]================================================================
 
