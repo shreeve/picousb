@@ -28,13 +28,11 @@ int debug_mode = 1;               // Dynamically enables or disables printf()
 
 // ==[ PicoUSB ]================================================================
 
-#define USER_DEVICES   4 // Not including dev0
-
 enum {
-    MAX_DEVICES   =   1 + USER_DEVICES,
     MAX_ENDPOINTS =  16, // 1 EPX + 15 polled hardware endpoints
     MAX_TEMP      = 255, // Must be 255 or less
     MAX_HUBS      =   1 +  0, // root +  0
+    MAX_DEVICES   =   1 +  1, // dev0 +  1
 };
 
 #define MAKE_U16(x, y) (((x) << 8) | ((y)     ))
