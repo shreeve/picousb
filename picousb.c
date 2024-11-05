@@ -29,10 +29,10 @@ int debug_mode = 1;               // Dynamically enables or disables printf()
 // ==[ PicoUSB ]================================================================
 
 enum {
-    MAX_ENDPOINTS =  16, // 1 EPX + 15 polled hardware endpoints
     MAX_TEMP      = 255, // Must be 255 or less
     MAX_HUBS      =   1 +  0, // root +  0
     MAX_DEVICES   =   1 +  1, // dev0 +  1
+    MAX_ENDPOINTS =   1 + 15, // epx  + 15 (no polled hardware endpoints)
 };
 
 #define MAKE_U16(x, y) (((x) << 8) | ((y)     ))
@@ -139,37 +139,35 @@ enum {
 typedef void (*endpoint_c)(uint8_t *buf, uint16_t len);
 
 typedef struct {
+
+    // USB config
     uint8_t    dev_addr  ; // Device address
     uint8_t    ep_addr   ; // Endpoint address
     uint8_t    type      ; // Transfer type: control/bulk/interrupt/isochronous
     uint16_t   interval  ; // Polling interval in ms
     uint16_t   maxsize   ; // Maximum packet size
-    bool       configured; // Endpoint is configured
 
-    io_rw_32  *ecr       ; // Endpoint control register
-    io_rw_32  *bcr       ; // Buffer control register
+    // Memory buffers
     volatile               // Data buffer is volative
     uint8_t   *buf       ; // Data buffer in DPSRAM
+    uint8_t   *user_buf  ; // User buffer in DPSRAM, RAM, or flash
 
+    // Hardware registers
+    io_rw_32  *ecr       ; // Endpoint control register
+    io_rw_32  *bcr       ; // Buffer control register
+
+    // Setup status
+    bool       configured; // Endpoint is configured
+
+    // Transfer details
+    bool       active    ; // Transfer is active
     bool       setup     ; // Setup packet flag
     uint8_t    data_pid  ; // Toggle between DATA0/DATA1 packets
-    bool       active    ; // Transfer is active
-    uint8_t   *user_buf  ; // User buffer in DPSRAM, RAM, or flash
     uint16_t   bytes_left; // Bytes left to transfer
     uint16_t   bytes_done; // Bytes done transferring
 } endpoint_t;
 
 static endpoint_t eps[MAX_ENDPOINTS], *epx = eps;
-
-SDK_INLINE const char *transfer_type(uint8_t bits) {
-    switch (bits & USB_TRANSFER_TYPE_BITS) {
-        case USB_TRANSFER_TYPE_CONTROL:     return "Control"    ; break;
-        case USB_TRANSFER_TYPE_ISOCHRONOUS: return "Isochronous"; break;
-        case USB_TRANSFER_TYPE_BULK:        return "Bulk"       ; break;
-        case USB_TRANSFER_TYPE_INTERRUPT:   return "Interrupt"  ; break;
-        default:                            return "Unknown"    ; break;
-    }
-}
 
 SDK_INLINE const char *ep_dir(endpoint_t *ep) {
     return ep->ep_addr & USB_DIR_IN ? "IN" : "OUT";
@@ -179,12 +177,8 @@ SDK_INLINE bool ep_in(endpoint_t *ep) {
     return ep->ep_addr & USB_DIR_IN;
 }
 
-SDK_INLINE uint8_t ep_num(endpoint_t *ep) {
-    return ep->ep_addr & 0xf;
-}
-
 SDK_INLINE void show_endpoint(endpoint_t *ep) {
-    printf(" │ %-3uEP%-2d%3s │\n", ep->dev_addr, ep_num(ep), ep_dir(ep));
+    printf(" │ %-3uEP%-2d%3s │\n", ep->dev_addr, ep->ep_addr & 0xf, ep_dir(ep));
 }
 
 void setup_endpoint(endpoint_t *ep, usb_endpoint_descriptor_t *usb, uint8_t *user_buf) {
@@ -200,76 +194,57 @@ void setup_endpoint(endpoint_t *ep, usb_endpoint_descriptor_t *usb, uint8_t *use
         .user_buf = user_buf,
     };
 
+    // Panic if endpoint is not a control or bulk transfer type
+    if (ep->type & 1u) panic("Interrupt and isochronous endpoints not allowed");
+
     // USB 2.0 max packet size is 64 bytes, but isochronous can be up to 1,023!
     if (ep->maxsize > 64) panic("Packet size is currently limited to 64 bytes");
 
-    if (!ep_num(ep)) { // Use the shared EPX
-        if (ep->type) panic("EP0 must use a control transfer type");
-
-        // Setup shared EPX endpoint and enable double buffering
-        ep->ecr = &usbh_dpram->epx_ctrl;
-        ep->bcr = &usbh_dpram->epx_buf_ctrl;
-        ep->buf = &usbh_dpram->epx_data[0];
-       *ep->ecr = EP_CTRL_ENABLE_BITS         // Enable endpoint
-                | DOUBLE_BUFFER               // Interrupt per double buffer
-                | ep->type << 26              // Set transfer type
-                | (uint32_t) ep->buf & 0xfff; // Offset from DSPRAM
-
-    } else { // Use a polled hardware endpoint
-        if (!ep->type) panic("Control endpoints cannot be polled");
-
-        // Locate an unused polled hardware endpoint
-        uint8_t hwep;
-        for (hwep = 1; hwep < MAX_ENDPOINTS; hwep++) {
-            if (!usbh_dpram->int_ep_ctrl[hwep - 1].ctrl) break;
-        }
-        if (hwep == MAX_ENDPOINTS) panic("No free polled endpoints remaining");
-
-        // Setup polled hardware endpoint (these only support single buffering)
-        ep->ecr = &usbh_dpram->int_ep_ctrl       [hwep - 1].ctrl;
-        ep->bcr = &usbh_dpram->int_ep_buffer_ctrl[hwep - 1].ctrl;
-        ep->buf = &usbh_dpram->epx_data         [(hwep + 1) * 64];
-
-        bool     ls  = false;              // TODO: Set to true if low-speed
-        bool     in  = ep_in(ep);          // IN direction?
-        uint32_t dar = (!ls ? 0 : 1 << 26) // Preamble: LS on a FS hub
-                     | ( in ? 0 : 1 << 25) // Direction: In=0, Out=1
-                     | (ep_num(ep)  << 16) // Endpoint address (4 bits)
-                     |  ep->dev_addr;      // Device address (7 bits)
-
-        // Set the device and endpoint address and enable polling
-        usb_hw    ->int_ep_addr_ctrl[hwep - 1] = dar;
-       *ep->ecr = EP_CTRL_ENABLE_BITS             // Enable endpoint
-                | SINGLE_BUFFER                   // Interrupt per single buffer
-                | ep->type << 26                  // Set transfer type
-                | ((ep->interval || 1) - 1) << 16 // Polling interval - 1 ms
-                | (uint32_t) ep->buf & 0xfff;     // Offset from DSPRAM
-       *ep->bcr = 0;
-        usb_hw_set->int_ep_ctrl = 1 << hwep;
-    }
+    // Hardware addresses
+    ep->ecr = &usbh_dpram->epx_ctrl;
+    ep->bcr = &usbh_dpram->epx_buf_ctrl;
+    ep->buf = &usbh_dpram->epx_data[0];
 
     // Set as configured
     ep->configured = true;
 }
 
-endpoint_t *get_endpoint(uint8_t dev_addr, uint8_t ep_addr) {
-    if (!(ep_addr & 0xf)) return epx; // All EP0s use one shared EPX
-    for (uint8_t hwep = 1; hwep < MAX_ENDPOINTS; hwep++) {
-        endpoint_t *ep = &eps[hwep];
+SDK_INLINE void restore_endpoint(endpoint_t *ep) {
+    ep->active     = false;
+    ep->setup      = false;
+    ep->data_pid   = 0;
+    ep->bytes_left = 0;
+    ep->bytes_done = 0;
+}
+
+void setup_epx() {
+    setup_endpoint(epx, &((usb_endpoint_descriptor_t) {
+        .bLength          = sizeof(usb_endpoint_descriptor_t),
+        .bDescriptorType  = USB_DT_ENDPOINT,
+        .bEndpointAddress = 0,
+        .bmAttributes     = USB_TRANSFER_TYPE_CONTROL,
+        .wMaxPacketSize   = 0,
+        .bInterval        = 0,
+    }), ctrl_buf);
+}
+
+endpoint_t *get_endpoint(uint8_t dev_addr, uint8_t ep_num) {
+    for (uint8_t i = 0; i < MAX_ENDPOINTS; i++) {
+        endpoint_t *ep = &eps[i];
         if (ep->configured) {
-            if (ep->dev_addr == dev_addr && ep_num(ep) == ep_addr)
+            if ((ep->dev_addr == dev_addr) && ((ep->ep_addr & 0xf) == ep_num))
                 return ep;
         }
     }
-    panic("Endpoint 0x%02x for device %u does not exist", ep_addr, dev_addr);
+    panic("No configured EP%u on device %u", ep_num, dev_addr);
     return NULL;
 }
 
 endpoint_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
                           uint8_t *user_buf) {
     if (!(usb->bEndpointAddress & 0xf)) panic("EP0 cannot be requested");
-    for (uint8_t hwep = 1; hwep < MAX_ENDPOINTS; hwep++) {
-        endpoint_t *ep = &eps[hwep];
+    for (uint8_t i = 1; i < MAX_ENDPOINTS; i++) {
+        endpoint_t *ep = &eps[i];
         if (!ep->configured) {
             ep->dev_addr = dev_addr;
             setup_endpoint(ep, usb, user_buf);
@@ -280,31 +255,13 @@ endpoint_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
     return NULL;
 }
 
-SDK_INLINE void clear_endpoint(endpoint_t *ep) {
-    ep->setup      = false;
-    ep->data_pid   = 0;
-    ep->active     = false;
-    ep->bytes_left = 0;
-    ep->bytes_done = 0;
+void reset_endpoint(uint8_t dev_addr, uint8_t ep_num) {
+    endpoint_t *ep = get_endpoint(dev_addr, ep_num);
+    memclr(ep, sizeof(endpoint_t));
 }
 
-// TODO: Do we need a reset_endpoint(endpoint_t *ep)?
-
-void reset_epx() {
-    setup_endpoint(epx, &((usb_endpoint_descriptor_t) {
-        .bLength          = sizeof(usb_endpoint_descriptor_t),
-        .bDescriptorType  = USB_DT_ENDPOINT,
-        .bEndpointAddress = 0,
-        .bmAttributes     = USB_TRANSFER_TYPE_CONTROL,
-        .wMaxPacketSize   = 0, // TODO: Is this ok?
-        .bInterval        = 0,
-    }), ctrl_buf);
-}
-
-// Clear all endpoints
 void reset_endpoints() {
     memclr(eps, sizeof(eps));
-    reset_epx();
 }
 
 // ==[ Buffers ]================================================================
@@ -1391,8 +1348,8 @@ void isr_usbctrl() {
             printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n", ep_dir(ep), ep->dev_addr, guid);
         }
 
-        // Clear the endpoint (since its complete)
-        clear_endpoint(ep);
+        // Reset the endpoint, since the transfer is complete
+        restore_endpoint(ep);
 
         // Queue the transfer task
         queue_add_blocking(queue, &((task_t) {
@@ -1474,9 +1431,11 @@ void setup_usb_host() {
 
     irq_set_enabled(USBCTRL_IRQ, true);
 
-    printf( "┌───────┬──────┬─────────────────────────────────────┬────────────┐\n");
     reset_devices();
     reset_endpoints();
+    setup_epx();
+
+    printf( "┌───────┬──────┬─────────────────────────────────────┬────────────┐\n");
     bindump("│INT", usb_hw->inte);
     printf( "└───────┴──────┴─────────────────────────────────────┴────────────┘\n");
 }
