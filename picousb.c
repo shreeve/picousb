@@ -119,12 +119,12 @@ device_t *next_device() {
     return NULL;
 }
 
-void reset_device(uint8_t dev_addr) {
+void clear_device(uint8_t dev_addr) {
     device_t *dev = get_device(dev_addr);
     memclr(dev, sizeof(device_t));
 }
 
-void reset_devices() {
+void clear_devices() {
     memclr(devices, sizeof(devices));
 }
 
@@ -255,12 +255,12 @@ endpoint_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
     return NULL;
 }
 
-void reset_endpoint(uint8_t dev_addr, uint8_t ep_num) {
+void clear_endpoint(uint8_t dev_addr, uint8_t ep_num) {
     endpoint_t *ep = get_endpoint(dev_addr, ep_num);
     memclr(ep, sizeof(endpoint_t));
 }
 
-void reset_endpoints() {
+void clear_endpoints() {
     memclr(eps, sizeof(eps));
 }
 
@@ -969,7 +969,7 @@ void enumerate(void *arg) {
         case ENUMERATION_SET_ADDRESS: {
             device_t *dev = get_device(new_addr);
             dev->state    = DEVICE_ADDRESSED;
-            reset_device(0);
+            clear_device(0);
 
             printf("Starting GET_DEVICE\n");
             get_device_descriptor(dev);
@@ -1096,7 +1096,7 @@ void usb_task() {
                 last_attempt = time_us_64();
 
                 // Initialize dev0
-                reset_device(0);
+                clear_device(0);
                 dev0->state = DEVICE_ENUMERATING;
                 dev0->speed = task.connect.speed;
 
@@ -1247,7 +1247,7 @@ void isr_usbctrl() {
             printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
             printf( "│DISCONN│ %-4s │ %-35s │            │\n", "", "Device disconnected");
 
-            reset_device(0);
+            clear_device(0);
             reset_epx(); // TODO: There's more to do here
         }
     }
@@ -1431,8 +1431,8 @@ void setup_usb_host() {
 
     irq_set_enabled(USBCTRL_IRQ, true);
 
-    reset_devices();
-    reset_endpoints();
+    clear_devices();
+    clear_endpoints();
     setup_epx();
 
     printf( "┌───────┬──────┬─────────────────────────────────────┬────────────┐\n");
