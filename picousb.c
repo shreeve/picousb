@@ -209,7 +209,7 @@ void setup_endpoint(endpoint_t *ep, usb_endpoint_descriptor_t *usb, uint8_t *use
     ep->configured = true;
 }
 
-SDK_INLINE void restore_endpoint(endpoint_t *ep) {
+SDK_INLINE void reset_endpoint(endpoint_t *ep) {
     ep->active     = false;
     ep->setup      = false;
     ep->data_pid   = 0;
@@ -1349,7 +1349,7 @@ void isr_usbctrl() {
         }
 
         // Reset the endpoint, since the transfer is complete
-        restore_endpoint(ep);
+        reset_endpoint(ep);
 
         // Queue the transfer task
         queue_add_blocking(queue, &((task_t) {
