@@ -8,11 +8,7 @@
 // Thanks to Ha Thach for TinyUSB and https://github.com/hathach/tinyusb
 // Thanks to Miroslav Nemecek for his https://github.com/Panda381/PicoLibSDK
 //
-// NOTE: For now, only control transfers can use EPX
-// NOTE: For now, bulk transfers always use polled hardware endpoints (EPn)
-// NOTE: For now, interrupt transfers aren't supported (easy to add?)
-// NOTE: For now, isochronous transfers aren't supported
-// NOTE: Remove the poll_ep1_in() function asap
+// NOTE: For now, this only supports control and bulk transfers on EPX
 // =============================================================================
 
 #include <stdio.h>                // For printf
