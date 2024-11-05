@@ -450,7 +450,7 @@ void start_transfer(endpoint_t *ep) {
 
     // Calculate registers
     uint32_t dar = ep->dev_addr | ep_num(ep) << 16;  // Set dev_addr and ep_num
-    uint32_t scr = USB_SIE_CTRL_BASE                 // SIE_CTRL defaults
+    uint32_t sie = USB_SIE_CTRL_BASE                 // SIE_CTRL defaults
       | (!ls ? 0 : USB_SIE_CTRL_PREAMBLE_EN_BITS)    // Preamble: LS on a FS hub
       | (!ss ? 0 : USB_SIE_CTRL_SEND_SETUP_BITS)     // Toggle SETUP packet
       | ( in ?     USB_SIE_CTRL_RECEIVE_DATA_BITS    // Receive bit means IN
@@ -459,7 +459,7 @@ void start_transfer(endpoint_t *ep) {
 
     // Set hardware registers and fill buffers
     usb_hw->dev_addr_ctrl = dar;
-    usb_hw->sie_ctrl      = scr & ~USB_SIE_CTRL_START_TRANS_BITS;
+    usb_hw->sie_ctrl      = sie & ~USB_SIE_CTRL_START_TRANS_BITS;
     transfer(ep); // ~20 μs
 
     // Debug output
@@ -468,8 +468,8 @@ void start_transfer(endpoint_t *ep) {
     printf( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transfer started");
     show_endpoint(ep);
     printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+    bindump("│SIE", usb_hw->sie_ctrl);
     bindump("│SSR", usb_hw->sie_status);
-    bindump("│SCR", usb_hw->sie_ctrl);
     printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
     bindump("│DAR", usb_hw->dev_addr_ctrl);
     bindump("│ECR", *ep->ecr);
@@ -489,7 +489,7 @@ void start_transfer(endpoint_t *ep) {
     }
 
     // Trigger the actual transfer
-    usb_hw->sie_ctrl = scr;
+    usb_hw->sie_ctrl = sie;
 }
 
 void transfer_zlp(void *arg) {
@@ -1210,8 +1210,8 @@ void isr_usbctrl() {
     show_endpoint(ep);
     printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
     bindump("│INT", ints);
+    bindump("│SIE", usb_hw->sie_ctrl);
     bindump("│SSR", usb_hw->sie_status);
-    bindump("│SCR", usb_hw->sie_ctrl);
     printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
     bindump("│DAR", usb_hw->dev_addr_ctrl);
     bindump("│ECR", ecr);
