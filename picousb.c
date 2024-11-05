@@ -1,5 +1,5 @@
 // =============================================================================
-// PicoUSB - A USB host and device library for the rp2040 (Raspberry Pi Pico/W)
+// PicoUSB - A smaller than tiny USB Host library for the Raspberry Pi Pico/W
 //
 // Author: Steve Shreeve <steve.shreeve@gmail.com>
 //   Date: November 5, 2024
