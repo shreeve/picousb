@@ -403,46 +403,6 @@ void start_transfer(endpoint_t *ep) {
     if (ep->active) panic("Transfer already active on endpoint");
     ep->active = true;
 
-    // Transfer polled hardware endpoints
-    if (ep_num(ep)) {
-        uint8_t  was = ep->bytes_left;
-        uint32_t dar = ep->dev_addr | ep_num(ep) << 16;
-        uint32_t ecr = *ep->ecr;
-        uint32_t bcr = prep_buffer(ep, 0);
-        uint8_t  now = ep->bytes_left;
-
-        // Update ECR and BCR (set BCR first so controller has time to settle)
-        *ep->bcr = bcr & UNAVAILABLE;
-        *ep->ecr = ecr;
-        nop(); // NOTE: Not needed if we have debugging delays anyway...
-        nop(); // NOTE: Not needed if we have debugging delays anyway...
-
-        // Debug output
-        printf("\n");
-        printf( "┌───────┬──────┬─────────────────────────────────────┬────────────┐\n");
-        printf( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transfer started");
-        show_endpoint(ep);
-        printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
-        bindump("│DAR", dar);
-        bindump("│ECR", ecr);
-        bindump("│BCR", bcr);
-        if (!ep_in(ep) && was > now) {
-            uint8_t len = was - now;
-            printf( "├───────┼──────┼─────────────────────────────────────┴────────────┤\n");
-            hexdump("│SENT", &ep->user_buf[ep->bytes_done - len], len, 1);
-            printf( "└───────┴──────┴──────────────────────────────────────────────────┘\n");
-        } else {
-            printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
-            printf( "│%s\t│ %-4s │ Device %-28u │            │\n", ep_in(ep) ? "POLL" : "ZLP", ep_dir(ep), ep->dev_addr);
-            printf( "└───────┴──────┴─────────────────────────────────────┴────────────┘\n");
-        }
-
-        // Trigger the actual transfer
-        *ep->bcr = bcr;
-
-        return;
-    }
-
     // Calculate flags
     bool ls  = false;
     bool in = ep_in(ep);
