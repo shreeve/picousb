@@ -2,7 +2,7 @@
 // PicoUSB - A USB host and device library for the rp2040 (Raspberry Pi Pico/W)
 //
 // Author: Steve Shreeve <steve.shreeve@gmail.com>
-//   Date: November 2, 2024
+//   Date: November 5, 2024
 //  Legal: Same license as the Raspberry Pi Pico SDK
 //
 // Thanks to Ha Thach for TinyUSB and https://github.com/hathach/tinyusb
