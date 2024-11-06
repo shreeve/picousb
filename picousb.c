@@ -312,21 +312,44 @@ uint16_t start_buffer(endpoint_t *ep, uint8_t buf_id) {
     return bcr;
 }
 
-// Transfer one or two buffers (SIE_CTRL_START_TRANS needed for new transfers)
-void transfer(endpoint_t *ep) {
-    uint32_t ecr = *ep->ecr;
-    uint32_t bcr = prep_buffer(ep, 0);
+uint16_t finish_buffer(endpoint_t *ep, uint8_t buf_id, uint32_t bcr) {
+    bool     in   = ep_in(ep);                   // Buffer is inbound
+    bool     full = bcr & USB_BUF_CTRL_FULL;     // Buffer is full (populated)
+    uint16_t len  = bcr & USB_BUF_CTRL_LEN_MASK; // Buffer length
 
-    // Handle double buffering for EPX
-    if (!ep_num(ep)) {
-        if (bcr & USB_BUF_CTRL_LAST) {
-            ecr &= ~DOUBLE_BUFFER; // Disable double-buffering
-            ecr |=  SINGLE_BUFFER; // Enable  single-buffering
-        } else {
-            ecr &= ~SINGLE_BUFFER; // Disable single-buffering
-            ecr |=  DOUBLE_BUFFER; // Enable  double-buffering
-            bcr |= prep_buffer(ep, 1) << 16;
-        }
+    // Inbound buffers must be full and outbound buffers must be empty
+    assert(in == full);
+
+    // IN: Copy inbound data from the endpoint to the user buffer
+    if (in && len) {
+        uint8_t *ptr = &ep->user_buf[ep->bytes_done];
+        uint8_t *src = (uint8_t *) (ep->buf + buf_id * 64);
+        memcpy(ptr, src, len);
+        hexdump(buf_id ? "│IN/2" : "│IN/1", ptr, len, 1); // ~7.5 ms
+        ep->bytes_done += len;
+    }
+
+    // Short packet (below maxsize) means the transfer is done
+    if (len < ep->maxsize)
+        ep->bytes_left = 0;
+
+    return len;
+}
+
+// ==[ Transactions ]===========================================================
+
+void start_transaction(endpoint_t *ep) {
+    io_rw_32 ecr = *ep->ecr;
+    io_rw_16 bcr = load_buffer(ep, 0);
+
+    // Handle double buffering
+    if (bcr & USB_BUF_CTRL_LAST) {
+        ecr &= ~DOUBLE_BUFFER; // Disable double-buffering
+        ecr |=  SINGLE_BUFFER; // Enable  single-buffering
+    } else {
+        ecr &= ~SINGLE_BUFFER; // Disable single-buffering
+        ecr |=  DOUBLE_BUFFER; // Enable  double-buffering
+        bcr |= load_buffer(ep, 1) << 16;
     }
 
     // Update ECR and BCR (set BCR first so controller has time to settle)
@@ -334,12 +357,13 @@ void transfer(endpoint_t *ep) {
     *ep->ecr = ecr;
     nop();
     nop();
+    nop(); // TODO: Is this one needed?
+    nop(); // TODO: Is this one needed?
+    nop(); // TODO: Is this one needed?
     *ep->bcr = bcr;
-    *ep->bcr = bcr; // Set this twice?
 }
 
-// Processes buffers in ISR context
-void handle_buffers(endpoint_t *ep) {
+void finish_transaction(endpoint_t *ep) {
     if (!ep->active) show_endpoint(ep), panic("Illegal buffer completion");
 
     // Read current buffer(s)
@@ -355,7 +379,7 @@ void handle_buffers(endpoint_t *ep) {
     }
 
     // Continue the transfer
-    if (ep->bytes_left) transfer(ep);
+    if (ep->bytes_left) send_buffers(ep);
 }
 
 // ==[ Transfers ]==============================================================
@@ -375,6 +399,16 @@ enum {
                       | USB_SIE_CTRL_SOF_EN_BITS        // Enable full speed
 };
 
+SDK_INLINE const char *transfer_type(uint8_t bits) {
+    switch (bits & USB_TRANSFER_TYPE_BITS) {
+        case USB_TRANSFER_TYPE_CONTROL:     return "Control"    ; break;
+        case USB_TRANSFER_TYPE_ISOCHRONOUS: return "Isochronous"; break;
+        case USB_TRANSFER_TYPE_BULK:        return "Bulk"       ; break;
+        case USB_TRANSFER_TYPE_INTERRUPT:   return "Interrupt"  ; break;
+        default:                            return "Unknown"    ; break;
+    }
+}
+
 // TODO: Clear a stall and toggle data PID back to DATA0
 // TODO: Abort a transfer if not yet started and return true on success
 
@@ -388,7 +422,7 @@ void start_transfer(endpoint_t *ep) {
     bool ss = ep->setup && !ep->bytes_done; // Start of a SETUP packet
 
     // Calculate registers
-    uint32_t dar = ep->dev_addr | ep_num(ep) << 16;  // Set dev_addr and ep_num
+    uint32_t dar = (ep->ep_addr & 0xf) << 16 | ep->dev_addr;
     uint32_t sie = USB_SIE_CTRL_BASE                 // SIE_CTRL defaults
       | (!ls ? 0 : USB_SIE_CTRL_PREAMBLE_EN_BITS)    // Preamble: LS on a FS hub
       | (!ss ? 0 : USB_SIE_CTRL_SEND_SETUP_BITS)     // Toggle SETUP packet
@@ -399,7 +433,7 @@ void start_transfer(endpoint_t *ep) {
     // Set hardware registers and fill buffers
     usb_hw->dev_addr_ctrl = dar;
     usb_hw->sie_ctrl      = sie & ~USB_SIE_CTRL_START_TRANS_BITS;
-    transfer(ep); // ~20 μs
+    start_transaction(ep); // ~20 μs
 
     // Debug output
     printf("\n");
@@ -489,7 +523,7 @@ void bulk_transfer(endpoint_t *ep, uint8_t *ptr, uint16_t len) {
 }
 
 void reset_piccolo(device_t *dev) {
-    static uint8_t (states[USER_DEVICES]) = { 0 };
+    static uint8_t (states[MAX_DEVICES]) = { 0 };
     uint8_t state = ++states[dev->dev_addr];
 
     printf("Piccolo reset step %u\n", state);
