@@ -138,6 +138,11 @@ enum {
 
 typedef void (*endpoint_c)(uint8_t *buf, uint16_t len);
 
+typedef volatile struct {
+    uint16_t lower;  // 16-bit access to the lower half
+    uint16_t upper;  // 16-bit access to the upper half
+} io_lu_32;
+
 typedef struct {
 
     // USB config
@@ -154,7 +159,7 @@ typedef struct {
 
     // Hardware registers
     io_rw_32  *ecr       ; // Endpoint control register
-    io_rw_32  *bcr       ; // Buffer control register
+    io_lu_32  *bcr       ; // Buffer control register (NOTE: two 16-bit halves!)
 
     // Setup status
     bool       configured; // Endpoint is configured
