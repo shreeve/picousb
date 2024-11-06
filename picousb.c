@@ -275,40 +275,14 @@ enum { // Used to mask availability in the BCR
     UNAVAILABLE = ~(USB_BUF_CTRL_AVAIL << 16 | USB_BUF_CTRL_AVAIL)
 };
 
-// Read an inbound data buffer from an endpoint and return its length
-uint16_t read_buffer(endpoint_t *ep, uint8_t buf_id, uint32_t bcr) {
-    bool     in   = ep_in(ep);                   // Buffer is inbound
-    bool     full = bcr & USB_BUF_CTRL_FULL;     // Buffer is full (populated)
-    uint16_t len  = bcr & USB_BUF_CTRL_LEN_MASK; // Buffer length
-
-    // Inbound buffers must be full and outbound buffers must be empty
-    assert(in == full);
-
-    // IN: Copy inbound data from the endpoint to the user buffer
-    if (in && len) {
-        uint8_t *ptr = &ep->user_buf[ep->bytes_done];
-        uint8_t *src = (uint8_t *) (ep->buf + buf_id * 64);
-        memcpy(ptr, src, len);
-        hexdump(buf_id ? "│IN/2" : "│IN/1", ptr, len, 1); // ~7.5 ms
-        ep->bytes_done += len;
-    }
-
-    // Short packet (below maxsize) means the transfer is done
-    if (len < ep->maxsize)
-        ep->bytes_left = 0;
-
-    return len;
-}
-
-// Prepare an outbound data buffer for an endpoint and return its half of BCR
-uint16_t prep_buffer(endpoint_t *ep, uint8_t buf_id) {
+uint16_t start_buffer(endpoint_t *ep, uint8_t buf_id) {
     bool     in  = ep_in(ep);                         // Buffer is inbound
     bool     mas = ep->bytes_left > ep->maxsize;      // Any more packets?
 
-    // FIXME: This is goofy! Pretends like there is more data to prevent LAST
-    if (in && ep_num(ep) && !ep->bytes_left && !ep->bytes_done) {
-        mas = 1;
-    }
+    // // FIXME: This is goofy! Pretends like there is more data to prevent LAST
+    // if (in && ep_num(ep) && !ep->bytes_left && !ep->bytes_done) {
+    //     mas = 1;
+    // }
 
     // Calculate BCR
     uint8_t  pid = ep->data_pid;                      // Set DATA0/DATA1
