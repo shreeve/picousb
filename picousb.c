@@ -1095,18 +1095,6 @@ void usb_task() {
                 } else if (dev->state < DEVICE_READY) {
                     printf("Calling reset_piccolo\n");
                     reset_piccolo(dev);
-
-                    // Once we're ready, start polling
-                    if (dev->state == DEVICE_READY) {
-                        debug_mode = 1;
-                        queue_add_blocking(queue, &((task_t) {
-                            .type         = TASK_CALLBACK,
-                            .guid         = guid++,
-                            .callback.fn  = poll_ep1_in,
-                            .callback.arg = NULL,
-                        }));
-                    }
-
                 } else {
                     printf("Transfer completed\n");
                 }
