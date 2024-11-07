@@ -355,6 +355,7 @@ void start_transaction(endpoint_t *ep) {
 
     // Allow time for bcr to settle
     nop(); nop(); nop();
+    nop(); nop(); nop();
 
     // Fire off the transaction, which yields to the USB controller
     *bcr |= fire;
