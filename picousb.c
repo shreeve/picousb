@@ -1272,17 +1272,6 @@ void isr_usbctrl() {
 
         // Panic if we missed any buffers
         if (bits) panic("Unhandled buffer mask: %032b", bits);
-
-        if (bulk) {
-            eps[1].active = false; // HACK HACK HACK...
-
-            queue_add_blocking(queue, &((task_t) {
-                .type         = TASK_CALLBACK,
-                .guid         = guid++,
-                .callback.fn  = poll_ep1_in,
-                .callback.arg = NULL,
-            }));
-        }
     }
 
     // Transfer complete (last packet)
