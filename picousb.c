@@ -994,7 +994,7 @@ void enumerate(void *arg) {
 // ==[ Callbacks ]==============================================================
 
 void poll_ep1_in(void *arg) {
-    bulk_transfer((endpoint_t *) &eps[1], (uint8_t *) REMOVE_THIS, (uint16_t) 0);
+    bulk_transfer((endpoint_t *) &eps[1], (uint8_t *) REMOVE_THIS, (uint16_t) 40);
 }
 
 // ==[ Tasks ]==================================================================
