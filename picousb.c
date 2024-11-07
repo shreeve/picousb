@@ -324,28 +324,33 @@ uint16_t finish_buffer(endpoint_t *ep, uint8_t buf_id, io_rw_32 bcr) {
 // ==[ Transactions ]===========================================================
 
 void start_transaction(endpoint_t *ep) {
-    io_rw_32 ecr = *ep->ecr;
-    io_rw_16 bcr = load_buffer(ep, 0);
+    io_rw_32 *ecr = ep->ecr;
+    io_rw_32 *bcr = ep->bcr;
+    uint32_t fire = USB_BUF_CTRL_AVAIL;
 
-    // Handle double buffering
-    if (bcr & USB_BUF_CTRL_LAST) {
-        ecr &= ~DOUBLE_BUFFER; // Disable double-buffering
-        ecr |=  SINGLE_BUFFER; // Enable  single-buffering
-    } else {
-        ecr &= ~SINGLE_BUFFER; // Disable single-buffering
-        ecr |=  DOUBLE_BUFFER; // Enable  double-buffering
-        bcr |= load_buffer(ep, 1) << 16;
+    assert(ep->active);
+
+    // Set bcr
+    *bcr = start_buffer(ep, 0);
+
+    // If using epx, update the buffering mode
+    if (ep->ecr == epx->ecr) {
+        if (*bcr & USB_BUF_CTRL_LAST) {        // For single buffering:
+            *ecr &= ~DOUBLE_BUFFER;            //   Disable double-buffering
+            *ecr |=  SINGLE_BUFFER;            //   Enable  single-buffering
+        } else {                               // For double buffering:
+            *bcr |= start_buffer(ep, 1) << 16; //   Overlay bcr for buf1
+            *ecr &= ~SINGLE_BUFFER;            //   Disable single-buffering
+            *ecr |=  DOUBLE_BUFFER;            //   Enable  double-buffering
+            fire |=  fire << 16;               //   Fire buffers together
+        }
     }
 
-    // Update ECR and BCR (set BCR first so controller has time to settle)
-    *ep->bcr = bcr & UNAVAILABLE;
-    *ep->ecr = ecr;
-    nop();
-    nop();
-    nop(); // TODO: Is this one needed?
-    nop(); // TODO: Is this one needed?
-    nop(); // TODO: Is this one needed?
-    *ep->bcr = bcr;
+    // Allow time for bcr to settle
+    nop(); nop(); nop();
+
+    // Fire off the transaction, which yields to the USB controller
+    *bcr |= fire;
 }
 
 void finish_transaction(endpoint_t *ep) {
