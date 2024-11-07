@@ -1262,7 +1262,7 @@ void isr_usbctrl() {
                     sprintf(str, "│BCR%u", hwep);
                     bindump(str, *eps[hwep].bcr);
 
-                    handle_buffers(&eps[hwep]);
+                    finish_transaction(&eps[hwep]);
 
                     // FIXME: Go nuclear trying to re-arm
                     *eps[hwep].ecr |=  EP_CTRL_ENABLE_BITS;
