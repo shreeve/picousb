@@ -205,6 +205,12 @@ void setup_endpoint(endpoint_t *ep, usb_endpoint_descriptor_t *usb, uint8_t *use
     ep->bcr = &usbh_dpram->epx_buf_ctrl;
     ep->buf = &usbh_dpram->epx_data[0];
 
+    // Setup shared epx endpoint and enable double buffering
+    *ep->ecr = EP_CTRL_ENABLE_BITS         // Enable endpoint
+             | DOUBLE_BUFFER               // Interrupt per double buffer
+             | ep->type << 26              // Set transfer type
+             | (uint32_t) ep->buf & 0xfff; // Offset from DSPRAM
+
     // Set as configured
     ep->configured = true;
 }
