@@ -1248,6 +1248,8 @@ void isr_usbctrl() {
         printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
         bindump(dub ? "│BUF/2" : "│BUF/1", bits);
 
+        // TODO: Use Miroslav's technique...
+
         // Check EPX (bidirectional) and polled hardware endpoints (IN and OUT)
         for (uint8_t hwep = 0; hwep < MAX_ENDPOINTS && bits; hwep++) {
             for (uint8_t dir = 0; dir < 2; dir++) { // IN=evens, OUT=odds
