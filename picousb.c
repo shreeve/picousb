@@ -297,9 +297,9 @@ uint16_t start_buffer(endpoint_t *ep, uint8_t buf_id) {
     return bcr;
 }
 
-uint16_t finish_buffer(endpoint_t *ep, uint8_t buf_id, uint32_t bcr) {
-    bool     in   = ep_in(ep);                   // Buffer is inbound
-    bool     full = bcr & USB_BUF_CTRL_FULL;     // Buffer is full (populated)
+uint16_t finish_buffer(endpoint_t *ep, uint8_t buf_id, io_rw_32 bcr) {
+    bool     in   = ep_in(ep);                   // Inbound buffer?
+    bool     full = bcr & USB_BUF_CTRL_FULL;     // Is buffer full? (populated)
     uint16_t len  = bcr & USB_BUF_CTRL_LEN_MASK; // Buffer length
 
     // Inbound buffers must be full and outbound buffers must be empty
@@ -310,7 +310,7 @@ uint16_t finish_buffer(endpoint_t *ep, uint8_t buf_id, uint32_t bcr) {
         uint8_t *ptr = &ep->user_buf[ep->bytes_done];
         uint8_t *src = (uint8_t *) (ep->buf + buf_id * 64);
         memcpy(ptr, src, len);
-        hexdump(buf_id ? "│IN/2" : "│IN/1", ptr, len, 1); // ~7.5 ms
+        hexdump(buf_id ? "│IN/2" : "│IN/1", ptr, len, 1);
         ep->bytes_done += len;
     }
 
