@@ -339,6 +339,7 @@ void start_transaction(endpoint_t *ep) {
 
     // Set bcr
     *bcr = start_buffer(ep, 0);
+    nop(); nop(); nop(); nop(); nop();         // FIXME: Handle differently...
 
     // If using epx, update the buffering mode
     if (ep->ecr == epx->ecr) {
@@ -347,6 +348,7 @@ void start_transaction(endpoint_t *ep) {
             *ecr |=  SINGLE_BUFFER;            //   Enable  single-buffering
         } else {                               // For double buffering:
             *bcr |= start_buffer(ep, 1) << 16; //   Overlay bcr for buf1
+            nop(); nop(); nop(); nop(); nop(); //   FIXME: Handle differently...
             *ecr &= ~SINGLE_BUFFER;            //   Disable single-buffering
             *ecr |=  DOUBLE_BUFFER;            //   Enable  double-buffering
             fire |=  fire << 16;               //   Fire buffers together
