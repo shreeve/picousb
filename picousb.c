@@ -354,22 +354,23 @@ void start_transaction(endpoint_t *ep) {
 }
 
 void finish_transaction(endpoint_t *ep) {
-    if (!ep->active) show_endpoint(ep), panic("Illegal buffer completion");
+    io_rw_32 *ecr = ep->ecr;
+    io_rw_32 *bcr = ep->bcr;
 
-    // Read current buffer(s)
-    uint32_t ecr = *ep->ecr;                          // ECR is single or double
-    uint32_t bcr = *ep->bcr;                          // Buffer control register
-    if (ecr & EP_CTRL_DOUBLE_BUFFERED_BITS) {         // When double buffered...
-        if (read_buffer(ep, 0, bcr) == ep->maxsize)   // If first buffer is full
-            read_buffer(ep, 1, bcr >> 16);            // Then, read second also
-    } else {                                          // When single buffered...
-        uint32_t bch = usb_hw->buf_cpu_should_handle; // Check CPU handling bits
-        if (bch & 1u) bcr >>= 16;                     // Do RP2040-E4 workaround
-        read_buffer(ep, 0, bcr);                      // And read the one buffer
+    assert(ep->active);
+
+    // Finish based on if we're single or double buffered
+    if (*ecr & EP_CTRL_DOUBLE_BUFFERED_BITS) {         // For double buffering:
+        if (finish_buffer(ep, 0, *bcr) == ep->maxsize) //   Finish first buffer
+            finish_buffer(ep, 1, *bcr >> 16);          //   Finish second buffer
+    } else {                                           // For single buffering:
+        uint32_t bch = usb_hw->buf_cpu_should_handle;  //   Workaround RP2040-E4
+        if (bch & 1u) *bcr >> 16;                      //   By "fixing" bcr
+        finish_buffer(ep, 0, *bcr);                    //   Finish the buffer
     }
 
-    // Continue the transfer
-    if (ep->bytes_left) send_buffers(ep);
+    // Start next transaction
+    if (ep->bytes_left) start_transaction(ep);
 }
 
 // ==[ Transfers ]==============================================================
