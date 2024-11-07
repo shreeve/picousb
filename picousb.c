@@ -266,10 +266,6 @@ void clear_endpoints() {
 
 // ==[ Buffers ]================================================================
 
-enum { // Used to mask availability in the BCR
-    UNAVAILABLE = ~(USB_BUF_CTRL_AVAIL << 16 | USB_BUF_CTRL_AVAIL)
-};
-
 uint16_t start_buffer(endpoint_t *ep, uint8_t buf_id) {
     bool     in  = ep_in(ep);                         // Buffer is inbound
     bool     mas = ep->bytes_left > ep->maxsize;      // Any more packets?
