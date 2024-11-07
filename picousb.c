@@ -1212,7 +1212,6 @@ void isr_usbctrl() {
             printf( "│DISCONN│ %-4s │ %-35s │            │\n", "", "Device disconnected");
 
             clear_device(0);
-            reset_epx(); // TODO: There's more to do here
         }
     }
 
