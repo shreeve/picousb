@@ -1420,9 +1420,24 @@ int main() {
     queue_init(queue, sizeof(task_t), 64);
     setup_usb_host();
 
-    debug_mode = 1;
+    debug_mode = 0;
+
+    uint64_t last_attempt = 0;
 
     while (1) {
         usb_task();
+
+        // FIXME: Poor-man's polling...
+        if (devices[1].state == DEVICE_READY) {
+            if ((time_us_64() - last_attempt) > 10000000) {
+                last_attempt = time_us_64();
+                queue_add_blocking(queue, &((task_t) {
+                    .type         = TASK_CALLBACK,
+                    .guid         = guid++,
+                    .callback.fn  = poll_ep1_in,
+                    .callback.arg = NULL,
+                }));
+            }
+        }
     }
 }
