@@ -165,6 +165,7 @@ typedef struct {
     uint8_t    data_pid  ; // Toggle between DATA0/DATA1 packets
     uint16_t   bytes_left; // Bytes left to transfer
     uint16_t   bytes_done; // Bytes done transferring
+    endpoint_c cb        ; // Callback function
 } endpoint_t;
 
 static endpoint_t eps[MAX_ENDPOINTS], *epx = eps;
