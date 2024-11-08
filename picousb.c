@@ -1018,8 +1018,8 @@ typedef struct {
             uint8_t    status    ; // Transfer status
             uint8_t    dev_addr  ; // Device address
             uint8_t    ep_num    ; // Endpoint number (direction not included)
-            uint8_t   *buffer    ; // User buffer in DPSRAM, RAM, or flash
-            uint16_t   length    ; // Bytes transferred
+            uint8_t   *user_buf  ; // User buffer in DPSRAM, RAM, or flash
+            uint16_t   len       ; // Bytes transferred
             endpoint_c cb        ; // Callback function
         } transfer;
 
@@ -1307,9 +1307,9 @@ void isr_usbctrl() {
             .transfer.status   = TRANSFER_SUCCESS, // Transfer status
             .transfer.dev_addr = dev_addr,         // Device address
             .transfer.ep_num   = ep_num,           // Endpoint number (EP0-EP15)
-            .transfer.buffer   = ep->user_buf,     // Transfer payload
-            .transfer.length   = ep->bytes_done,   // Length in bytes
-            .transfer.cb       = ep->cb            // Callback... TODO: Needed?
+            .transfer.user_buf = ep->user_buf,     // User buffer
+            .transfer.len      = ep->bytes_done,   // Transfer length
+            .transfer.cb       = ep->cb            // Callback
         };
 
         // Reset the endpoint
