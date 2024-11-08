@@ -1156,9 +1156,9 @@ void isr_usbctrl() {
 
     // Get device address and endpoint information
     uint8_t dev_addr =  dar & USB_ADDR_ENDP_ADDRESS_BITS;     // 7 bits (lowest)
-    uint8_t ep_addr  = (dar & USB_ADDR_ENDP_ENDPOINT_BITS) >> // 4 bits (higher)
+    uint8_t ep_num   = (dar & USB_ADDR_ENDP_ENDPOINT_BITS) >> // 4 bits (higher)
                               USB_ADDR_ENDP_ENDPOINT_LSB;
-    endpoint_t *ep = get_endpoint(dev_addr, ep_addr);
+    endpoint_t *ep = get_endpoint(dev_addr, ep_num);
 
     // Show system state
     printf( "\n=> %u) New ISR", guid++);
