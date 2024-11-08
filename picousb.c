@@ -142,7 +142,7 @@ typedef struct {
 
     // USB config
     uint8_t    dev_addr  ; // Device address
-    uint8_t    ep_addr   ; // Endpoint address
+    uint8_t    ep_addr   ; // Endpoint address (dir + num: 0x81 is EP1/IN)
     uint8_t    type      ; // Transfer type: control/bulk/interrupt/isochronous
     uint16_t   interval  ; // Polling interval in ms
     uint16_t   maxsize   ; // Maximum packet size
@@ -188,7 +188,7 @@ void setup_endpoint(endpoint_t *ep, usb_endpoint_descriptor_t *usb, uint8_t *use
     // Populate the endpoint (clears all fields not present)
     *ep = (endpoint_t) {
         .dev_addr = ep->dev_addr,
-        .ep_addr  = usb->bEndpointAddress,
+        .ep_addr  = usb->bEndpointAddress, // Thus, 0x81 is EP1/IN
         .type     = usb->bmAttributes,
         .interval = usb->bInterval,
         .maxsize  = usb->wMaxPacketSize,
@@ -483,7 +483,7 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     memcpy((void*) usbh_dpram->setup_packet, setup, sizeof(usb_setup_packet_t));
 
     epx->dev_addr   = dev->dev_addr;
-    epx->ep_addr    = setup->bmRequestType & USB_DIR_IN;
+    epx->ep_addr    = setup->bmRequestType & USB_DIR_IN; // Thus, 0x80 is EP0/IN
     epx->maxsize    = dev->maxsize0;
     epx->setup      = true;
     epx->data_pid   = 1; // NOTE: rp2040 does SETUP+DATA0+ACK, so DATA1 is next
