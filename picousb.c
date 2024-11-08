@@ -1015,9 +1015,12 @@ typedef struct {
         } connect;
 
         struct {
-            endpoint_t *ep;     // TODO: Risky to just sent this pointer?
-            uint16_t    len;    // TODO: Should we point to a safe buffer of this length?
-            uint8_t     status; // TODO: Are we even using this?
+            uint8_t    status    ; // Transfer status
+            uint8_t    dev_addr  ; // Device address
+            uint8_t    ep_num    ; // Endpoint number (direction not included)
+            uint8_t   *buffer    ; // User buffer in DPSRAM, RAM, or flash
+            uint16_t   length    ; // Bytes transferred
+            endpoint_c cb        ; // Callback function
         } transfer;
 
         struct {
@@ -1297,17 +1300,23 @@ void isr_usbctrl() {
             printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n", ep_dir(ep), ep->dev_addr, guid);
         }
 
-        // Reset the endpoint, since the transfer is complete
+        // Create the transfer task
+        task_t transfer_task = {
+            .type              = TASK_TRANSFER,
+            .guid              = guid++,
+            .transfer.status   = TRANSFER_SUCCESS, // Transfer status
+            .transfer.dev_addr = dev_addr,         // Device address
+            .transfer.ep_num   = ep_num,           // Endpoint number (EP0-EP15)
+            .transfer.buffer   = ep->user_buf,     // Transfer payload
+            .transfer.length   = ep->bytes_done,   // Length in bytes
+            .transfer.cb       = ep->cb            // Callback... TODO: Needed?
+        };
+
+        // Reset the endpoint
         reset_endpoint(ep);
 
         // Queue the transfer task
-        queue_add_blocking(queue, &((task_t) {
-            .type            = TASK_TRANSFER,
-            .guid            = guid++,
-            .transfer.ep     = ep,
-            .transfer.len    = len,
-            .transfer.status = TRANSFER_SUCCESS, // TODO: Is this needed?
-        }));
+        queue_add_blocking(queue, &transfer_task);
     }
 
     // Receive timeout (waited too long without seeing an ACK)
