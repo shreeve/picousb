@@ -406,9 +406,6 @@ void finish_transaction(endpoint_t *ep) {
         if (bch & 1u) *bcr >> 16;                      //   By "fixing" bcr
         finish_buffer(ep, 0, *bcr);                    //   Finish the buffer
     }
-
-    // Start next transaction
-    if (ep->bytes_left) start_transaction(ep);
 }
 
 // ==[ Transfers ]==============================================================
@@ -999,6 +996,10 @@ void poll_ep1_in(void *arg) {
     bulk_transfer((endpoint_t *) &eps[1], (uint8_t *) REMOVE_THIS, (uint16_t) 40);
 }
 
+void print_callback(void *arg) {
+    printf("%s", (char *) arg);
+}
+
 // ==[ Tasks ]==================================================================
 
 enum {
@@ -1051,9 +1052,11 @@ SDK_INLINE const char *task_name(uint8_t type) {
 }
 
 SDK_INLINE const char *callback_name(void (*fn) (void *)) {
-    if (fn == enumerate   ) return "enumerate";
-    if (fn == transfer_zlp) return "transfer_zlp";
-    if (fn == poll_ep1_in ) return "poll_ep1_in";
+    if (fn == enumerate        ) return "enumerate"        ;
+    if (fn == poll_ep1_in      ) return "poll_ep1_in"      ;
+    if (fn == print_callback   ) return "print_callback"   ;
+    if (fn == start_transaction) return "start_transaction";
+    if (fn == transfer_zlp     ) return "transfer_zlp"     ;
     printf("Calling unknown callback function\n");
 }
 
@@ -1085,6 +1088,7 @@ void usb_task() {
                 printf("Device connected (%s speed)\n", str);
 
                 // Start enumeration
+                printf("Start enumeration\n");
                 enumerate(dev0);
 
             }   break;
@@ -1262,6 +1266,7 @@ void isr_usbctrl() {
         // TODO: Use Miroslav's technique...
 
         // Check EPX (bidirectional) and polled hardware endpoints (IN and OUT)
+        endpoint_t *ep;
         for (uint8_t hwep = 0; hwep < MAX_ENDPOINTS && bits; hwep++) {
             for (uint8_t dir = 0; dir < 2; dir++) { // IN=evens, OUT=odds
                 mask = 1 << (hwep * 2 + dir);
@@ -1275,12 +1280,30 @@ void isr_usbctrl() {
                     sprintf(str, "│BCR%u", hwep);
                     bindump(str, *eps[hwep].bcr);
 
-                    finish_transaction(&eps[hwep]);
+                    // Finish the transaction
+                    finish_transaction(ep = &eps[hwep]);
 
-                    // FIXME: Go nuclear trying to re-arm
-                    *eps[hwep].ecr |=  EP_CTRL_ENABLE_BITS;
-                    *eps[hwep].bcr &= ~USB_BUF_CTRL_LAST;
-                    usb_hw_set->int_ep_ctrl = 1 << hwep;
+                    // Start the next transaction or complete the transfer
+                    if (ep->bytes_left) {
+                        queue_add_blocking(queue, &((task_t) {
+                            .type         = TASK_CALLBACK,
+                            .guid         = guid++,
+                            .callback.fn  = start_transaction,
+                            .callback.arg = (void *) ep,
+                        }));
+                    } else {
+                        queue_add_blocking(queue, &((task_t) {
+                            .type         = TASK_CALLBACK,
+                            .guid         = guid++,
+                            .callback.fn  = print_callback,
+                            .callback.arg = (void *) "Transfer complete!\n",
+                        }));
+                    }
+
+                    // // FIXME: Go nuclear trying to re-arm
+                    // *eps[hwep].ecr |=  EP_CTRL_ENABLE_BITS;
+                    // *eps[hwep].bcr &= ~USB_BUF_CTRL_LAST;
+                    // usb_hw_set->int_ep_ctrl = 1 << hwep;
                 }
                 if (!hwep) break;
             }
