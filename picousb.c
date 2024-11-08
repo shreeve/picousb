@@ -1088,8 +1088,15 @@ void usb_task() {
             }   break;
 
             case TASK_TRANSFER: {
-                endpoint_t *ep  = task.transfer.ep;
-                uint16_t    len = task.transfer.len;
+                uint8_t    dev_addr = task.transfer.dev_addr; // Device address
+                uint8_t    ep_num   = task.transfer.ep_num;   // Endpoint number
+                uint8_t   *user_buf = task.transfer.user_buf; // User buffer
+                uint16_t   len      = task.transfer.len;      // Buffer length
+                endpoint_c cb       = task.transfer.cb;       // Callback fn
+                uint8_t    status   = task.transfer.status;   // Transfer status
+
+                // Get the endpoint
+                endpoint_t *ep = get_endpoint(dev_addr, ep_num);
 
                 // Handle the transfer
                 device_t *dev = get_device(ep->dev_addr);
@@ -1308,12 +1315,12 @@ void isr_usbctrl() {
         task_t transfer_task = {
             .type              = TASK_TRANSFER,
             .guid              = guid++,
-            .transfer.status   = TRANSFER_SUCCESS, // Transfer status
             .transfer.dev_addr = dev_addr,         // Device address
             .transfer.ep_num   = ep_num,           // Endpoint number (EP0-EP15)
             .transfer.user_buf = ep->user_buf,     // User buffer
-            .transfer.len      = ep->bytes_done,   // Transfer length
-            .transfer.cb       = ep->cb            // Callback
+            .transfer.len      = ep->bytes_done,   // Buffer length
+            .transfer.cb       = ep->cb,           // Callback fn
+            .transfer.status   = TRANSFER_SUCCESS, // Transfer status
         };
 
         // Reset the endpoint
