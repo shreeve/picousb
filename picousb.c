@@ -359,30 +359,32 @@ void start_transaction(endpoint_t *ep) {
     nop(); nop(); nop(); nop(); nop(); nop();
 
     // Debug output
-    printf("\n");
-    printf( "┌───────┬──────┬─────────────────────────────────────┬────────────┐\n");
-    printf( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transaction started");
-    show_endpoint(ep);
-    printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
-    bindump("│SIE", usb_hw->sie_ctrl);
-    bindump("│SSR", usb_hw->sie_status);
-    printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
-    bindump("│DAR", usb_hw->dev_addr_ctrl);
-    bindump("│ECR", *ep->ecr);
-    bindump("│BCR", *ep->bcr);
-    if (ep->setup) {
-        uint32_t *packet = (uint32_t *) usbh_dpram->setup_packet;
-        printf( "├───────┼──────┼─────────────────────────────────────┴────────────┤\n");
-        hexdump("│SETUP", packet, sizeof(usb_setup_packet_t), 1);
-        printf( "└───────┴──────┴──────────────────────────────────────────────────┘\n");
-    } else if (!ep->bytes_left) {
-        bool in = ep_in(ep);
-        char *str = in ? "IN" : "OUT";
+    if (!ep->bytes_done) {
+        printf("\n");
+        printf( "┌───────┬──────┬─────────────────────────────────────┬────────────┐\n");
+        printf( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transaction started");
+        show_endpoint(ep);
         printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
-        printf( "│ZLP\t│ %-4s │ Device %-28u │            │\n", str, ep->dev_addr);
-        printf( "└───────┴──────┴─────────────────────────────────────┴────────────┘\n");
-    } else {
-        printf( "└───────┴──────┴─────────────────────────────────────┴────────────┘\n");
+        bindump("│SIE", usb_hw->sie_ctrl);
+        bindump("│SSR", usb_hw->sie_status);
+        printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+        bindump("│DAR", usb_hw->dev_addr_ctrl);
+        bindump("│ECR", *ep->ecr);
+        bindump("│BCR", *ep->bcr | fire);
+        if (ep->setup) {
+            uint32_t *packet = (uint32_t *) usbh_dpram->setup_packet;
+            printf( "├───────┼──────┼─────────────────────────────────────┴────────────┤\n");
+            hexdump("│SETUP", packet, sizeof(usb_setup_packet_t), 1);
+            printf( "└───────┴──────┴──────────────────────────────────────────────────┘\n");
+        } else if (!ep->bytes_left) {
+            bool in = ep_in(ep);
+            char *str = in ? "IN" : "OUT";
+            printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+            printf( "│ZLP\t│ %-4s │ Device %-28u │            │\n", str, ep->dev_addr);
+            printf( "└───────┴──────┴─────────────────────────────────────┴────────────┘\n");
+        } else {
+            printf( "└───────┴──────┴─────────────────────────────────────┴────────────┘\n");
+        }
     }
 
     // Fire off the transaction, which yields to the USB controller
