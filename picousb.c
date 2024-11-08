@@ -1149,10 +1149,10 @@ void isr_usbctrl() {
     uint32_t dar  = usb_hw->dev_addr_ctrl;              // dev_addr/ep_num
     uint32_t ecr  = usbh_dpram->epx_ctrl;               // Endpoint control
     uint32_t bcr  = usbh_dpram->epx_buf_ctrl;           // Buffer control
-    bool     dub  = ecr & EP_CTRL_DOUBLE_BUFFERED_BITS; // EPX double buffered
+    bool     dbl  = ecr & EP_CTRL_DOUBLE_BUFFERED_BITS; // EPX double buffered
 
     // Fix RP2040-E4 by shifting buffer control registers for affected buffers
-    if (!dub && (usb_hw->buf_cpu_should_handle & 1u)) bcr >>= 16;
+    if (!dbl && (usb_hw->buf_cpu_should_handle & 1u)) bcr >>= 16;
 
     // Get device address and endpoint information
     uint8_t dev_addr =  dar & USB_ADDR_ENDP_ADDRESS_BITS;     // 7 bits (lowest)
@@ -1241,7 +1241,7 @@ void isr_usbctrl() {
 
         // Show single/double buffer status of EPX and which buffers are ready
         printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
-        bindump(dub ? "│BUF/2" : "│BUF/1", bits);
+        bindump(dbl ? "│BUF/2" : "│BUF/1", bits);
 
         // TODO: Use Miroslav's technique...
 
