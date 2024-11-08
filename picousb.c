@@ -485,7 +485,7 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     epx->ep_addr    = setup->bmRequestType & USB_DIR_IN; // Thus, 0x80 is EP0/IN
     epx->maxsize    = dev->maxsize0;
     epx->setup      = true;
-    epx->data_pid   = 1; // NOTE: rp2040 does SETUP+DATA0+ACK, so DATA1 is next
+    epx->data_pid   = 1; // DATA1 comes after SETUP, which uses DATA0
     epx->user_buf   = ctrl_buf;
     epx->bytes_left = setup->wLength;
     epx->bytes_done = 0;
