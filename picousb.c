@@ -1006,27 +1006,31 @@ enum {
 };
 
 typedef struct {
+    uint8_t speed; // LS is 1.5 Mbps, FS is 12Mbps
+} connect_task_t;
+
+typedef struct {
+    uint8_t    dev_addr ; // Device address
+    uint8_t    ep_num   ; // Endpoint number (direction not included)
+    uint8_t   *user_buf ; // User buffer in DPSRAM, RAM, or flash
+    uint16_t   len      ; // Bytes transferred
+    endpoint_c cb       ; // Callback function
+    uint8_t    status   ; // Transfer status
+} transfer_task_t;
+
+typedef struct {
+    void (*fn) (void *); // Function pointer
+    void *arg          ; // One argument
+} callback_task_t;
+
+typedef struct {
     uint8_t type;
     uint32_t guid;
 
     union {
-        struct {
-            uint8_t speed;
-        } connect;
-
-        struct {
-            uint8_t    status    ; // Transfer status
-            uint8_t    dev_addr  ; // Device address
-            uint8_t    ep_num    ; // Endpoint number (direction not included)
-            uint8_t   *user_buf  ; // User buffer in DPSRAM, RAM, or flash
-            uint16_t   len       ; // Bytes transferred
-            endpoint_c cb        ; // Callback function
-        } transfer;
-
-        struct {
-            void (*fn) (void *);
-            void *arg;
-        } callback;
+        connect_task_t  connect;  // Device connect or disconnect
+        transfer_task_t transfer; // Transfer has completed
+        callback_task_t callback; // Generic function callback
     };
 } task_t;
 
