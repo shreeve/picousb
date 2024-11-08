@@ -142,7 +142,7 @@ typedef struct {
 
     // USB config
     uint8_t    dev_addr  ; // Device address
-    uint8_t    ep_addr   ; // Endpoint address (dir + num: 0x81 is EP1/IN)
+    uint8_t    ep_addr   ; // Endpoint address (0x81 is EP1/IN)
     uint8_t    type      ; // Transfer type: control/bulk/interrupt/isochronous
     uint16_t   interval  ; // Polling interval in ms
     uint16_t   maxsize   ; // Maximum packet size
