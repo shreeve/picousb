@@ -995,7 +995,18 @@ void enumerate(void *arg) {
 // ==[ Callbacks ]==============================================================
 
 void poll_ep1_in(void *arg) {
-    bulk_transfer((endpoint_t *) &eps[1], (uint8_t *) REMOVE_THIS, (uint16_t) 40);
+
+    // TODO: Is there a better way to poll for maxsize? Should we send in
+    //       len=-1 to mean "maxsize". On epx, should we enable double buffers
+    //       and then ask for TWICE maxsize, in case there is data? Or, would
+    //       that require TWO buffers to respond, and thus be inefficient in
+    //       the common case? Look into some ideas to see if there's anything
+    //       better that we can do.
+
+    endpoint_t *ep = &eps[1];
+    uint16_t len = ep->maxsize;
+
+    bulk_transfer(ep, REMOVE_THIS, len);
 }
 
 void print_callback(void *arg) {
