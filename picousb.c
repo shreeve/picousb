@@ -212,6 +212,9 @@ void setup_endpoint(endpoint_t *ep, usb_endpoint_descriptor_t *usb, uint8_t *use
              | ep->type << 26              // Set transfer type
              | (uint32_t) ep->buf & 0xfff; // Offset from DSPRAM
 
+    // Control endpoints start with DATA0, otherwise start with DATA1
+    ep->data_pid = ep->type ? 1 : 0;
+
     // Set as configured
     ep->configured = true;
 }
@@ -219,7 +222,6 @@ void setup_endpoint(endpoint_t *ep, usb_endpoint_descriptor_t *usb, uint8_t *use
 SDK_INLINE void reset_endpoint(endpoint_t *ep) {
     ep->active     = false;
     ep->setup      = false;
-    ep->data_pid   = 0;
     ep->bytes_left = 0;
     ep->bytes_done = 0;
 }
@@ -470,7 +472,6 @@ void transfer_zlp(void *arg) {
     ep->bytes_left = 0;
 
     // Send the ZLP transfer
-    ep->data_pid = 1;
     start_transfer(ep);
 }
 
@@ -511,7 +512,6 @@ void bulk_transfer(endpoint_t *ep, uint8_t *ptr, uint16_t len) {
     if (!ep->configured)                     panic("Endpoint not configured");
     if ( ep->type != USB_TRANSFER_TYPE_BULK) panic("Not a bulk endpoint");
 
-    ep->data_pid   = 1;
     ep->user_buf   = ptr;
     ep->bytes_left = len;
     ep->bytes_done = 0;
