@@ -349,6 +349,7 @@ void start_transaction(endpoint_t *ep) {
         if (*bcr & USB_BUF_CTRL_LAST) {        // For single buffering:
             *ecr &= ~DOUBLE_BUFFER;            //   Disable double-buffering
             *ecr |=  SINGLE_BUFFER;            //   Enable  single-buffering
+printf("\nSingle buffering: buffer0's DATA_PID=%u\n", (*bcr & USB_BUF_CTRL_DATA1_PID) ? 1 : 0);
         } else {                               // For double buffering:
             *bcr |= start_buffer(ep, 1) << 16; //   Overlay bcr for buf1
             nop(); nop(); nop(); nop(); nop(); //   FIXME: Handle differently...
@@ -487,7 +488,7 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     epx->ep_addr    = setup->bmRequestType & USB_DIR_IN; // Thus, 0x80 is EP0/IN
     epx->maxsize    = dev->maxsize0;
     epx->setup      = true;
-    epx->data_pid   = 1; // DATA1 comes after SETUP, which uses DATA0
+    epx->data_pid   = 1; // SETUP uses DATA0, so this next packet will be DATA1
     epx->user_buf   = ctrl_buf;
     epx->bytes_left = setup->wLength;
     epx->bytes_done = 0;
