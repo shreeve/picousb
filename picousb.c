@@ -245,7 +245,8 @@ endpoint_t *get_endpoint(uint8_t dev_addr, uint8_t ep_num) {
                 return ep;
         }
     }
-    panic("No configured EP%u on device %u", ep_num, dev_addr);
+    printf("No configured EP%u on device %u", ep_num, dev_addr);
+    panic("Exiting");
     return NULL;
 }
 
