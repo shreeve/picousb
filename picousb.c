@@ -1451,7 +1451,7 @@ int main() {
 
         // FIXME: Poor-man's polling...
         if (devices[1].state == DEVICE_READY) {
-            if ((time_us_64() - last_attempt) > 10000000) {
+            if ((time_us_64() - last_attempt) > 2000000) {
                 last_attempt = time_us_64();
                 queue_add_blocking(queue, &((task_t) {
                     .type         = TASK_CALLBACK,
