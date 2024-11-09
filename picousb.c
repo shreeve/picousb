@@ -1310,7 +1310,7 @@ void isr_usbctrl() {
                             .type         = TASK_CALLBACK,
                             .guid         = guid++,
                             .callback.fn  = print_callback,
-                            .callback.arg = (void *) "Transfer complete!\n",
+                            .callback.arg = (void *) "\nCallback user code!\n");
                         }));
                     }
 
