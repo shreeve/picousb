@@ -349,7 +349,6 @@ void start_transaction(endpoint_t *ep) {
         if (*bcr & USB_BUF_CTRL_LAST) {        // For single buffering:
             *ecr &= ~DOUBLE_BUFFER;            //   Disable double-buffering
             *ecr |=  SINGLE_BUFFER;            //   Enable  single-buffering
-printf("\nSingle buffering: buffer0's DATA_PID=%u\n", (*bcr & USB_BUF_CTRL_DATA1_PID) ? 1 : 0);
         } else {                               // For double buffering:
             *bcr |= start_buffer(ep, 1) << 16; //   Overlay bcr for buf1
             nop(); nop(); nop(); nop(); nop(); //   FIXME: Handle differently...
