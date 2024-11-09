@@ -211,6 +211,7 @@ void setup_endpoint(endpoint_t *ep, usb_endpoint_descriptor_t *usb, uint8_t *use
              | DOUBLE_BUFFER               // Interrupt per double buffer
              | ep->type << 26              // Set transfer type
              | (uint32_t) ep->buf & 0xfff; // Offset from DSPRAM
+    *ep->bcr = 0;
 
     // Control endpoints start with DATA0, otherwise start with DATA1
     ep->data_pid = ep->type ? 1 : 0;
