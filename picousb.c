@@ -333,7 +333,8 @@ uint16_t finish_buffer(endpoint_t *ep, uint8_t buf_id, io_rw_32 bcr) {
 
 // ==[ Transactions ]===========================================================
 
-void start_transaction(endpoint_t *ep) {
+void start_transaction(void *arg) {
+    endpoint_t *ep = (endpoint_t *) arg;
     io_rw_32 *ecr = ep->ecr;
     io_rw_32 *bcr = ep->bcr;
     uint32_t fire = USB_BUF_CTRL_AVAIL;
