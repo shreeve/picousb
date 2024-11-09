@@ -182,7 +182,8 @@ SDK_INLINE void show_endpoint(endpoint_t *ep) {
     printf(" │ %-3uEP%-2d%3s │\n", ep->dev_addr, ep->ep_addr & 0xf, ep_dir(ep));
 }
 
-void setup_endpoint(endpoint_t *ep, usb_endpoint_descriptor_t *usb, uint8_t *user_buf) {
+void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
+                    uint8_t *user_buf) {
     if (!user_buf) panic("Endpoints require a valid buffer");
 
     // Populate the endpoint (clears all fields not present)
@@ -201,7 +202,32 @@ void setup_endpoint(endpoint_t *ep, usb_endpoint_descriptor_t *usb, uint8_t *use
     // USB 2.0 max packet size is 64 bytes, but isochronous can be up to 1,023!
     if (ep->maxsize > 64) panic("Packet size is currently limited to 64 bytes");
 
-    // Hardware addresses
+    // // Setup hardware registers and data buffers
+    // if (!(ep->ep_addr & 0xf)) { // Any EP0 will share epx and a buffer
+    //     ep->ecr = &usbh_dpram->epx_ctrl;
+    //     ep->bcr = &usbh_dpram->epx_buf_ctrl;
+    //     ep->buf = &usbh_dpram->epx_data[0];
+    // } else if (ep->type != USB_TRANSFER_TYPE_BULK) {
+    //     panic("No current support for interrupt and isochronous endpoints");
+    // } else {
+    //     ep->ecr = &usbh_dpram->epx_ctrl;
+    //     ep->bcr = &usbh_dpram->epx_buf_ctrl;
+    //     ep->buf = &usbh_dpram->epx_data[(epn + 2) * 64];
+    // }
+    //
+    // // Setup hardware polled endpoints
+    // if (!ep_num(ep)) panic("EP0 cannot be polled");
+    // uint8_t most = MIN(USER_ENDPOINTS, MAX_POLLED);
+    // for (uint8_t i = 0; i < most; i++) {
+    //     if (usbh_dpram->int_ep_ctrl[i].ctrl) continue; // Skip if being used
+    //     ep->ecr = &usbh_dpram->int_ep_ctrl       [i].ctrl;
+    //     ep->bcr = &usbh_dpram->int_ep_buffer_ctrl[i].ctrl;
+    //     ep->buf = &usbh_dpram->epx_data[(i + 2) * 64]; // Can't do ISO?
+    //     break;
+    // }
+    // if (!ep->ecr) panic("No free polled endpoints remaining");
+
+    // Use the epx registers and buffers
     ep->ecr = &usbh_dpram->epx_ctrl;
     ep->bcr = &usbh_dpram->epx_buf_ctrl;
     ep->buf = &usbh_dpram->epx_data[0];
@@ -228,7 +254,7 @@ SDK_INLINE void reset_endpoint(endpoint_t *ep) {
 }
 
 void setup_epx() {
-    setup_endpoint(epx, &((usb_endpoint_descriptor_t) {
+    setup_endpoint(epx, 0, &((usb_endpoint_descriptor_t) {
         .bLength          = sizeof(usb_endpoint_descriptor_t),
         .bDescriptorType  = USB_DT_ENDPOINT,
         .bEndpointAddress = 0,
@@ -258,7 +284,7 @@ endpoint_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
         endpoint_t *ep = &eps[i];
         if (!ep->configured) {
             ep->dev_addr = dev_addr;
-            setup_endpoint(ep, usb, user_buf);
+            setup_endpoint(ep, i, usb, user_buf);
             return ep;
         }
     }
