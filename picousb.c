@@ -1482,8 +1482,6 @@ int main() {
     queue_init(queue, sizeof(task_t), 64);
     setup_usb_host();
 
-    debug_mode = 1;
-
     uint64_t last_attempt = 0;
 
     while (1) {
