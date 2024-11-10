@@ -240,7 +240,22 @@ void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
     *ep->bcr = 0;
 
     // Control endpoints start with DATA0, otherwise start with DATA1
-    ep->data_pid = ep->type ? 1 : 0;
+    ep->data_pid = 0;
+
+    // NOTE: There is a significant bug in the rp2040 hardware, shown at:
+    //
+    //       https://github.com/hathach/tinyusb/issues/2776
+    //
+    // As a temporary workaround, we can override the default starting data_pid
+    // to begin with a 1 instead of the correct value, which should be a 0.
+
+    if (ep->dev_addr) {
+        device_t *dev = get_device(ep->dev_addr);
+
+        if (dev->vid == 0x0403 && dev->pid == 0xcd18) {
+            ep->data_pid = 1;
+        }
+    }
 
     // Set as configured
     ep->configured = true;
