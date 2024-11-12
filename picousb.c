@@ -1020,9 +1020,9 @@ void enumerate(void *arg) {
         }   break;
 
         case ENUMERATION_SET_CONFIG:
-            show_string_blocking(dev, dev->manufacturer);
-            show_string_blocking(dev, dev->product     );
-            show_string_blocking(dev, dev->serial      );
+            // show_string_blocking(dev, dev->manufacturer);
+            // show_string_blocking(dev, dev->product     );
+            // show_string_blocking(dev, dev->serial      );
 
             dev->state = DEVICE_ACTIVE;
             printf("Enumeration completed\n");
