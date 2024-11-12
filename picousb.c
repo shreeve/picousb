@@ -1218,13 +1218,16 @@ SDK_INLINE void printf_interrupts(uint32_t ints) {
 
 // Interrupt handler
 void isr_usbctrl() {
-    uint32_t ints = usb_hw->ints; // Interrupt bits after masking and forcing
+    io_rw_32 ints = usb_hw->ints; // Interrupt bits after masking and forcing
 
     // ==[ EPX related registers and variables ]==
 
-    uint32_t dar  = usb_hw->dev_addr_ctrl;              // dev_addr/ep_num
-    uint32_t ecr  = usbh_dpram->epx_ctrl;               // Endpoint control
-    uint32_t bcr  = usbh_dpram->epx_buf_ctrl;           // Buffer control
+    io_rw_32 dar  = usb_hw->dev_addr_ctrl;              // dev_addr/ep_num
+    io_rw_32 ecr  = usbh_dpram->epx_ctrl;               // Endpoint control
+    io_rw_32 bcr  = usbh_dpram->epx_buf_ctrl;           // Buffer control
+    io_rw_32 sie  = usb_hw->sie_ctrl;                   // SIE control
+    io_rw_32 ssr  = usb_hw->sie_status;                 // SIE status
+    io_ro_32 sof  = usb_hw->sof_rd;                     // Frame number
     bool     dbl  = ecr & EP_CTRL_DOUBLE_BUFFERED_BITS; // EPX double buffered
 
     // Fix RP2040-E4 by shifting buffer control registers for affected buffers
@@ -1241,12 +1244,12 @@ void isr_usbctrl() {
     printf_interrupts(ints);
     printf( "\n\n");
     printf( "┌───────┬──────┬─────────────────────────────────────┬────────────┐\n");
-    printf( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Interrupt Handler");
+    printf( "│Frame  │ %4u │ %-35s", sof, "Interrupt Handler");
     show_endpoint(ep);
     printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
     bindump("│INT", ints);
-    bindump("│SIE", usb_hw->sie_ctrl);
-    bindump("│SSR", usb_hw->sie_status);
+    bindump("│SIE", sie);
+    bindump("│SSR", ssr);
     printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
     bindump("│DAR", dar);
     bindump("│ECR", ecr);
@@ -1258,8 +1261,8 @@ void isr_usbctrl() {
         ints ^= USB_INTS_HOST_CONN_DIS_BITS;
 
         // Get the device speed
-        uint8_t speed = (usb_hw->sie_status & USB_SIE_STATUS_SPEED_BITS)
-                                           >> USB_SIE_STATUS_SPEED_LSB;
+        uint8_t speed = (sie &  USB_SIE_STATUS_SPEED_BITS)
+                             >> USB_SIE_STATUS_SPEED_LSB;
 
         // Clear the interrupt
         usb_hw_clear->sie_status = USB_SIE_STATUS_SPEED_BITS;
