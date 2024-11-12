@@ -629,7 +629,6 @@ void load_device_descriptor(void *ptr, device_t *dev) {
     dev->class        = d->bDeviceClass;
     dev->subclass     = d->bDeviceSubClass;
     dev->protocol     = d->bDeviceProtocol;
-
     dev->vid          = d->idVendor;
     dev->pid          = d->idProduct;
     dev->version      = d->bcdDevice;
