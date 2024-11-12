@@ -55,6 +55,19 @@ static uint8_t REMOVE_THIS[2048]; // FIXME: Remove this!
 
 void usb_task(); // Forward declaration
 
+// ==[ Hardware tweaks ]========================================================
+
+// static void unaligned_memcpy(void *dst, const void *src, size_t n) {
+//   const uint8_t *src_byte = (const uint8_t *) src;
+//         uint8_t *dst_byte = (      uint8_t *) dst;
+//
+//   while (n--) {
+//     *dst_byte++ = *src_byte++;
+//   }
+// }
+//
+// #define memcpy unaligned_memcpy
+
 #define __ISR(x) __no_inline_not_in_flash_func(x)
 
 // ==[ Hubs ]===================================================================
