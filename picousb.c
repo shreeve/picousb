@@ -1351,7 +1351,7 @@ void isr_usbctrl() {
                             .type         = TASK_CALLBACK,
                             .guid         = guid++,
                             .callback.fn  = print_callback,
-                            .callback.arg = (void *) "\nCallback user code!\n",
+                            .callback.arg = (void *) "Callback user code!\n",
                         }));
                     }
 
