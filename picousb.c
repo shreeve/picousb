@@ -451,8 +451,9 @@ void finish_transaction(endpoint_t *ep) {
             finish_buffer(ep, 1, *bcr >> 16);          //   Finish second buffer
     } else {                                           // For single buffering:
         uint32_t bch = usb_hw->buf_cpu_should_handle;  //   Workaround RP2040-E4
-        if (bch & 1u) *bcr >> 16;                      //   By "fixing" bcr
-        finish_buffer(ep, 0, *bcr);                    //   Finish the buffer
+        uint32_t tmp = *bcr;
+        if (bch & 1u) tmp >>= 16;                     //   By "fixing" bcr
+        finish_buffer(ep, 0, tmp);                    //   Finish the buffer
     }
 }
 
