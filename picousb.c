@@ -1248,7 +1248,7 @@ void isr_usbctrl() {
     bindump("│SIE", usb_hw->sie_ctrl);
     bindump("│SSR", usb_hw->sie_status);
     printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
-    bindump("│DAR", usb_hw->dev_addr_ctrl);
+    bindump("│DAR", dar);
     bindump("│ECR", ecr);
     bindump("│BCR", bcr);
     bool flat = false; // For the last line of debug output
