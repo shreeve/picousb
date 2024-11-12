@@ -378,31 +378,33 @@ uint16_t finish_buffer(endpoint_t *ep, uint8_t buf_id, io_rw_32 bcr) {
 void start_transaction(void *arg) {
     endpoint_t *ep = (endpoint_t *) arg;
     io_rw_32 *ecr = ep->ecr;
-    io_rw_32 *bcr = ep->bcr;
+    io_rw_32 *bcr = ep->bcr, hold;
     uint32_t fire = USB_BUF_CTRL_AVAIL;
 
     assert(ep->active);
 
-    // Set bcr
-    *bcr = start_buffer(ep, 0);
-    nop(); nop(); nop(); nop(); nop();         // FIXME: Handle differently...
+    // Hold the value for bcr
+    hold = start_buffer(ep, 0);
 
     // If using epx, update the buffering mode
     if (ep->ecr == epx->ecr) {
-        if (*bcr & USB_BUF_CTRL_LAST) {        // For single buffering:
+        if (hold & USB_BUF_CTRL_LAST) {        // For single buffering:
             *ecr &= ~DOUBLE_BUFFER;            //   Disable double-buffering
             *ecr |=  SINGLE_BUFFER;            //   Enable  single-buffering
         } else {                               // For double buffering:
-            *bcr |= start_buffer(ep, 1) << 16; //   Overlay bcr for buf1
-            nop(); nop(); nop(); nop(); nop(); //   FIXME: Handle differently...
+            hold |= start_buffer(ep, 1) << 16; //   Merge bcr for buf1
             *ecr &= ~SINGLE_BUFFER;            //   Disable single-buffering
             *ecr |=  DOUBLE_BUFFER;            //   Enable  double-buffering
             fire |=  fire << 16;               //   Fire buffers together
         }
     }
 
+    // Set bcr now
+    *bcr = hold;
+
     // Allow time for bcr to settle
     nop(); nop(); nop(); nop(); nop(); nop();
+    nop(); nop(); nop(); nop(); nop(); nop(); // TODO: Is this overkill?
 
     // Debug output
     if (!ep->bytes_done) {
@@ -416,7 +418,7 @@ void start_transaction(void *arg) {
         printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
         bindump("│DAR", usb_hw->dev_addr_ctrl);
         bindump("│ECR", *ep->ecr);
-        bindump("│BCR", *ep->bcr | fire);
+        bindump("│BCR", hold | fire);
         if (ep->setup) {
             uint32_t *packet = (uint32_t *) usbh_dpram->setup_packet;
             printf( "├───────┼──────┼─────────────────────────────────────┴────────────┤\n");
@@ -434,7 +436,7 @@ void start_transaction(void *arg) {
     }
 
     // Fire off the transaction, which yields to the USB controller
-    *bcr |= fire;
+    *bcr = hold | fire;
 }
 
 void finish_transaction(endpoint_t *ep) {
