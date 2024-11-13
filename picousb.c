@@ -566,11 +566,11 @@ void bulk_transfer(endpoint_t *ep, uint8_t *ptr, uint16_t len) {
     start_transfer(ep);
 }
 
-void reset_piccolo(device_t *dev) {
+void reset_ftdi(device_t *dev) {
     static uint8_t (states[MAX_DEVICES]) = { 0 };
     uint8_t state = ++states[dev->dev_addr];
 
-    printf("Piccolo reset step %u\n", state);
+    printf("FTDI reset step %u\n", state);
 
     switch (state) {
         case  1: command(dev, 0x40,  0,  0    , 1, 0); break; // reset both
@@ -586,7 +586,7 @@ void reset_piccolo(device_t *dev) {
         default:
             states[dev->dev_addr] = 0;
             dev->state = DEVICE_READY;
-            printf("Piccolo reset complete\n");
+            printf("FTDI reset complete\n");
             break;
     }
 }
@@ -1021,16 +1021,16 @@ void enumerate(void *arg) {
         }   break;
 
         case ENUMERATION_SET_CONFIG:
-            // show_string_blocking(dev, dev->manufacturer);
-            // show_string_blocking(dev, dev->product     );
-            // show_string_blocking(dev, dev->serial      );
+            show_string_blocking(dev, dev->manufacturer);
+            show_string_blocking(dev, dev->product     );
+            show_string_blocking(dev, dev->serial      );
 
             dev->state = DEVICE_ACTIVE;
             printf("Enumeration completed\n");
 
             // FIXME: Where and how should this be called? A task? A callback?
-            printf("\nCalling reset_piccolo\n");
-            reset_piccolo(dev);
+            printf("\nCalling reset_ftdi\n");
+            reset_ftdi(dev);
 
             break;
     }
@@ -1170,8 +1170,8 @@ void usb_task() {
                     printf("Calling enumerate\n");
                     enumerate(dev);
                 } else if (dev->state < DEVICE_READY) {
-                    printf("Calling reset_piccolo\n");
-                    reset_piccolo(dev);
+                    printf("Calling reset_ftdi\n");
+                    reset_ftdi(dev);
                 } else {
                     printf("Transfer completed\n");
                 }
