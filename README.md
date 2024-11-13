@@ -25,7 +25,8 @@ seems the name PicoUSB is fitting.
 
 ## Host Example
 
-The current status, as of the end of November 2024, showing the output from [enumeration of a Pico Debug probe](https://github.com/shreeve/picousb/blob/main/enumeration.md).
+The current status, as of the end of November 2024, showing the output from
+[enumeration of an FTDI board](https://github.com/shreeve/picousb/blob/main/enumeration.md).
 
 ## Compiling
 
