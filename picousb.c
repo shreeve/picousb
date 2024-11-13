@@ -723,6 +723,8 @@ void show_string_blocking(device_t *dev, uint8_t index) {
 
 // ==[ Classes ]================================================================
 
+// NOTE: These classes are NOT done yet, just sort of sketched out...
+
 void cdch_init() {
     printf("CDC Host Driver Initialized\n");
 }
