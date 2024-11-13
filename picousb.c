@@ -66,8 +66,6 @@ static void unaligned_memcpy(void *dst, const void *src, size_t n) {
   }
 }
 
-#define __ISR(x) __no_inline_not_in_flash_func(x)
-
 // ==[ Hubs ]===================================================================
 
 typedef struct {
@@ -294,7 +292,7 @@ void setup_epx() {
     }), ctrl_buf);
 }
 
-endpoint_t __ISR(*get_endpoint)(uint8_t dev_addr, uint8_t ep_num) {
+endpoint_t *get_endpoint(uint8_t dev_addr, uint8_t ep_num) {
     for (uint8_t i = 0; i < MAX_ENDPOINTS; i++) {
         endpoint_t *ep = &eps[i];
         if (ep->configured) {
@@ -321,7 +319,7 @@ endpoint_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
     return NULL;
 }
 
-void __ISR(clear_endpoint)(uint8_t dev_addr, uint8_t ep_num) {
+void clear_endpoint(uint8_t dev_addr, uint8_t ep_num) {
     endpoint_t *ep = get_endpoint(dev_addr, ep_num);
     memclr(ep, sizeof(endpoint_t));
 }
@@ -332,7 +330,7 @@ void clear_endpoints() {
 
 // ==[ Buffers ]================================================================
 
-uint16_t __ISR(start_buffer)(endpoint_t *ep, uint8_t buf_id) {
+uint16_t start_buffer(endpoint_t *ep, uint8_t buf_id) {
 
     // Calculate bcr
     bool     in  = ep_in(ep);                         // Inbound buffer?
@@ -363,7 +361,7 @@ uint16_t __ISR(start_buffer)(endpoint_t *ep, uint8_t buf_id) {
     return bcr;
 }
 
-uint16_t __ISR(finish_buffer)(endpoint_t *ep, uint8_t buf_id, io_rw_32 bcr) {
+uint16_t finish_buffer(endpoint_t *ep, uint8_t buf_id, io_rw_32 bcr) {
     bool     in   = ep_in(ep);                   // Inbound buffer?
     bool     full = bcr & USB_BUF_CTRL_FULL;     // Is buffer full? (populated)
     uint16_t len  = bcr & USB_BUF_CTRL_LEN_MASK; // Buffer length
@@ -389,7 +387,7 @@ uint16_t __ISR(finish_buffer)(endpoint_t *ep, uint8_t buf_id, io_rw_32 bcr) {
 
 // ==[ Transactions ]===========================================================
 
-void __ISR(start_transaction)(void *arg) {
+void start_transaction(void *arg) {
     endpoint_t *ep = (endpoint_t *) arg;
     io_rw_32 *ecr = ep->ecr;
     io_rw_32 *bcr = ep->bcr, hold;
@@ -453,7 +451,7 @@ void __ISR(start_transaction)(void *arg) {
     *bcr = hold | fire;
 }
 
-void __ISR(finish_transaction)(endpoint_t *ep) {
+void finish_transaction(endpoint_t *ep) {
     io_rw_32 *ecr = ep->ecr;
     io_rw_32 *bcr = ep->bcr;
 
@@ -501,7 +499,7 @@ SDK_INLINE const char *transfer_type(uint8_t bits) {
 // TODO: Clear a stall and toggle data PID back to DATA0
 // TODO: Abort a transfer if not yet started and return true on success
 
-void __ISR(start_transfer)(endpoint_t *ep) {
+void start_transfer(endpoint_t *ep) {
     if (ep->active) panic("Transfer already active on endpoint");
     ep->active = true;
 
@@ -1232,7 +1230,7 @@ SDK_INLINE void printf_interrupts(uint32_t ints) {
 }
 
 // Interrupt handler
-void __ISR(isr_usbctrl)() {
+void isr_usbctrl() {
     io_rw_32 ints = usb_hw->ints; // Interrupt bits after masking and forcing
 
     // ==[ EPX related registers and variables ]==
