@@ -55,17 +55,6 @@ static uint8_t REMOVE_THIS[MAX_TEMP]; // FIXME: Remove this!
 
 void usb_task(); // Forward declaration
 
-// ==[ Hardware tweaks ]========================================================
-
-static void unaligned_memcpy(void *dst, const void *src, size_t n) {
-  const uint8_t *src_byte = (const uint8_t *) src;
-        uint8_t *dst_byte = (      uint8_t *) dst;
-
-  while (n--) {
-    *dst_byte++ = *src_byte++;
-  }
-}
-
 // ==[ Hubs ]===================================================================
 
 typedef struct {
@@ -350,7 +339,7 @@ uint16_t start_buffer(endpoint_t *ep, uint8_t buf_id) {
     if (!in && len) {
         uint8_t *src = (uint8_t *) (&ep->user_buf[ep->bytes_done]);
         uint8_t *dst = (uint8_t *) (ep->buf + buf_id * 64);
-        unaligned_memcpy(dst, src, len);
+        memcpy(dst, src, len);
         hexdump(buf_id ? "│OUT/2" : "│OUT/1", src, len, 1);
         ep->bytes_done += len;
     }
@@ -373,7 +362,7 @@ uint16_t finish_buffer(endpoint_t *ep, uint8_t buf_id, io_rw_32 bcr) {
     if (in && len) {
         uint8_t *src = (uint8_t *) (ep->buf + buf_id * 64);
         uint8_t *dst = (uint8_t *) &ep->user_buf[ep->bytes_done];
-        unaligned_memcpy(dst, src, len);
+        memcpy(dst, src, len);
         hexdump(buf_id ? "│IN/2" : "│IN/1", dst, len, 1);
         ep->bytes_done += len;
     }
@@ -539,7 +528,7 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     if ( epx->type)       panic("Not a control endpoint");
 
     // Copy the setup packet
-    unaligned_memcpy((void*) usbh_dpram->setup_packet, setup, sizeof(usb_setup_packet_t));
+    memcpy((void*) usbh_dpram->setup_packet, setup, sizeof(usb_setup_packet_t));
 
     epx->dev_addr   = dev->dev_addr;
     epx->ep_addr    = setup->bmRequestType & USB_DIR_IN; // Thus, 0x80 is EP0/IN
