@@ -546,7 +546,7 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     if ( epx->type)       panic("Not a control endpoint");
 
     // Copy the setup packet
-    memcpy((void*) usbh_dpram->setup_packet, setup, sizeof(usb_setup_packet_t));
+    unaligned_memcpy((void*) usbh_dpram->setup_packet, setup, sizeof(usb_setup_packet_t));
 
     epx->dev_addr   = dev->dev_addr;
     epx->ep_addr    = setup->bmRequestType & USB_DIR_IN; // Thus, 0x80 is EP0/IN
