@@ -57,14 +57,14 @@ void usb_task(); // Forward declaration
 
 // ==[ Hardware tweaks ]========================================================
 
-// static void unaligned_memcpy(void *dst, const void *src, size_t n) {
-//   const uint8_t *src_byte = (const uint8_t *) src;
-//         uint8_t *dst_byte = (      uint8_t *) dst;
-//
-//   while (n--) {
-//     *dst_byte++ = *src_byte++;
-//   }
-// }
+static void unaligned_memcpy(void *dst, const void *src, size_t n) {
+  const uint8_t *src_byte = (const uint8_t *) src;
+        uint8_t *dst_byte = (      uint8_t *) dst;
+
+  while (n--) {
+    *dst_byte++ = *src_byte++;
+  }
+}
 
 #define __ISR(x) __no_inline_not_in_flash_func(x)
 
