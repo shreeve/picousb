@@ -51,7 +51,7 @@ enum {
 #define usb_hw_set   ((usb_hw_t *) hw_set_alias_untyped  (usb_hw))
 
 static uint8_t ctrl_buf[MAX_TEMP]; // Shared buffer for control transfers
-static uint8_t REMOVE_THIS[2048]; // FIXME: Remove this!
+static uint8_t REMOVE_THIS[MAX_TEMP]; // FIXME: Remove this!
 
 void usb_task(); // Forward declaration
 
