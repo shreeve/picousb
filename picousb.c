@@ -247,11 +247,13 @@ void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
     ep->bcr = &usbh_dpram->epx_buf_ctrl;
     ep->buf = &usbh_dpram->epx_data[0];
 
+    if (((uint32_t) ep->buf) & 0x3f) panic("Bad memory location\n");
+
     // Setup shared epx endpoint and enable double buffering
-    *ep->ecr = EP_CTRL_ENABLE_BITS         // Enable endpoint
-             | DOUBLE_BUFFER               // Interrupt per double buffer
-             | ep->type << 26              // Set transfer type
-             | (uint32_t) ep->buf & 0xfff; // Offset from DSPRAM
+    *ep->ecr = EP_CTRL_ENABLE_BITS           // Enable endpoint
+             | DOUBLE_BUFFER                 // Interrupt per double buffer
+             | ep->type << 26                // Set transfer type
+             | ((uint32_t) ep->buf) & 0xfc0; // DSPRAM offset (64-byte aligned)
     *ep->bcr = 0;
 
     // Control endpoints start with DATA0, otherwise start with DATA1
