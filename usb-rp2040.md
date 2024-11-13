@@ -9,6 +9,11 @@ typically used for devices that require lower bandwidth, such as keyboards and
 mice, while Full Speed USB is used for a wider range of devices, including audio
 devices, and storage devices which offer higher data transfer rates.
 
+![asset-01](https://github.com/user-attachments/assets/08861c65-92ff-4e3d-9893-70a5b550f325)
+![asset-02](https://github.com/user-attachments/assets/7445813e-bd64-46cf-912d-6d86c0976f0d)
+![asset-03](https://github.com/user-attachments/assets/b1b18fef-ecb2-4345-81de-aca54810f419)
+![asset-04](https://github.com/user-attachments/assets/1217edcb-30db-4df2-a77d-33a3ee414424)
+
 ### Bus Topology
 
 USB operates by connecting one or more USB devices on a common bus, which is
