@@ -65,8 +65,6 @@ void usb_task(); // Forward declaration
 //     *dst_byte++ = *src_byte++;
 //   }
 // }
-//
-// #define memcpy unaligned_memcpy
 
 #define __ISR(x) __no_inline_not_in_flash_func(x)
 
