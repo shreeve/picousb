@@ -9,11 +9,6 @@ typically used for devices that require lower bandwidth, such as keyboards and
 mice, while Full Speed USB is used for a wider range of devices, including audio
 devices, and storage devices which offer higher data transfer rates.
 
-![asset-01](https://github.com/user-attachments/assets/08861c65-92ff-4e3d-9893-70a5b550f325)
-![asset-02](https://github.com/user-attachments/assets/7445813e-bd64-46cf-912d-6d86c0976f0d)
-![asset-03](https://github.com/user-attachments/assets/b1b18fef-ecb2-4345-81de-aca54810f419)
-![asset-04](https://github.com/user-attachments/assets/1217edcb-30db-4df2-a77d-33a3ee414424)
-
 ### Bus Topology
 
 USB operates by connecting one or more USB devices on a common bus, which is
@@ -23,7 +18,7 @@ single USB host, and each device assigned a unique address between 1 and 127.
 Sometimes a USB device is referred to as a "function", but we will only use the
 term "device".
 
-<div align="center"><img width="300" src="https://github.com/shreeve/pico-usb/assets/142875/7b2e9004-c0a9-475a-a9ef-e3cf9e081eed"></div>
+<div align="center"><img width="300" src="https://github.com/user-attachments/assets/7445813e-bd64-46cf-912d-6d86c0976f0d"></div>
 
 ### Main Components
 
@@ -49,7 +44,7 @@ there:
 
 The main USB connectors encountered are USB A, USB B, Micro USB, and USB C.
 
-<div align="center"><img width="480" src="https://github.com/shreeve/pico-usb/assets/142875/b9cf5f00-e9f6-40af-b042-01c2adf88888"></div>
+<div align="center"><img width="480" src="https://github.com/user-attachments/assets/b1b18fef-ecb2-4345-81de-aca54810f419"></div>
 
 ### Wires
 
@@ -59,7 +54,7 @@ and is a green wire), and Data Minus (called DM or D- and is a white wire). The
 following diagram is for a USB Type A connector, but each of the other connector
 types have similar wiring, but just use different connector pins.
 
-<div align="center"><img width="300" src="https://github.com/shreeve/pico-usb/assets/142875/c3732290-69ca-4b29-a3b8-e39ecf4fd31f"></div>
+<div align="center"><img width="300" src="https://github.com/user-attachments/assets/1217edcb-30db-4df2-a77d-33a3ee414424"></div>
 
 ### Voltages
 
@@ -158,7 +153,7 @@ being sent. The End of Packet (EOP) sequence indicates the packet has ended and
 is now complete. The SOP and EOP components are always the same. Sandwiched
 between them is the actual data that defines the packet type and its contents.
 
-<div align="center"><img width="500" src="https://github.com/shreeve/pico-usb/assets/142875/128ffe21-893f-46f6-b984-4b636bc506d3"></div>
+<div align="center"><img width="500" src="https://github.com/user-attachments/assets/08861c65-92ff-4e3d-9893-70a5b550f325"></div>
 
 ### Packet Types
 
