@@ -1328,62 +1328,56 @@ void __ISR(isr_usbctrl)() {
     if (ints &  USB_INTS_BUFF_STATUS_BITS) {
         ints ^= USB_INTS_BUFF_STATUS_BITS;
 
-        // Remove this soon also...
-        bool bulk = usb_hw->buf_status & ~1u;
-
         // Find the buffer(s) that are ready
         uint32_t bits = usb_hw->buf_status;
-        uint32_t mask = 1u;
+        uint32_t mask = 0b11; // (2 bits at time, IN/OUT transfer together)
 
         // Show single/double buffer status of EPX and which buffers are ready
         printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
         bindump(dbl ? "│BUF/2" : "│BUF/1", bits);
 
-        // TODO: Use Miroslav's technique...
+        // Finish transactions on each pending endpoint
+        endpoint_t *epz;
+        for (uint8_t epn = 0; epn < MAX_ENDPOINTS && bits; epn++, mask <<= 2) {
+            if (bits &   mask) {
+                bits &= ~mask;
+                usb_hw_clear->buf_status = mask;
 
-        // Check EPX (bidirectional) and polled hardware endpoints (IN and OUT)
-        endpoint_t *ep;
-        for (uint8_t hwep = 0; hwep < MAX_ENDPOINTS && bits; hwep++) {
-            for (uint8_t dir = 0; dir < 2; dir++) { // IN=evens, OUT=odds
-                mask = 1 << (hwep * 2 + dir);
-                if (bits &  mask) {
-                    bits ^= mask;
-                    usb_hw_clear->buf_status = mask;
+                // Get a handle to the correct endpoint
+                epz = (!epn && ep->ecr == epx->ecr) ? ep : &eps[epn];
 
-                    char *str = (char[MAX_TEMP]) { 0 };
-                    sprintf(str, "│ECR%u", hwep);
-                    bindump(str, *eps[hwep].ecr);
-                    sprintf(str, "│BCR%u", hwep);
-                    bindump(str, *eps[hwep].bcr);
+                // char *str = (char[MAX_TEMP]) { 0 };
+                // sprintf(str, "│ECR%u", epn);
+                // bindump(str, *epz->ecr);
+                // sprintf(str, "│BCR%u", epn);
+                // bindump(str, *epz->bcr);
 
-                    // Finish the transaction
-                    finish_transaction(ep = &eps[hwep]);
+                // Finish the transaction
+                finish_transaction(epz);
 
-                    // Start the next transaction or complete the transfer
-                    if (ep->bytes_left) {
-                        queue_add_blocking(queue, &((task_t) {
-                            .type         = TASK_CALLBACK,
-                            .guid         = guid++,
-                            .callback.fn  = start_transaction,
-                            .callback.arg = (void *) ep,
-                        }));
-                    } else {
-                        queue_add_blocking(queue, &((task_t) {
-                            .type         = TASK_CALLBACK,
-                            .guid         = guid++,
-                            .callback.fn  = print_callback,
-                            .callback.arg = (void *) "Callback user code!\n",
-                        }));
-                    }
-
-                    // // FIXME: Go nuclear trying to re-arm
-                    // *eps[hwep].ecr |=  EP_CTRL_ENABLE_BITS;
-                    // *eps[hwep].bcr &= ~USB_BUF_CTRL_LAST;
-                    // usb_hw_set->int_ep_ctrl = 1 << hwep;
+                // Start the next transaction or complete the transfer
+                if (epz->bytes_left) {
+                    queue_add_blocking(queue, &((task_t) {
+                        .type         = TASK_CALLBACK,
+                        .guid         = guid++,
+                        .callback.fn  = start_transaction,
+                        .callback.arg = (void *) epz,
+                    }));
+                } else {
+                    queue_add_blocking(queue, &((task_t) {
+                        .type         = TASK_CALLBACK,
+                        .guid         = guid++,
+                        .callback.fn  = print_callback,
+                        .callback.arg = (void *) "Callback user code!\n",
+                    }));
                 }
-                if (!hwep) break;
+
+                // // FIXME: Go nuclear trying to re-arm
+                // *eps[epn].ecr |=  EP_CTRL_ENABLE_BITS;
+                // *eps[epn].bcr &= ~USB_BUF_CTRL_LAST;
+                // usb_hw_set->int_ep_ctrl = 1 << epn;
             }
-        }
+		}
 
         // Panic if we missed any buffers
         if (bits) panic("Unhandled buffer mask: %032b", bits);
