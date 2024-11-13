@@ -352,10 +352,10 @@ uint16_t __ISR(start_buffer)(endpoint_t *ep, uint8_t buf_id) {
 
     // OUT: Copy outbound data from the user buffer to the endpoint
     if (!in && len) {
-        uint8_t *ptr = &ep->user_buf[ep->bytes_done];
+        uint8_t *src = (uint8_t *) (&ep->user_buf[ep->bytes_done]);
         uint8_t *dst = (uint8_t *) (ep->buf + buf_id * 64);
-        memcpy(dst, ptr, len);
-        hexdump(buf_id ? "│OUT/2" : "│OUT/1", ptr, len, 1);
+        unaligned_memcpy(dst, src, len);
+        hexdump(buf_id ? "│OUT/2" : "│OUT/1", src, len, 1);
         ep->bytes_done += len;
     }
 
@@ -375,10 +375,10 @@ uint16_t __ISR(finish_buffer)(endpoint_t *ep, uint8_t buf_id, io_rw_32 bcr) {
 
     // IN: Copy inbound data from the endpoint to the user buffer
     if (in && len) {
-        uint8_t *ptr = &ep->user_buf[ep->bytes_done];
         uint8_t *src = (uint8_t *) (ep->buf + buf_id * 64);
-        memcpy(ptr, src, len);
-        hexdump(buf_id ? "│IN/2" : "│IN/1", ptr, len, 1);
+        uint8_t *dst = (uint8_t *) &ep->user_buf[ep->bytes_done];
+        unaligned_memcpy(dst, src, len);
+        hexdump(buf_id ? "│IN/2" : "│IN/1", dst, len, 1);
         ep->bytes_done += len;
     }
 
