@@ -405,7 +405,6 @@ void start_transaction(void *arg) {
 
     // Allow time for bcr to settle (if CPU reads too soon, bad things happen!)
     nop(); nop(); nop(); nop(); nop(); nop();
-    nop(); nop(); nop(); nop(); nop(); nop(); // TODO: Is this overkill?
 
     // Debug output
     if (!ep->bytes_done) {
