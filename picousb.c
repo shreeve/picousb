@@ -418,7 +418,7 @@ void __ISR(start_transaction)(void *arg) {
     // Set bcr now
     *bcr = hold;
 
-    // Allow time for bcr to settle
+    // Allow time for bcr to settle (if CPU reads too soon, bad things happen!)
     nop(); nop(); nop(); nop(); nop(); nop();
     nop(); nop(); nop(); nop(); nop(); nop(); // TODO: Is this overkill?
 
