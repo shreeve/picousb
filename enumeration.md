@@ -3,7 +3,7 @@
 #### Using a Pico as USB Host and an FTDI board as a USB Device
 
 <kbd>
-<img width="675" alt="picousb" src="">
+<img width="675" alt="picousb" src="https://github.com/user-attachments/assets/4497092d-e661-4c98-b3d1-2d399c40ba4a">
 </kbd>
 
 #### Example console output (March 3, 2024)
