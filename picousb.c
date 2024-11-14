@@ -22,15 +22,19 @@ bool poll_epx(repeating_timer_t *timer) {
     return true;
 }
 
+// Hard code a 0.5 sec polling interval
+void app_init() {
+    repeating_timer_t timer;
+    void *user_data = (void *)(uintptr_t) 1; // dev_addr
+
+    add_repeating_timer_us(500000, poll_epx, user_data, &timer);
+}
+
 int main() {
     usb_debug = 1;
 
+    app_init();
     usb_init();
-
-    // Hard code a 0.5 sec polling interval
-    repeating_timer_t timer;
-    void *user_data = (void *) 1; // dev_addr
-    add_repeating_timer_us(500000, poll_epx, user_data, &timer);
 
     while (1) {
         usb_task();
