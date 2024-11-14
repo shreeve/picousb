@@ -58,12 +58,12 @@ void usb_task(); // Forward declaration
 
 uint8_t usb_debug_level = 0; // Dynamic debug level
 
-#define DEBUG_ROW \
-  "•───────•──────•─────────────────────────────────────•────────────•\n"
-
 void usb_debug(uint8_t level) {
     usb_debug_level = level;
 }
+
+#define DEBUG_ROW \
+  "•───────•──────•─────────────────────────────────────•────────────•\n"
 
 // ==[ Hubs ]===================================================================
 
