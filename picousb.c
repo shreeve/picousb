@@ -24,7 +24,7 @@
 #include "usb_common.h"           // USB 2.0 definitions
 #include "helpers.h"              // Helper functions
 
-int debug_level = 0;              // Dynamic debug level
+int debug_level = 1;              // Dynamic debug level
 
 // ==[ PicoUSB ]================================================================
 
@@ -409,29 +409,29 @@ void start_transaction(void *arg) {
     // Debug output
     if (!ep->bytes_done) {
         printf("\n");
-        printf( "┌───────┬──────┬─────────────────────────────────────┬────────────┐\n");
+        printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
         printf( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transaction started");
         show_endpoint(ep);
-        printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+        printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
         bindump("│SIE", usb_hw->sie_ctrl);
         bindump("│SSR", usb_hw->sie_status);
-        printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+        printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
         bindump("│DAR", usb_hw->dev_addr_ctrl);
         bindump("│ECR", *ep->ecr);
         bindump("│BCR", hold | fire);
         if (ep->setup) {
             uint32_t *packet = (uint32_t *) usbh_dpram->setup_packet;
-            printf( "├───────┼──────┼─────────────────────────────────────┴────────────┤\n");
+            printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
             hexdump("│SETUP", packet, sizeof(usb_setup_packet_t), 1);
-            printf( "└───────┴──────┴──────────────────────────────────────────────────┘\n");
+            printf( "•───────•──────•──────────────────────────────────────────────────•\n");
         } else if (!ep->bytes_left) {
             bool in = ep_in(ep);
             char *str = in ? "IN" : "OUT";
-            printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+            printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
             printf( "│ZLP\t│ %-4s │ Device %-28u │            │\n", str, ep->dev_addr);
-            printf( "└───────┴──────┴─────────────────────────────────────┴────────────┘\n");
+            printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
         } else {
-            printf( "└───────┴──────┴─────────────────────────────────────┴────────────┘\n");
+            printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
         }
     }
 
@@ -1246,14 +1246,14 @@ void isr_usbctrl() {
     printf( "\n=> %u) New ISR", guid++);
     printf_interrupts(ints);
     printf( "\n\n");
-    printf( "┌───────┬──────┬─────────────────────────────────────┬────────────┐\n");
+    printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
     printf( "│Frame  │ %4u │ %-35s", sof, "Interrupt Handler");
     show_endpoint(ep);
-    printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+    printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
     bindump("│INT", ints);
     bindump("│SIE", sie);
     bindump("│SSR", ssr);
-    printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+    printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
     bindump("│DAR", dar);
     bindump("│ECR", ecr);
     bindump("│BCR", bcr);
@@ -1274,7 +1274,7 @@ void isr_usbctrl() {
         if (speed) {
 
             // Show connection info
-            printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+            printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
             printf( "│CONNECT│ %-4s │ %-35s │ Task #%-4u │\n", "", "New device connected", guid);
 
             queue_add_blocking(queue, &((task_t) { // ~20 μs
@@ -1285,7 +1285,7 @@ void isr_usbctrl() {
         } else {
 
             // Show disconnection
-            printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+            printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
             printf( "│DISCONN│ %-4s │ %-35s │            │\n", "", "Device disconnected");
 
             clear_device(0);
@@ -1319,7 +1319,7 @@ void isr_usbctrl() {
         uint32_t mask = 0b11; // (2 bits at time, IN/OUT transfer together)
 
         // Show single/double buffer status of EPX and which buffers are ready
-        printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+        printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
         bindump(dbl ? "│BUF/2" : "│BUF/1", bits);
 
         // Finish transactions on each pending endpoint
@@ -1383,12 +1383,12 @@ void isr_usbctrl() {
 
         // Debug output
         if (len) {
-            printf( "├───────┼──────┼─────────────────────────────────────┴────────────┤\n");
+            printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
             printf( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n", len, ep->dev_addr, guid);
             hexdump("│Data", ep->user_buf, len, 1);
             flat = true;
         } else {
-            printf( "├───────┼──────┼─────────────────────────────────────┼────────────┤\n");
+            printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
             printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n", ep_dir(ep), ep->dev_addr, guid);
         }
 
@@ -1446,7 +1446,7 @@ void isr_usbctrl() {
     // TODO: How should we deal with NAKs seen in the SSR?
     // usb_hw_clear->sie_status = 1 << 28u; // Clear the NAK???
 
-    printf("└───────┴──────┴─────────────────────────────────────%s────────────┘\n", flat ? "─" : "┴");
+    printf("•───────•──────•─────────────────────────────────────%s────────────•\n", flat ? "─" : "•");
 }
 
 // ==[ Setup USB Host ]=========================================================
@@ -1485,9 +1485,9 @@ void setup_usb_host() {
     clear_endpoints();
     setup_epx();
 
-    printf( "┌───────┬──────┬─────────────────────────────────────┬────────────┐\n");
+    printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
     bindump("│INT", usb_hw->inte);
-    printf( "└───────┴──────┴─────────────────────────────────────┴────────────┘\n");
+    printf( "•───────•──────•─────────────────────────────────────•────────────•\n");
 }
 
 // ==[ Main ]===================================================================
