@@ -47,12 +47,11 @@ project(picousb C CXX ASM)
 # Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-# Add executable. Default name is the project name, version 0.1
-
+# Executable name
 add_executable(picousb picousb.c )
 
 pico_set_program_name(picousb "picousb")
-pico_set_program_version(picousb "0.1")
+pico_set_program_version(picousb "0.2")
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(picousb 1)
