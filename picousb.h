@@ -42,6 +42,7 @@ enum {
 #define SWAP_U16(x)    (((x) >> 8) | ((x) << 8))
 
 #define SDK_ALIGNED(bytes) __attribute__ ((aligned(bytes)))
+#define SDK_FAST           __attribute__ ((noinline, section(".time_critical")))
 #define SDK_INLINE         __attribute__ ((always_inline)) static inline
 #define SDK_NOINLINE       __attribute__ ((noinline))
 #define SDK_PACKED         __attribute__ ((packed))
