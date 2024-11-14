@@ -1103,7 +1103,7 @@ SDK_INLINE const char *callback_name(void (*fn) (void *)) {
     if (fn == print_callback   ) return "print_callback"   ;
     if (fn == start_transaction) return "start_transaction";
     if (fn == transfer_zlp     ) return "transfer_zlp"     ;
-    printf("Calling user defined callback function\n");
+    return "user defined function";
 }
 
 void usb_task() {
