@@ -16,6 +16,7 @@ int main() {
     while (1) {
         usb_task();
 
+        // FIXME: Poor-man's polling...
         if (devices[1].state == DEVICE_READY) {
             if ((time_us_64() - last_attempt) > 1000000) {
                 last_attempt = time_us_64();
