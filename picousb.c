@@ -8,7 +8,6 @@ void poll_ep1_in(void *arg) {
 }
 
 int main() {
-    uint64_t last_attempt = 0;
     usb_debug = 1;
 
     usb_init();
@@ -18,6 +17,7 @@ int main() {
 
         // FIXME: Poor-man's polling...
         if (devices[1].state == DEVICE_READY) {
+            static uint64_t last_attempt = 0;
             if ((time_us_64() - last_attempt) > 1000000) {
                 last_attempt = time_us_64();
                 queue_add_blocking(queue, &((task_t) {
