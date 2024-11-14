@@ -1,9 +1,5 @@
 #include "picousb.h"
 
-#include "hardware/timer.h"
-
-extern int debug_level;
-
 void poll_ep1_in(void *arg) {
     endpoint_t *ep = &eps[1];
     uint16_t len = ep->maxsize;
@@ -27,7 +23,9 @@ bool poll_epx(repeating_timer_t *timer) {
 }
 
 int main() {
+    usb_debug = 0;
     usb_init();
+    usb_debug = 1;
 
     // Hard code a 0.5 sec polling interval
     repeating_timer_t timer;

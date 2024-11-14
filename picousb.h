@@ -24,10 +24,10 @@
 #include "usb_common.h"           // USB 2.0 definitions
 #include "helpers.h"              // Helper functions
 
+int usb_debug = 1;                // Dynamic debug level
+
 #define DEBUG_ROW \
   "•───────•──────•─────────────────────────────────────•────────────•\n"
-
-int debug_level = 1;              // Dynamic debug level
 
 // ==[ PicoUSB ]================================================================
 
