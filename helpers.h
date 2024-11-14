@@ -1,7 +1,7 @@
 // Debug mode support
-extern int usb_debug;
+extern uint8_t usb_debug_level;
 #define __real_printf(...) printf(__VA_ARGS__)
-#define printf(...) (usb_debug ? __real_printf(__VA_ARGS__) : (void) 0)
+#define printf(...) (usb_debug_level ? __real_printf(__VA_ARGS__) : (void) 0)
 
 // Hex dump (mode: 0 = hex; 1 = hex + ascii; 2 = hex + ascii + no newline)
 void hexdump(const unsigned char *str, const void *data, size_t size, uint mode) {

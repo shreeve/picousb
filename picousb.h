@@ -24,11 +24,6 @@
 #include "usb_common.h"           // USB 2.0 definitions
 #include "helpers.h"              // Helper functions
 
-int usb_debug = 0;                // Dynamic debug level
-
-#define DEBUG_ROW \
-  "•───────•──────•─────────────────────────────────────•────────────•\n"
-
 // ==[ PicoUSB ]================================================================
 
 enum {
@@ -58,6 +53,17 @@ static uint8_t ctrl_buf[MAX_TEMP]; // Shared buffer for control transfers
 static uint8_t REMOVE_THIS[MAX_TEMP]; // FIXME: Remove this!
 
 void usb_task(); // Forward declaration
+
+// ==[ Debug ]==================================================================
+
+uint8_t usb_debug_level = 0; // Dynamic debug level
+
+#define DEBUG_ROW \
+  "•───────•──────•─────────────────────────────────────•────────────•\n"
+
+void usb_debug(uint8_t level) {
+    usb_debug_level = level;
+}
 
 // ==[ Hubs ]===================================================================
 
