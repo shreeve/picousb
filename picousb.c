@@ -24,7 +24,7 @@
 #include "usb_common.h"           // USB 2.0 definitions
 #include "helpers.h"              // Helper functions
 
-int debug_mode = 1;               // Dynamically enables or disables printf()
+int debug_level = 0;              // Dynamic debug level
 
 // ==[ PicoUSB ]================================================================
 
