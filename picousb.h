@@ -502,7 +502,7 @@ void start_transfer(endpoint_t *ep) {
     ep->active = true;
 
     // Calculate flags
-    bool ls  = false;
+    bool ls = false;
     bool in = ep_in(ep);
     bool ss = ep->setup && !ep->bytes_done; // Start of a SETUP packet
 
