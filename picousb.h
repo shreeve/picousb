@@ -1475,4 +1475,11 @@ void setup_usb_host() {
     printf(DEBUG_ROW);
 }
 
+void usb_init() {
+    stdout_uart_init();
+    printf("\033[2J\033[H\n==[ PicoUSB Host ]==\n\n");
+    queue_init(queue, sizeof(task_t), 64);
+    setup_usb_host();
+}
+
 // ==[ End ]====================================================================

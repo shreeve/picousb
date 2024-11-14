@@ -27,10 +27,7 @@ bool poll_epx(repeating_timer_t *timer) {
 }
 
 int main() {
-    stdout_uart_init();
-    printf("\033[2J\033[H\n==[ USB host example]==\n\n");
-    queue_init(queue, sizeof(task_t), 64);
-    setup_usb_host();
+    usb_init();
 
     // Hard code a 0.5 sec polling interval
     repeating_timer_t timer;
