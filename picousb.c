@@ -7,36 +7,25 @@ void poll_ep1_in(void *arg) {
     bulk_transfer(ep, REMOVE_THIS, len);
 }
 
-bool poll_epx(repeating_timer_t *timer) {
-    uint8_t dev_addr = (uint32_t)(uintptr_t) timer->user_data;
-
-    if (devices[dev_addr].state == DEVICE_READY) {
-        queue_add_blocking(queue, &((task_t) {
-            .type         = TASK_CALLBACK,
-            .guid         = guid++,
-            .callback.fn  = poll_ep1_in,
-            .callback.arg = NULL,
-        }));
-    }
-
-    return true;
-}
-
-// Hard code a 0.5 sec polling interval
-void app_init() {
-    repeating_timer_t timer;
-    void *user_data = (void *)(uintptr_t) 1; // dev_addr
-
-    add_repeating_timer_us(500000, poll_epx, user_data, &timer);
-}
-
 int main() {
+    uint64_t last_attempt = 0;
     usb_debug = 1;
 
-    app_init();
     usb_init();
 
     while (1) {
         usb_task();
+
+        if (devices[1].state == DEVICE_READY) {
+            if ((time_us_64() - last_attempt) > 1000000) {
+                last_attempt = time_us_64();
+                queue_add_blocking(queue, &((task_t) {
+                    .type         = TASK_CALLBACK,
+                    .guid         = guid++,
+                    .callback.fn  = poll_ep1_in,
+                    .callback.arg = NULL,
+                }));
+            }
+        }
     }
 }
