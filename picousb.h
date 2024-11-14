@@ -1113,6 +1113,15 @@ SDK_INLINE const char *callback_name(void (*fn) (void *)) {
     return "user defined function";
 }
 
+SDK_INLINE void queue_callback(void (*fn)(void *), void *arg) {
+    queue_add_blocking(queue, &((task_t) {
+        .type         = TASK_CALLBACK,
+        .guid         = guid++,
+        .callback.fn  = fn,
+        .callback.arg = arg,
+    }));
+}
+
 void usb_task() {
     task_t task;
 
