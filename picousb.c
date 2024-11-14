@@ -23,9 +23,9 @@ bool poll_epx(repeating_timer_t *timer) {
 }
 
 int main() {
-    usb_debug = 0;
-    usb_init();
     usb_debug = 1;
+
+    usb_init();
 
     // Hard code a 0.5 sec polling interval
     repeating_timer_t timer;

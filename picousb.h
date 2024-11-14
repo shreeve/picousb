@@ -24,7 +24,7 @@
 #include "usb_common.h"           // USB 2.0 definitions
 #include "helpers.h"              // Helper functions
 
-int usb_debug = 1;                // Dynamic debug level
+int usb_debug = 0;                // Dynamic debug level
 
 #define DEBUG_ROW \
   "•───────•──────•─────────────────────────────────────•────────────•\n"
