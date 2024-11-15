@@ -485,8 +485,8 @@ SDK_INLINE const char *transfer_type(uint8_t bits) {
 // TODO: Abort a transfer if not yet started and return true on success
 
 void start_transfer(endpoint_t *ep) {
-    if (ep->active) panic("Transfer already active on endpoint");
     if (!ep->user_buf) panic("Transfer has an invalid memory pointer");
+    if ( ep->active  ) panic("Transfer already active on endpoint");
     ep->active = true;
 
     // Calculate registers
