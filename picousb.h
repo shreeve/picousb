@@ -583,16 +583,11 @@ void reset_ftdi(device_t *dev) {
     printf("FTDI reset step %u\n", state);
 
     switch (state) {
-        case  1: command(dev, 0x40,  0,  0    , 1, 0); break; // reset both
-        case  2: command(dev, 0x40,  0,  2    , 1, 0); break; // reset TX
-        case  3: command(dev, 0x40,  0,  1    , 1, 0); break; // reset RX
-        case  4: command(dev, 0x40,  2,  0    , 1, 0); break; // set flow control (none)
-        case  5: command(dev, 0xc0, 10,  0    , 1, 1); break; // get latency
-        case  6: command(dev, 0x40,  9, 16    , 1, 0); break; // set latency to 16ms
-        case  7: command(dev, 0xc0,  5,  0    , 1, 2); break; // get modem status
-        case  8: command(dev, 0x40,  3, 0x4138, 1, 0); break; // 9600 baud (3MHz/312.5)
-        case  9: command(dev, 0x40,  1, 0x0303, 1, 0); break; // enable DTR/RTS
-        case 10: command(dev, 0x40,  2, 0x1311, 1, 0); break; // set flow control (XON=0x11, XOFF=0x13)
+        case 1: command(dev, 0x40,  0,  0    , 1, 0); break; // reset interface
+        case 2: command(dev, 0x40,  9, 16    , 1, 0); break; // set latency=16ms
+        case 3: command(dev, 0x40,  3, 0x4138, 1, 0); break; // set baud=9600
+        case 4: command(dev, 0x40,  1, 0x0303, 1, 0); break; // enable DTR/RTS
+        case 5: command(dev, 0x40,  2, 0x1311, 1, 0); break; // flow control on
         default:
             states[dev->dev_addr] = 0;
             dev->state = DEVICE_READY;
