@@ -227,10 +227,10 @@ void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
         bool ls = false;
         bool in = ep_in(ep);
         usb_hw->int_ep_addr_ctrl[i] = \
-              (ls ? 1 : 0)        << 26 // Preamble: LS on FS hub
-            | (in ? 0 : 1)        << 25 // Direction (In=0, Out=1)
-            | (ep->ep_addr & 0xf) << 16 // Endpoint number
-            |  ep->dev_addr;            // Device address
+              (ls ? 1 : 0)        << 26    // Preamble: LS on FS hub
+            | (in ? 0 : 1)        << 25    // Direction (In=0, Out=1)
+            | (ep->ep_addr & 0xf) << 16    // Endpoint number
+            |  ep->dev_addr;               // Device address
     } else {
         panic("EP0 cannot be polled");
     }
