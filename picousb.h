@@ -1176,6 +1176,14 @@ void usb_task() {
                 } else {
                     printf("Transfer completed\n");
                 }
+
+                // queue_add_blocking(queue, &((task_t) {
+                //     .type         = TASK_CALLBACK,
+                //     .guid         = guid++,
+                //     .callback.fn  = print_callback,
+                //     .callback.arg = (void *) "Callback user code!\n",
+                // }));
+
            }   break;
 
             case TASK_CALLBACK: {
@@ -1383,39 +1391,9 @@ void isr_usbctrl() {
 
                     // Queue the transfer task
                     queue_add_blocking(queue, &transfer_task);
-
-                    // queue_add_blocking(queue, &((task_t) {
-                    //     .type         = TASK_CALLBACK,
-                    //     .guid         = guid++,
-                    //     .callback.fn  = print_callback,
-                    //     .callback.arg = (void *) "Callback user code!\n",
-                    // }));
-
-                    // // Create the transfer task
-                    // task_t transfer_task = {
-                    //     .type              = TASK_TRANSFER,
-                    //     .guid              = guid++,
-                    //     .transfer.dev_addr = dev_addr,         // Device address
-                    //     .transfer.ep_num   = ep_num,           // Endpoint number (EP0-EP15)
-                    //     .transfer.user_buf = ep->user_buf,     // User buffer
-                    //     .transfer.len      = ep->bytes_done,   // Buffer length
-                    //     .transfer.cb       = ep->cb,           // Callback fn
-                    //     .transfer.status   = TRANSFER_SUCCESS, // Transfer status
-                    // };
-
-                    // // Reset the endpoint
-                    // reset_endpoint(ep);
-
-                    // // Queue the transfer task
-                    // queue_add_blocking(queue, &transfer_task);
                 }
-
-                // // FIXME: Go nuclear trying to re-arm
-                // *eps[epn].ecr |=  EP_CTRL_ENABLE_BITS;
-                // *eps[epn].bcr &= ~USB_BUF_CTRL_LAST;
-                // usb_hw_set->int_ep_ctrl = 1 << epn;
             }
-		}
+        }
 
         // Panic if we missed any buffers
         if (bits) panic("Unhandled buffer mask: %032b", bits);
