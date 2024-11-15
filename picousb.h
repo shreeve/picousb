@@ -496,8 +496,7 @@ void start_transfer(endpoint_t *ep) {
 
     // Calculate registers
     uint32_t dar = (ep->ep_addr & 0xf) << 16 | ep->dev_addr;
-    uint32_t sie = USB_SIE_CTRL_BASE              // SIE_CTRL defaults
-                 | USB_SIE_CTRL_START_TRANS_BITS; // Allow the transfer
+    uint32_t sie = USB_SIE_CTRL_BASE;
 
     // Shared epx must be setup each transfer, epn's are already setup
     if (ep->ecr == epx->ecr) {
@@ -511,11 +510,15 @@ void start_transfer(endpoint_t *ep) {
             |  (!ss ? 0 : USB_SIE_CTRL_SEND_SETUP_BITS  );// Toggle SETUP packet
     }
 
-    // Set hardware registers and fill buffers
+    // Set the registers
     usb_hw->dev_addr_ctrl = dar;
     usb_hw->sie_ctrl      = sie;
 
+    // Get the transaction and buffers ready
     start_transaction(ep);
+
+    // Initiate the transfer
+    usb_hw->sie_ctrl      = sie | USB_SIE_CTRL_START_TRANS_BITS;
 }
 
 void transfer_zlp(void *arg) {
