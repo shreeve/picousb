@@ -1334,11 +1334,12 @@ void isr_usbctrl() {
                 // Get a handle to the correct endpoint
                 epz = (!epn && ep->ecr == epx->ecr) ? ep : &eps[epn];
 
-                // char *str = (char[MAX_TEMP]) { 0 };
-                // sprintf(str, "│ECR%u", epn);
-                // bindump(str, *epz->ecr);
-                // sprintf(str, "│BCR%u", epn);
-                // bindump(str, *epz->bcr);
+                // Show epn details
+                char *str = (char[MAX_TEMP]) { 0 };
+                sprintf(str, "│ECR%u", epn);
+                bindump(str, *epz->ecr);
+                sprintf(str, "│BCR%u", epn);
+                bindump(str, *epz->bcr);
 
                 // Finish the transaction
                 finish_transaction(epz);
