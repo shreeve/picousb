@@ -1,10 +1,11 @@
 #include "picousb.h"
 
+char *buf = (char[1024]) { 0 };
 void poll_ep1_in(void *arg) {
     endpoint_t *ep = &eps[1];
     uint16_t len = ep->maxsize;
 
-    bulk_transfer(ep, REMOVE_THIS, len);
+    bulk_transfer(ep, buf, len);
 }
 
 int main() {
