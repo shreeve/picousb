@@ -324,8 +324,6 @@ void clear_endpoints() {
 // ==[ Buffers ]================================================================
 
 uint16_t start_buffer(endpoint_t *ep, uint8_t buf_id) {
-
-    // Calculate bcr
     bool     in  = ep_in(ep);                         // Inbound buffer?
     bool     run = ep->bytes_left > ep->maxsize;      // Continue to run?
     uint8_t  pid = ep->data_pid;                      // Set DATA0/DATA1
