@@ -260,7 +260,7 @@ void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
     //
     // As a temporary workaround, we can override the default starting data_pid
     // to begin with a 1 instead of the correct value, which should be a 0.
-
+    //
     if (ep->dev_addr) {
         device_t *dev = get_device(ep->dev_addr);
 
