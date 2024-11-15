@@ -7,8 +7,6 @@
 //
 // Thanks to Ha Thach for TinyUSB and https://github.com/hathach/tinyusb
 // Thanks to Miroslav Nemecek for his https://github.com/Panda381/PicoLibSDK
-//
-// NOTE: For now, this only supports control and bulk transfers on EPX
 // =============================================================================
 
 #include <stdio.h>                // For printf
