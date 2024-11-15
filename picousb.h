@@ -212,37 +212,31 @@ void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
     // USB 2.0 max packet size is 64 bytes, but isochronous can be up to 1,023!
     if (ep->maxsize > 64) panic("Packet size is currently limited to 64 bytes");
 
-    // // Setup hardware registers and data buffers
-    // if (!(ep->ep_addr & 0xf)) { // Any EP0 will share epx and a buffer
-    //     ep->ecr = &usbh_dpram->epx_ctrl;
-    //     ep->bcr = &usbh_dpram->epx_buf_ctrl;
-    //     ep->buf = &usbh_dpram->epx_data[0];
-    // } else if (ep->type != USB_TRANSFER_TYPE_BULK) {
-    //     panic("No current support for interrupt and isochronous endpoints");
-    // } else {
-    //     ep->ecr = &usbh_dpram->epx_ctrl;
-    //     ep->bcr = &usbh_dpram->epx_buf_ctrl;
-    //     ep->buf = &usbh_dpram->epx_data[(epn + 2) * 64];
-    // }
-    //
-    // // Setup hardware polled endpoints
-    // if (!ep_num(ep)) panic("EP0 cannot be polled");
-    // uint8_t most = MIN(USER_ENDPOINTS, MAX_POLLED);
-    // for (uint8_t i = 0; i < most; i++) {
-    //     if (usbh_dpram->int_ep_ctrl[i].ctrl) continue; // Skip if being used
-    //     ep->ecr = &usbh_dpram->int_ep_ctrl       [i].ctrl;
-    //     ep->bcr = &usbh_dpram->int_ep_buffer_ctrl[i].ctrl;
-    //     ep->buf = &usbh_dpram->epx_data[(i + 2) * 64]; // Can't do ISO?
-    //     break;
-    // }
-    // if (!ep->ecr) panic("No free polled endpoints remaining");
+    // Setup hardware registers and data buffers
+    if (!epn) { // Shared epx
+        ep->ecr = &usbh_dpram->epx_ctrl;
+        ep->bcr = &usbh_dpram->epx_buf_ctrl;
+        ep->buf = &usbh_dpram->epx_data[0];
+    } else if (ep->ep_addr & 0xf) { // Polled hardware endpoint
+        uint8_t i = epn - 1;
+        ep->ecr = &usbh_dpram->int_ep_ctrl       [i].ctrl;
+        ep->bcr = &usbh_dpram->int_ep_buffer_ctrl[i].ctrl;
+        ep->buf = &usbh_dpram->epx_data         [(i + 2) * 64];
 
-    // Use the epx registers and buffers
-    ep->ecr = &usbh_dpram->epx_ctrl;
-    ep->bcr = &usbh_dpram->epx_buf_ctrl;
-    ep->buf = &usbh_dpram->epx_data[0];
+        // Polled hardware endpoint address and direction
+        bool ls = false;
+        bool in = ep_in(ep);
+        usb_hw->int_ep_addr_ctrl[i] = \
+              (ls ? 1 : 0)        << 26 // Preamble: LS on FS hub
+            | (in ? 0 : 1)        << 25 // Direction (In=0, Out=1)
+            | (ep->ep_addr & 0xf) << 16 // Endpoint number
+            |  ep->dev_addr;            // Device address
+    } else {
+        panic("EP0 cannot be polled");
+    }
 
-    if (((uint32_t) ep->buf) & 0x3f) panic("Bad memory location\n");
+    // Set bcr first to prevent any issues when ecr is set
+    *ep->bcr = 0; nop(); nop(); nop(); nop(); nop(); nop();
 
     // Setup shared epx endpoint and enable double buffering
     *ep->ecr = EP_CTRL_ENABLE_BITS           // Enable endpoint
