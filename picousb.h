@@ -231,6 +231,7 @@ void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
             | (in ? 0 : 1)        << 25    // Direction (In=0, Out=1)
             | (ep->ep_addr & 0xf) << 16    // Endpoint number
             |  ep->dev_addr;               // Device address
+        usb_hw->int_ep_ctrl |= (1 << epn); // Activate the endpoint
     } else {
         panic("EP0 cannot be polled");
     }
