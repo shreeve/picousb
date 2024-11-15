@@ -16,10 +16,9 @@ int main() {
     while (1) {
         usb_task();
 
-        // FIXME: Poor-man's polling...
         if (devices[1].state == DEVICE_READY) {
             static uint64_t last_attempt = 0;
-            if (!last_attempt || ((time_us_64() - last_attempt) > 400000)) {
+            if(!last_attempt || ((time_us_64() - last_attempt) > 400000)) {
                 last_attempt = time_us_64();
                 queue_callback(poll_ep1_in, NULL);
             }
