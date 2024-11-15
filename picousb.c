@@ -17,7 +17,7 @@ int main() {
         // FIXME: Poor-man's polling...
         if (devices[1].state == DEVICE_READY) {
             static uint64_t last_attempt = 0;
-            if ((time_us_64() - last_attempt) > 1000000) {
+            if (!last_attempt || ((time_us_64() - last_attempt) > 400000)) {
                 last_attempt = time_us_64();
                 queue_callback(poll_ep1_in, NULL);
             }
