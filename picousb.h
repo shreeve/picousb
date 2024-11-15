@@ -239,11 +239,12 @@ void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
     *ep->bcr = 0; nop(); nop(); nop(); nop(); nop(); nop();
 
     // Setup shared epx endpoint and enable double buffering
-    *ep->ecr = EP_CTRL_ENABLE_BITS           // Enable endpoint
-             | DOUBLE_BUFFER                 // Interrupt per double buffer
-             | ep->type << 26                // Set transfer type
-             | ((uint32_t) ep->buf) & 0xfc0; // DSPRAM offset (64-byte aligned)
-    *ep->bcr = 0;
+    *ep->ecr = EP_CTRL_ENABLE_BITS             // Enable endpoint
+             |  (epn ? SINGLE_BUFFER           // Non-epx are single buffered
+                     : DOUBLE_BUFFER)          // And epx are double buffered
+             |   ep->type << 26                // Set transfer type
+             | ((ep->interval || 1) - 1) << 16 // Polling interval minus 1 ms
+             | ((uint32_t) ep->buf) & 0xfc0;   // DSPRAM offset: 64-byte aligned
 
     // Control endpoints start with DATA0, otherwise start with DATA1
     ep->data_pid = 0;
@@ -492,23 +493,33 @@ void start_transfer(endpoint_t *ep) {
     if (ep->active) panic("Transfer already active on endpoint");
     ep->active = true;
 
-    // Calculate flags
-    bool ls = false;
-    bool in = ep_in(ep);
-    bool ss = ep->setup && !ep->bytes_done; // Start of a SETUP packet
+    // Shared epx must be setup each transfer, epn's are already setup
+    if (ep->ecr == epx->ecr) {
 
-    // Calculate registers
-    uint32_t dar = (ep->ep_addr & 0xf) << 16 | ep->dev_addr;
-    uint32_t sie = USB_SIE_CTRL_BASE                 // SIE_CTRL defaults
-      | (!ls ? 0 : USB_SIE_CTRL_PREAMBLE_EN_BITS)    // Preamble: LS on a FS hub
-      | (!ss ? 0 : USB_SIE_CTRL_SEND_SETUP_BITS)     // Toggle SETUP packet
-      | ( in ?     USB_SIE_CTRL_RECEIVE_DATA_BITS    // Receive bit means IN
-                 : USB_SIE_CTRL_SEND_DATA_BITS)      // Send bit means OUT
-      |            USB_SIE_CTRL_START_TRANS_BITS;    // Start the transfer now
+        // Calculate flags
+        bool ls = false;
+        bool in = ep_in(ep);
+        bool ss = ep->setup && !ep->bytes_done; // Start of a SETUP packet
 
-    // Set hardware registers and fill buffers
-    usb_hw->dev_addr_ctrl = dar;
-    usb_hw->sie_ctrl      = sie;
+        // Calculate registers
+        uint32_t dar = (ep->ep_addr & 0xf) << 16 | ep->dev_addr;
+        uint32_t sie = USB_SIE_CTRL_BASE              // SIE_CTRL defaults
+          | (!ls ? 0 : USB_SIE_CTRL_PREAMBLE_EN_BITS) // Preamble: LS on FS hub
+          | (!ss ? 0 : USB_SIE_CTRL_SEND_SETUP_BITS)  // Toggle SETUP packet
+          | ( in ?     USB_SIE_CTRL_RECEIVE_DATA_BITS // Receive bit means IN
+                     : USB_SIE_CTRL_SEND_DATA_BITS)   // Send bit means OUT
+          |            USB_SIE_CTRL_START_TRANS_BITS; // Allow the transfer
+
+        // Set hardware registers and fill buffers
+        usb_hw->dev_addr_ctrl = dar;
+        usb_hw->sie_ctrl      = sie;
+    } else {
+
+        // For epn's, we only need to set one bit
+        usb_hw->dev_addr_ctrl = 0;
+        usb_hw->sie_ctrl = USB_SIE_CTRL_START_TRANS_BITS; // Allow the transfer
+    }
+
     start_transaction(ep);
 }
 
