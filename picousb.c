@@ -8,7 +8,7 @@ void poll_ep1_in(void *arg) {
 }
 
 int main() {
-    usb_debug(1);
+    usb_debug(0);
     usb_init();
 
     while (1) {
