@@ -484,6 +484,7 @@ SDK_INLINE const char *transfer_type(uint8_t bits) {
 // TODO: Clear a stall and toggle data PID back to DATA0
 // TODO: Abort a transfer if not yet started and return true on success
 
+// Start a new transfer
 void start_transfer(endpoint_t *ep) {
     if (!ep->user_buf) panic("Transfer has an invalid memory pointer");
     if ( ep->active  ) panic("Transfer already active on endpoint");
@@ -527,6 +528,7 @@ void transfer_zlp(void *arg) {
     start_transfer(ep);
 }
 
+// Send a control transfer using an existing setup packet
 void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     if (!epx->configured) panic("Endpoint not configured");
     if ( epx->type)       panic("Not a control endpoint");
@@ -549,6 +551,7 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     start_transfer(epx);
 }
 
+// Send a control transfer using a newly constructed setup packet
 void command(device_t *dev, uint8_t bmRequestType, uint8_t bRequest,
              uint16_t wValue, uint16_t wIndex, uint16_t wLength) {
     control_transfer(dev, &((usb_setup_packet_t) {
@@ -560,6 +563,7 @@ void command(device_t *dev, uint8_t bmRequestType, uint8_t bRequest,
     }));
 }
 
+// Send a bulk transfer and pass a data buffer
 void bulk_transfer(endpoint_t *ep, uint8_t *ptr, uint16_t len) {
     if (!ep->configured)                     panic("Endpoint not configured");
     if ( ep->type != USB_TRANSFER_TYPE_BULK) panic("Not a bulk endpoint");
@@ -571,6 +575,7 @@ void bulk_transfer(endpoint_t *ep, uint8_t *ptr, uint16_t len) {
     start_transfer(ep);
 }
 
+// Resets an FTDI device and configures its baud rate and line settings
 void reset_ftdi(device_t *dev) {
     static uint8_t (states[MAX_DEVICES]) = { 0 };
     uint8_t state = ++states[dev->dev_addr];
