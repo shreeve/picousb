@@ -591,6 +591,7 @@ void reset_ftdi(device_t *dev) {
         default:
             states[dev->dev_addr] = 0;
             dev->state = DEVICE_READY;
+            usb_debug(1);
             printf("FTDI reset complete\n");
             break;
     }
