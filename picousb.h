@@ -48,7 +48,6 @@ enum {
 #define usb_hw_set   ((usb_hw_t *) hw_set_alias_untyped  (usb_hw))
 
 static uint8_t ctrl_buf[MAX_TEMP]; // Shared buffer for control transfers
-static uint8_t REMOVE_THIS[MAX_TEMP]; // FIXME: Remove this!
 
 void usb_task(); // Forward declaration
 
@@ -192,7 +191,6 @@ SDK_INLINE void show_endpoint(endpoint_t *ep) {
 
 void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
                     uint8_t *user_buf) {
-    if (!user_buf) panic("Endpoints require a valid buffer");
 
     // Populate the endpoint (clears all fields not present)
     *ep = (endpoint_t) {
@@ -488,6 +486,7 @@ SDK_INLINE const char *transfer_type(uint8_t bits) {
 
 void start_transfer(endpoint_t *ep) {
     if (ep->active) panic("Transfer already active on endpoint");
+    if (!ep->user_buf) panic("Transfer has an invalid memory pointer");
     ep->active = true;
 
     // Calculate registers
@@ -892,7 +891,7 @@ bool setup_drivers(void *ptr, device_t *dev) {
             case USB_DT_ENDPOINT:
                 epd = (usb_endpoint_descriptor_t *) cur;
                 show_endpoint_descriptor(epd);
-                next_endpoint(dev->dev_addr, epd, REMOVE_THIS);
+                next_endpoint(dev->dev_addr, epd, NULL); // user_buf starts NULL
                 break;
 
             // Unknown descriptor
