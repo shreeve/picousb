@@ -1352,12 +1352,65 @@ void isr_usbctrl() {
                         .callback.arg = (void *) epz,
                     }));
                 } else {
-                    queue_add_blocking(queue, &((task_t) {
-                        .type         = TASK_CALLBACK,
-                        .guid         = guid++,
-                        .callback.fn  = print_callback,
-                        .callback.arg = (void *) "Callback user code!\n",
-                    }));
+
+                    // Panic if the endpoint is not active
+                    if (!ep->active) panic("Endpoints must be active to be completed");
+
+                    // Get the transfer length (actual bytes transferred)
+                    uint16_t len = ep->bytes_done;
+
+                    // Debug output
+                    if (len) {
+                        printf(DEBUG_ROW);
+                        printf( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n", len, ep->dev_addr, guid);
+                        hexdump("│Data", ep->user_buf, len, 1);
+                    } else {
+                        printf(DEBUG_ROW);
+                        printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n", ep_dir(ep), ep->dev_addr, guid);
+                    }
+
+                    // Create the transfer task
+                    task_t transfer_task = {
+                        .type              = TASK_TRANSFER,
+                        .guid              = guid++,
+                        .transfer.dev_addr = dev_addr,         // Device address
+                        .transfer.ep_num   = ep_num,           // Endpoint number (EP0-EP15)
+                        .transfer.user_buf = ep->user_buf,     // User buffer
+                        .transfer.len      = ep->bytes_done,   // Buffer length
+                        .transfer.cb       = ep->cb,           // Callback fn
+                        .transfer.status   = TRANSFER_SUCCESS, // Transfer status
+                    };
+
+                    // Reset the endpoint
+                    reset_endpoint(ep);
+
+                    // Queue the transfer task
+                    queue_add_blocking(queue, &transfer_task);
+
+                    // queue_add_blocking(queue, &((task_t) {
+                    //     .type         = TASK_CALLBACK,
+                    //     .guid         = guid++,
+                    //     .callback.fn  = print_callback,
+                    //     .callback.arg = (void *) "Callback user code!\n",
+                    // }));
+
+                    // // Create the transfer task
+                    // task_t transfer_task = {
+                    //     .type              = TASK_TRANSFER,
+                    //     .guid              = guid++,
+                    //     .transfer.dev_addr = dev_addr,         // Device address
+                    //     .transfer.ep_num   = ep_num,           // Endpoint number (EP0-EP15)
+                    //     .transfer.user_buf = ep->user_buf,     // User buffer
+                    //     .transfer.len      = ep->bytes_done,   // Buffer length
+                    //     .transfer.cb       = ep->cb,           // Callback fn
+                    //     .transfer.status   = TRANSFER_SUCCESS, // Transfer status
+                    // };
+
+                    // // Reset the endpoint
+                    // reset_endpoint(ep);
+
+                    // // Queue the transfer task
+                    // queue_add_blocking(queue, &transfer_task);
                 }
 
                 // // FIXME: Go nuclear trying to re-arm
@@ -1377,39 +1430,6 @@ void isr_usbctrl() {
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_TRANS_COMPLETE_BITS;
 
-        // Panic if the endpoint is not active
-        if (!ep->active) panic("Endpoints must be active to be completed");
-
-        // Get the transfer length (actual bytes transferred)
-        uint16_t len = ep->bytes_done;
-
-        // Debug output
-        if (len) {
-            printf(DEBUG_ROW);
-            printf( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n", len, ep->dev_addr, guid);
-            hexdump("│Data", ep->user_buf, len, 1);
-        } else {
-            printf(DEBUG_ROW);
-            printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n", ep_dir(ep), ep->dev_addr, guid);
-        }
-
-        // Create the transfer task
-        task_t transfer_task = {
-            .type              = TASK_TRANSFER,
-            .guid              = guid++,
-            .transfer.dev_addr = dev_addr,         // Device address
-            .transfer.ep_num   = ep_num,           // Endpoint number (EP0-EP15)
-            .transfer.user_buf = ep->user_buf,     // User buffer
-            .transfer.len      = ep->bytes_done,   // Buffer length
-            .transfer.cb       = ep->cb,           // Callback fn
-            .transfer.status   = TRANSFER_SUCCESS, // Transfer status
-        };
-
-        // Reset the endpoint
-        reset_endpoint(ep);
-
-        // Queue the transfer task
-        queue_add_blocking(queue, &transfer_task);
     }
 
     // Receive timeout (waited too long without seeing an ACK)
