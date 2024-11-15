@@ -410,11 +410,8 @@ void start_transaction(void *arg) {
         }
     }
 
-    // Set bcr now
-    *bcr = hold;
-
-    // Allow time for bcr to settle (if CPU reads too soon, bad things happen!)
-    nop(); nop(); nop(); nop(); nop(); nop();
+    // Set bcr and allow time for it to settle (problems if CPU reads too soon!)
+    *bcr = hold; nop(); nop(); nop(); nop(); nop(); nop();
 
     // Debug output
     if (!ep->bytes_done) {
