@@ -46,6 +46,17 @@ following lines in `${PICO_SDK_PATH}/src/rp2_common/CMakeLists.txt`.
 # pico_add_subdirectory(pico_stdio_usb)
 ```
 
+## RP2040 Notes
+
+```
+NOTE: A hardware polled endpoint needs FOUR things to fire:
+
+1) usb_hw->int_ep_ctrl |= (1 << epn); // Activate the endpoint
+2) *ep->ecr = EP_CTRL_ENABLE_BITS // Enable EP in ecr
+3) *bcr = hold | USB_BUF_CTRL_AVAIL; // Buffer is available
+4) usb_hw->sie_ctrl = sie | USB_SIE_CTRL_START_TRANS_BITS; // Start transfer
+```
+
 ## License
 
 BSD-3-Clause license, the same as code in [pico-examples](https://github.com/raspberrypi/pico-examples/tree/master/usb/device/dev_lowlevel).
