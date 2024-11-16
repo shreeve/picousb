@@ -677,6 +677,12 @@ void show_configuration_descriptor(void *ptr) {
     printf("\n");
 }
 
+void get_configuration_descriptor(device_t *dev, uint8_t len) {
+    printf("Get configuration descriptor\n");
+
+    get_descriptor(dev, USB_DT_CONFIG, len);
+}
+
 void show_endpoint_descriptor(void *ptr) {
     usb_endpoint_descriptor_t *d = (usb_endpoint_descriptor_t *) ptr;
     uint8_t ep_addr = d->bEndpointAddress;
@@ -941,12 +947,6 @@ void set_device_address(device_t *dev) {
         .wIndex        = 0,
         .wLength       = 0,
     }));
-}
-
-void get_configuration_descriptor(device_t *dev, uint8_t len) {
-    printf("Get configuration descriptor\n");
-
-    get_descriptor(dev, USB_DT_CONFIG, len);
 }
 
 void set_configuration(device_t *dev, uint16_t cfg) {
