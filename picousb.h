@@ -1395,6 +1395,7 @@ void isr_usbctrl() {
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_TRANS_COMPLETE_BITS;
 
+        // TODO: Is there anything we need to do here?
     }
 
     // Receive timeout (waited too long without seeing an ACK)
