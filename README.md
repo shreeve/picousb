@@ -51,10 +51,10 @@ following lines in `${PICO_SDK_PATH}/src/rp2_common/CMakeLists.txt`.
 ```
 NOTE: A hardware polled endpoint needs FOUR things to fire:
 
-1) usb_hw->int_ep_ctrl |= (1 << epn); // Activate the endpoint
-2) *ep->ecr = EP_CTRL_ENABLE_BITS // Enable EP in ecr
-3) *bcr = hold | USB_BUF_CTRL_AVAIL; // Buffer is available
-4) usb_hw->sie_ctrl = sie | USB_SIE_CTRL_START_TRANS_BITS; // Start transfer
+1) usb_hw->int_ep_ctrl |= (1 << epn)                          ; // Activate the endpoint
+2) *ep->ecr            |= EP_CTRL_ENABLE_BITS                 ; // Enable EP in ecr
+3) *bcr                 = hold | USB_BUF_CTRL_AVAIL           ; // Buffer is available
+4) usb_hw->sie_ctrl     = sie  | USB_SIE_CTRL_START_TRANS_BITS; // Start transfer
 ```
 
 ## License
