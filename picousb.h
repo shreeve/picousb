@@ -1403,9 +1403,7 @@ void isr_usbctrl() {
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_RX_TIMEOUT_BITS;
 
-        printf("Receive timeout\n");
-
-        panic("Timed out waiting for data");
+        panic("Timeout waiting for data");
     }
 
     // Data error (IN packet from device has wrong data PID)
