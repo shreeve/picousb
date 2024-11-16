@@ -1438,9 +1438,6 @@ void isr_usbctrl() {
     // Were any interrupts missed?
     if (ints) panic("Unhandled IRQ bitmask 0x%08x", ints);
 
-    // TODO: How should we deal with NAKs seen in the SSR?
-    // usb_hw_clear->sie_status = 1 << 28u; // Clear the NAK???
-
     printf(DEBUG_ROW);
 }
 
