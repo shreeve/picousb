@@ -1303,16 +1303,7 @@ void isr_usbctrl() {
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_STALL_REC_BITS;
 
-        printf("Stall detected\n");
-
-        // // Queue the stalled transfer
-        // queue_add_blocking(queue, &((task_t) {
-        //     .type            = TASK_TRANSFER,
-        //     .guid            = guid++,
-        //     .transfer.ep     = ep,  // TODO: Need to flesh this out
-        //     .transfer.len    = 999, // TODO: Need to flesh this out
-        //     .transfer.status = TRANSFER_STALLED,
-        // }));
+        panic("Stall detected");
     }
 
     // Buffer processing is needed
