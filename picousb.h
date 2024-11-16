@@ -644,6 +644,17 @@ void show_device_descriptor(void *ptr) {
     printf("\n");
 }
 
+void get_device_descriptor(device_t *dev) {
+    printf("Get device descriptor\n");
+
+    uint8_t len = sizeof(usb_device_descriptor_t);
+
+    if (!dev->maxsize0)
+        len = dev->maxsize0 = 8; // Default per USB 2.0 spec
+
+    get_descriptor(dev, USB_DT_DEVICE, len);
+}
+
 void show_configuration_descriptor(void *ptr) {
     usb_configuration_descriptor_t *d = (usb_configuration_descriptor_t *) ptr;
 
@@ -917,17 +928,6 @@ enum {
     ENUMERATION_SET_CONFIG,
     ENUMERATION_END,
 };
-
-void get_device_descriptor(device_t *dev) {
-    printf("Get device descriptor\n");
-
-    uint8_t len = sizeof(usb_device_descriptor_t);
-
-    if (!dev->maxsize0)
-        len = dev->maxsize0 = 8; // Default per USB 2.0 spec
-
-    get_descriptor(dev, USB_DT_DEVICE, len);
-}
 
 void set_device_address(device_t *dev) {
     printf("Set device address to %u\n", dev->dev_addr);
