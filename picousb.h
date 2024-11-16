@@ -611,21 +611,6 @@ SDK_INLINE void get_descriptor(device_t *dev, uint8_t type, uint8_t len) {
     }));
 }
 
-void get_string_descriptor_blocking(device_t *dev, uint8_t index) {
-    control_transfer(dev, &((usb_setup_packet_t) {
-        .bmRequestType = USB_DIR_IN
-                       | USB_REQ_TYPE_STANDARD
-                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
-        .bRequest      = USB_REQUEST_GET_DESCRIPTOR,
-        .wValue        = MAKE_U16(USB_DT_STRING, index),
-        .wIndex        = 0,
-        .wLength       = MAX_TEMP,
-    }));
-
-    do { usb_task(); } while (epx->active); // This transfer...
-    do { usb_task(); } while (epx->active); // The ZLP...
-}
-
 void load_device_descriptor(void *ptr, device_t *dev) {
     usb_device_descriptor_t *d = (usb_device_descriptor_t *) ptr;
 
@@ -694,6 +679,21 @@ void show_endpoint_descriptor(void *ptr) {
     printf("  Max Packet Size:  %u\n"   , d->wMaxPacketSize);
     printf("  Interval:         %u\n"   , d->bInterval);
     printf("\n");
+}
+
+void get_string_descriptor_blocking(device_t *dev, uint8_t index) {
+    control_transfer(dev, &((usb_setup_packet_t) {
+        .bmRequestType = USB_DIR_IN
+                       | USB_REQ_TYPE_STANDARD
+                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
+        .bRequest      = USB_REQUEST_GET_DESCRIPTOR,
+        .wValue        = MAKE_U16(USB_DT_STRING, index),
+        .wIndex        = 0,
+        .wLength       = MAX_TEMP,
+    }));
+
+    do { usb_task(); } while (epx->active); // This transfer...
+    do { usb_task(); } while (epx->active); // The ZLP...
 }
 
 void show_string_blocking(device_t *dev, uint8_t index) {
