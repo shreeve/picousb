@@ -1124,7 +1124,7 @@ void usb_task() {
 
     while (queue_try_remove(queue, &task)) {
         uint8_t type = task.type;
-        printf("\n=> %u) New task, %s\n\n", task.guid, task_name(type)); // ~3 ms (sprintf was ~31 μs, ring_printf was 37 μs)
+        printf("\n=> %u) New task, %s\n\n", task.guid, task_name(type));
         switch (type) {
 
             case TASK_CONNECT: {
