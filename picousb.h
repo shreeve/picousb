@@ -1279,10 +1279,9 @@ void isr_usbctrl() {
 
         // Handle connect and disconnect
         if (speed) {
-
-            // Show connection info
             printf(DEBUG_ROW);
-            printf( "│CONNECT│ %-4s │ %-35s │ Task #%-4u │\n", "", "New device connected", guid);
+            printf( "│CONNECT│ %-4s │ %-35s │ Task #%-4u │\n", "",
+                     "New device connected", guid);
 
             queue_add_blocking(queue, &((task_t) { // ~20 μs
                 .type          = TASK_CONNECT,
@@ -1290,10 +1289,9 @@ void isr_usbctrl() {
                 .connect.speed = speed,
             }));
         } else {
-
-            // Show disconnection
             printf(DEBUG_ROW);
-            printf( "│DISCONN│ %-4s │ %-35s │            │\n", "", "Device disconnected");
+            printf( "│DISCONN│ %-4s │ %-35s │            │\n", "",
+                     "Device disconnected");
 
             clear_device(0);
         }
