@@ -27,8 +27,8 @@
 enum {
     MAX_HUBS      = 1 +  0, // root +  0
     MAX_DEVICES   = 1 +  1, // dev0 +  1
-    MAX_TEMP      = 320     // Large enough to handle a full config descriptor
     MAX_ENDPOINTS = 1 + 15, // epx  + 15
+    MAX_CTRL_BUF  = 320   , // Large enough to handle a full config descriptor
 };
 
 #define MAKE_U16(x, y) (((x) << 8) | ((y)     ))
@@ -47,7 +47,7 @@ enum {
 #define usb_hw_clear ((usb_hw_t *) hw_clear_alias_untyped(usb_hw))
 #define usb_hw_set   ((usb_hw_t *) hw_set_alias_untyped  (usb_hw))
 
-static uint8_t ctrl_buf[MAX_TEMP]; // Shared buffer for control transfers
+static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared buffer for control transfers
 
 void usb_task(); // Forward declaration
 
@@ -706,7 +706,7 @@ void get_string_descriptor_blocking(device_t *dev, uint8_t index) {
         .bRequest      = USB_REQUEST_GET_DESCRIPTOR,
         .wValue        = MAKE_U16(USB_DT_STRING, index),
         .wIndex        = 0,
-        .wLength       = MAX_TEMP,
+        .wLength       = MAX_CTRL_BUF,
     }));
 
     do { usb_task(); } while (epx->active); // This transfer...
@@ -724,7 +724,7 @@ void show_string_blocking(device_t *dev, uint8_t index) {
     uint16_t *uni = (uint16_t *) (ptr + 2);
 
     // Convert string from Unicode to UTF-8
-    char *utf = (char[MAX_TEMP]) { 0 };
+    char *utf = (char[MAX_CTRL_BUF]) { 0 };
     char *cur = utf;
     while (len--) {
         uint16_t u = *uni++;
@@ -1012,7 +1012,7 @@ void enumerate(void *arg) {
         case ENUMERATION_GET_CONFIG_SHORT: {
             uint16_t size =
                 ((usb_configuration_descriptor_t *) ctrl_buf)->wTotalLength;
-            if (size > MAX_TEMP) {
+            if (size > MAX_CTRL_BUF) {
                 show_configuration_descriptor(ctrl_buf);
                 panic("Configuration descriptor too large (%u bytes)", size);
             }
@@ -1338,7 +1338,7 @@ void isr_usbctrl() {
                 epz = (!epn && ep->ecr == epx->ecr) ? ep : &eps[epn];
 
                 // Show epn details
-                char *str = (char[MAX_TEMP]) { 0 };
+                char *str = (char[MAX_CTRL_BUF]) { 0 };
                 sprintf(str, "│ECR%u", epn);
                 bindump(str, *epz->ecr);
                 sprintf(str, "│BCR%u", epn);
