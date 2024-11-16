@@ -517,6 +517,7 @@ void start_transfer(endpoint_t *ep) {
     usb_hw->sie_ctrl      = sie | USB_SIE_CTRL_START_TRANS_BITS;
 }
 
+// Send a ZLP transfer out
 void transfer_zlp(void *arg) {
     endpoint_t *ep = (endpoint_t *) arg;
 
@@ -524,7 +525,6 @@ void transfer_zlp(void *arg) {
     ep->ep_addr &= ~USB_DIR_IN;
     ep->bytes_left = 0;
 
-    // Send the ZLP transfer
     start_transfer(ep);
 }
 
