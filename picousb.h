@@ -1357,11 +1357,13 @@ void isr_usbctrl() {
                     // Debug output
                     if (len) {
                         printf(DEBUG_ROW);
-                        printf( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n", len, ep->dev_addr, guid);
+                        printf( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n",
+                                  len, ep->dev_addr, guid);
                         hexdump("│Data", ep->user_buf, len, 1);
                     } else {
                         printf(DEBUG_ROW);
-                        printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n", ep_dir(ep), ep->dev_addr, guid);
+                        printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n",
+                                  ep_dir(ep), ep->dev_addr, guid);
                     }
 
                     // Create the transfer task
