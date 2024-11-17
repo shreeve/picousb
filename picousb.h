@@ -72,13 +72,13 @@ static hub_t hubs[MAX_HUBS], *root = hubs;
 
 // ==[ Devices ]================================================================
 
-enum {
+typedef enum {
     DISCONNECTED,
     LOW_SPEED,
     FULL_SPEED,
-};
+} connection_t;
 
-enum {
+typedef enum {
     DEVICE_DISCONNECTED,
     DEVICE_ALLOCATED,
     DEVICE_ENUMERATING,
@@ -86,7 +86,7 @@ enum {
     DEVICE_ACTIVE,
     DEVICE_READY,
     DEVICE_SUSPENDED,
-};
+} device_status_t;
 
 typedef struct {
     uint8_t  dev_addr    ; // Device address
@@ -137,11 +137,11 @@ void clear_devices() {
 
 // ==[ Endpoints ]==============================================================
 
-enum {
+typedef enum {
     SINGLE_BUFFER = EP_CTRL_INTERRUPT_PER_BUFFER,
     DOUBLE_BUFFER = EP_CTRL_DOUBLE_BUFFERED_BITS
                   | EP_CTRL_INTERRUPT_PER_DOUBLE_BUFFER,
-};
+} buffering_t;
 
 typedef void (*endpoint_c)(uint8_t *buf, uint16_t len);
 
@@ -456,13 +456,13 @@ void finish_transaction(endpoint_t *ep) {
 
 // ==[ Transfers ]==============================================================
 
-enum {
-    TRANSFER_SUCCESS, // not used yet
+typedef enum {
+    TRANSFER_SUCCESS,
     TRANSFER_FAILED,  // not used yet
     TRANSFER_STALLED, // not used yet
     TRANSFER_TIMEOUT, // not used yet
     TRANSFER_INVALID, // not used yet
-};
+} transfer_status_t;
 
 const uint32_t USB_SIE_CTRL_BASE = USB_SIE_CTRL_PULLDOWN_EN_BITS   // Enable
                                  | USB_SIE_CTRL_VBUS_EN_BITS       // Allow VBUS
