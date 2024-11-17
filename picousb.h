@@ -464,12 +464,10 @@ enum {
     TRANSFER_INVALID, // not used yet
 };
 
-enum {
-    USB_SIE_CTRL_BASE = USB_SIE_CTRL_PULLDOWN_EN_BITS   // Ready for devices
-                      | USB_SIE_CTRL_VBUS_EN_BITS       // Supply VBUS
-                      | USB_SIE_CTRL_KEEP_ALIVE_EN_BITS // Enable low speed
-                      | USB_SIE_CTRL_SOF_EN_BITS        // Enable full speed
-};
+const uint32_t USB_SIE_CTRL_BASE = USB_SIE_CTRL_PULLDOWN_EN_BITS   // Enable
+                                 | USB_SIE_CTRL_VBUS_EN_BITS       // Allow VBUS
+                                 | USB_SIE_CTRL_KEEP_ALIVE_EN_BITS // Low speed
+                                 | USB_SIE_CTRL_SOF_EN_BITS;       // Full speed
 
 SDK_INLINE const char *transfer_type(uint8_t bits) {
     switch (bits & USB_TRANSFER_TYPE_BITS) {
