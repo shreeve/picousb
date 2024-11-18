@@ -1,3 +1,6 @@
+#ifndef PICOUSB_HELPERS_H
+#define PICOUSB_HELPERS_H
+
 // Debug mode support
 extern uint8_t usb_debug_level;
 #define __real_printf(...) printf(__VA_ARGS__)
@@ -60,3 +63,5 @@ void printb(const char *str, uint16_t val) {
 
     z ? printf("%s%x.%x.%x\n", str, x, y, z) : printf("%s%x.%x\n", str, x, y);
 }
+
+#endif // PICOUSB_HELPERS_H
