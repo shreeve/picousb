@@ -6,6 +6,8 @@ static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared buffer for control transfers
 
 // ==[ Debug ]==================================================================
 
+uint8_t usb_debug_level = 0;
+
 void usb_debug(uint8_t level) {
     usb_debug_level = level;
 }
@@ -40,6 +42,8 @@ void clear_device(uint8_t dev_addr) {
 void clear_devices() {
     memclr(devices, sizeof(devices));
 }
+
+device_t devices[MAX_DEVICES], *dev0 = devices;
 
 // ==[ Endpoints ]==============================================================
 
@@ -184,6 +188,8 @@ void clear_endpoint(uint8_t dev_addr, uint8_t ep_num) {
 void clear_endpoints() {
     memclr(eps, sizeof(eps));
 }
+
+endpoint_t eps[MAX_ENDPOINTS], *epx = eps;
 
 // ==[ Buffers ]================================================================
 

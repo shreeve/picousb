@@ -36,8 +36,9 @@ pico_set_program_name(piccolo "piccolo")
 pico_set_program_version(piccolo "0.3")
 
 target_sources(piccolo PUBLIC
-        ${CMAKE_CURRENT_LIST_DIR}/picousb.c
         ${CMAKE_CURRENT_LIST_DIR}/piccolo.c
+        ${CMAKE_CURRENT_LIST_DIR}/picousb.c
+        ${CMAKE_CURRENT_LIST_DIR}/helpers.c
 )
 
 # Modify the below lines to enable/disable output over UART/USB

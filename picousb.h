@@ -102,7 +102,7 @@ typedef struct {
     uint8_t  serial      ; // String index of serial number
 } device_t;
 
-device_t devices[MAX_DEVICES], *dev0 = devices;
+extern device_t devices[MAX_DEVICES], *dev0;
 
 // ==[ Endpoints ]==============================================================
 
@@ -144,7 +144,7 @@ typedef struct {
     endpoint_c cb        ; // Callback function
 } endpoint_t;
 
-endpoint_t eps[MAX_ENDPOINTS], *epx = eps;
+extern endpoint_t eps[MAX_ENDPOINTS], *epx;
 
 // ==[ Buffers ]================================================================
 

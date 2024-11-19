@@ -28,8 +28,12 @@ void enquire_ep2_out(void *arg) {
     bulk_transfer(ep, buf, len);
 }
 
+void hello() {
+    printf("STRONG function!!!\n");
+}
+
 int main() {
-    usb_debug(1);
+    usb_debug(0);
     usb_init();
 
     // Create a repeating timer
