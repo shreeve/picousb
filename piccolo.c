@@ -9,9 +9,38 @@ bool timer_callback(struct repeating_timer *t) {
     return true; // Keep the timer running
 }
 
-// ==[ Polling with a static buffer ]==
+// ==[ Callbacks ]==
 
 char *buf = (char[1024]) { 0 };
+
+// Resets an FTDI device and configures its baud rate and line settings
+void reset_ftdi(device_t *dev) {
+    static uint8_t (states[MAX_DEVICES]) = { 0 };
+    uint8_t state = ++states[dev->dev_addr];
+
+    printf("FTDI reset step %u\n", state);
+
+    switch (state) {
+        case 1: command(dev, 0x40,  0,  0    , 1, 0); break; // reset interface
+        case 2: command(dev, 0x40,  9, 16    , 1, 0); break; // set latency=16ms
+        case 3: command(dev, 0x40,  3, 0x4138, 1, 0); break; // set baud=9600
+        case 4: command(dev, 0x40,  1, 0x0303, 1, 0); break; // enable DTR/RTS
+        case 5: command(dev, 0x40,  2, 0x1311, 1, 0); break; // flow control on
+        default:
+            states[dev->dev_addr] = 0;
+            dev->state = DEVICE_READY;
+            usb_debug(1);
+            printf("FTDI reset complete\n");
+            break;
+    }
+}
+
+void on_device_active(device_t *dev) {
+    usb_debug(1);
+    printf("STRONG: Device %u is now active\n", dev->dev_addr);
+    printf("Calling reset_ftdi\n");
+    reset_ftdi(dev);
+}
 
 void poll_ep1_in(void *arg) {
     endpoint_t *ep = &eps[1];
@@ -28,9 +57,7 @@ void enquire_ep2_out(void *arg) {
     bulk_transfer(ep, buf, len);
 }
 
-void hello() {
-    printf("STRONG function!!!\n");
-}
+// ==[ Let 'er rip! ]==
 
 int main() {
     usb_debug(0);

@@ -1,5 +1,11 @@
 #include "helpers.h"
 
+uint8_t usb_debug_level = 0;
+
+void usb_debug(uint8_t level) {
+    usb_debug_level = level;
+}
+
 // Hex dump (mode: 0 = hex; 1 = hex + ascii; 2 = hex + ascii + no newline)
 void hexdump(const unsigned char *str, const void *data, size_t size, uint mode) {
     const unsigned char *byte = (const unsigned char *) data;

@@ -1,16 +1,7 @@
 #include "picousb.h"              // Weak functions
 
-// ==[ PicoUSB ]================================================================
-
-static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared buffer for control transfers
-
-// ==[ Debug ]==================================================================
-
-uint8_t usb_debug_level = 0;
-
-void usb_debug(uint8_t level) {
-    usb_debug_level = level;
-}
+static uint32_t guid = 1;
+static queue_t *queue = &((queue_t) { 0 });
 
 // ==[ Hubs ]===================================================================
 
@@ -46,6 +37,8 @@ void clear_devices() {
 device_t devices[MAX_DEVICES], *dev0 = devices;
 
 // ==[ Endpoints ]==============================================================
+
+static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared buffer for control transfers
 
 SDK_INJECT const char *ep_dir(endpoint_t *ep) {
     return ep->ep_addr & USB_DIR_IN ? "IN" : "OUT";
@@ -437,27 +430,44 @@ void bulk_transfer(endpoint_t *ep, uint8_t *ptr, uint16_t len) {
     start_transfer(ep);
 }
 
-// Resets an FTDI device and configures its baud rate and line settings
-void reset_ftdi(device_t *dev) {
-    static uint8_t (states[MAX_DEVICES]) = { 0 };
-    uint8_t state = ++states[dev->dev_addr];
+// Finish a transfer
+void finish_transfer(endpoint_t *ep) {
 
-    printf("FTDI reset step %u\n", state);
+    // Panic if the endpoint is not active
+    if (!ep->active) panic("Endpoints must be active to finish");
 
-    switch (state) {
-        case 1: command(dev, 0x40,  0,  0    , 1, 0); break; // reset interface
-        case 2: command(dev, 0x40,  9, 16    , 1, 0); break; // set latency=16ms
-        case 3: command(dev, 0x40,  3, 0x4138, 1, 0); break; // set baud=9600
-        case 4: command(dev, 0x40,  1, 0x0303, 1, 0); break; // enable DTR/RTS
-        case 5: command(dev, 0x40,  2, 0x1311, 1, 0); break; // flow control on
-        default:
-            states[dev->dev_addr] = 0;
-            dev->state = DEVICE_READY;
-            usb_debug(1);
-            printf("FTDI reset complete\n");
-            hello();
-            break;
+    // Get the transfer length (actual bytes transferred)
+    uint16_t len = ep->bytes_done;
+
+    // Debug output
+    if (len) {
+        printf(DEBUG_ROW);
+        printf( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n",
+                    len, ep->dev_addr, guid);
+        hexdump("│Data", ep->user_buf, len, 1);
+    } else {
+        printf(DEBUG_ROW);
+        printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n",
+                    ep_dir(ep), ep->dev_addr, guid);
     }
+
+    // Create the transfer task
+    task_t transfer_task = {
+        .type              = TASK_TRANSFER,
+        .guid              = guid++,
+        .transfer.dev_addr = ep->dev_addr,      // Device address
+        .transfer.ep_num   = ep->ep_addr & 0xf, // Endpoint number (EP0-EP15)
+        .transfer.user_buf = ep->user_buf,      // User buffer
+        .transfer.len      = ep->bytes_done,    // Buffer length
+        .transfer.cb       = ep->cb,            // Callback fn
+        .transfer.status   = TRANSFER_SUCCESS,  // Transfer status
+    };
+
+    // Reset the endpoint
+    reset_endpoint(ep);
+
+    // Queue the transfer task
+    queue_add_blocking(queue, &transfer_task);
 }
 
 // ==[ Descriptors ]============================================================
@@ -898,11 +908,7 @@ void enumerate(void *arg) {
             show_string_blocking(dev, dev->serial      );
 
             dev->state = DEVICE_ACTIVE;
-            printf("Enumeration completed\n");
-
-            // FIXME: Where and how should this be called? A task? A callback?
-            printf("\nCalling reset_ftdi\n");
-            reset_ftdi(dev);
+            on_device_active(dev);
 
             break;
     }
@@ -910,19 +916,11 @@ void enumerate(void *arg) {
 
 // ==[ Callbacks ]==============================================================
 
-SDK_WEAK void hello() {
-    printf("WEAK FUNCTION\n");
-}
-
-void print_callback(void *arg) {
-    printf("%s", (char *) arg);
+SDK_WEAK void on_device_active(device_t *dev) {
+    printf("WEAK: Device %u is now active\n", dev->dev_addr);
 }
 
 // ==[ Tasks ]==================================================================
-
-static uint32_t guid = 1;
-
-static queue_t *queue = &((queue_t) { 0 });
 
 SDK_INJECT const char *task_name(uint8_t type) {
     switch (type) {
@@ -936,7 +934,6 @@ SDK_INJECT const char *task_name(uint8_t type) {
 
 SDK_INJECT const char *callback_name(void (*fn) (void *)) {
     if (fn == enumerate        ) return "enumerate"        ;
-    if (fn == print_callback   ) return "print_callback"   ;
     if (fn == start_transaction) return "start_transaction";
     if (fn == transfer_zlp     ) return "transfer_zlp"     ;
     return "user defined function";
@@ -997,6 +994,7 @@ void usb_task() {
 
                 // Handle the transfer
                 device_t *dev = get_device(ep->dev_addr);
+
                 if (len && dev->state < DEVICE_READY) {
                     printf("Calling transfer_zlp\n");
                     transfer_zlp(ep);
@@ -1009,13 +1007,6 @@ void usb_task() {
                 } else {
                     printf("Transfer completed\n");
                 }
-
-                // queue_add_blocking(queue, &((task_t) {
-                //     .type         = TASK_CALLBACK,
-                //     .guid         = guid++,
-                //     .callback.fn  = print_callback,
-                //     .callback.arg = (void *) "Callback user code!\n",
-                // }));
 
            }   break;
 
@@ -1170,7 +1161,7 @@ void isr_usbctrl() {
                 // Finish the transaction
                 finish_transaction(epz);
 
-                // Start the next transaction or complete the transfer
+                // Start the next transaction or finish the transfer
                 if (epz->bytes_left) {
                     queue_add_blocking(queue, &((task_t) {
                         .type         = TASK_CALLBACK,
@@ -1179,42 +1170,7 @@ void isr_usbctrl() {
                         .callback.arg = (void *) epz,
                     }));
                 } else {
-
-                    // Panic if the endpoint is not active
-                    if (!ep->active) panic("Endpoints must be active to be completed");
-
-                    // Get the transfer length (actual bytes transferred)
-                    uint16_t len = ep->bytes_done;
-
-                    // Debug output
-                    if (len) {
-                        printf(DEBUG_ROW);
-                        printf( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n",
-                                  len, ep->dev_addr, guid);
-                        hexdump("│Data", ep->user_buf, len, 1);
-                    } else {
-                        printf(DEBUG_ROW);
-                        printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n",
-                                  ep_dir(ep), ep->dev_addr, guid);
-                    }
-
-                    // Create the transfer task
-                    task_t transfer_task = {
-                        .type              = TASK_TRANSFER,
-                        .guid              = guid++,
-                        .transfer.dev_addr = dev_addr,         // Device address
-                        .transfer.ep_num   = ep_num,           // Endpoint number (EP0-EP15)
-                        .transfer.user_buf = ep->user_buf,     // User buffer
-                        .transfer.len      = ep->bytes_done,   // Buffer length
-                        .transfer.cb       = ep->cb,           // Callback fn
-                        .transfer.status   = TRANSFER_SUCCESS, // Transfer status
-                    };
-
-                    // Reset the endpoint
-                    reset_endpoint(ep);
-
-                    // Queue the transfer task
-                    queue_add_blocking(queue, &transfer_task);
+                    finish_transfer(ep);
                 }
             }
         }
