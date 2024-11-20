@@ -24,8 +24,7 @@
 
 #include "usb_common.h"           // USB 2.0 definitions
 #include "helpers.h"              // Helper functions
-
-#include "ring.h"
+#include "ring.h"                 // Multi-core and IRQ safe ring buffer
 
 // ==[ Constants ]==============================================================
 
