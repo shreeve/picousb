@@ -182,6 +182,37 @@ void clear_endpoints() {
     memclr(eps, sizeof(eps));
 }
 
+void print_endpoints() {
+    printf("\nEndpoint Status:\n");
+    printf("─────────────────────────────────────────────────────────────\n");
+    
+    for (uint8_t i = 0; i < MAX_ENDPOINTS; i++) {
+        endpoint_t *ep = &eps[i];
+        
+        if (!ep->configured) {
+            continue;
+        }
+        
+        printf("EP%u%s:\n", ep->ep_addr & 0xf, ep_in(ep) ? " IN" : " OUT");
+        printf("  Device Address: 0x%02x\n", ep->dev_addr);
+        printf("  Endpoint Addr:  0x%02x\n", ep->ep_addr);
+        printf("  Max Size:       0x%04x\n", ep->maxsize);
+        printf("  Type:          %s\n", 
+            ep->type == USB_TRANSFER_TYPE_CONTROL ? "Control" :
+            ep->type == USB_TRANSFER_TYPE_ISOCHRONOUS ? "Isochronous" :
+            ep->type == USB_TRANSFER_TYPE_BULK ? "Bulk" :
+            ep->type == USB_TRANSFER_TYPE_INTERRUPT ? "Interrupt" : "Unknown");
+        printf("  Active:        %s\n", ep->active ? "Yes" : "No");
+        printf("  Setup:         %s\n", ep->setup ? "Yes" : "No");
+        printf("  Data PID:      %u\n", ep->data_pid);
+        printf("  Bytes Left:    0x%04x\n", ep->bytes_left);
+        printf("  Bytes Done:    0x%04x\n", ep->bytes_done);
+        printf("─────────────────────────────────────────────────────────\n");
+    }
+}
+
+
+
 endpoint_t eps[MAX_ENDPOINTS], *epx = eps;
 
 // ==[ Buffers ]================================================================
@@ -385,7 +416,8 @@ void transfer_zlp(void *arg) {
 
 // Send a control transfer using an existing setup packet
 void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
-    if (!epx->configured) panic("Endpoint not configured");
+    printf("Control transfer: ");
+    if (!epx->configured) print_endpoints();
     if ( epx->type)       panic("Not a control endpoint");
 
     // Copy the setup packet
@@ -420,7 +452,8 @@ void command(device_t *dev, uint8_t bmRequestType, uint8_t bRequest,
 
 // Send a bulk transfer and pass a data buffer
 void bulk_transfer(endpoint_t *ep, uint8_t *ptr, uint16_t len) {
-    if (!ep->configured)                     panic("Endpoint not configured");
+    printf("Bulk transfer");
+    if (!ep->configured) print_endpoints();
     if ( ep->type != USB_TRANSFER_TYPE_BULK) panic("Not a bulk endpoint");
 
     ep->user_buf   = ptr;
@@ -436,7 +469,6 @@ void finish_transfer(endpoint_t *ep) {
     // Panic if the endpoint is not active
     if (!ep->active) panic("Endpoints must be active to finish");
 
-    // Get the transfer length (actual bytes transferred)
     uint16_t len = ep->bytes_done;
 
     // Debug output
@@ -760,43 +792,36 @@ driver_instance_t* driver_instance_for_interface(uint8_t topclass, uint8_t subcl
 // ==[ Driver Implementation for CDC ]=============================================
 bool cdc_open(driver_instance_t *instance, void *ptr, uint16_t len) {
     usb_configuration_descriptor_t *config_desc = (usb_configuration_descriptor_t *)ptr;
-    usb_device_descriptor_t *device_desc = (usb_device_descriptor_t *)ptr;
     
     printf("CDC Open: Attempting to configure driver\n");
     printf("Total config length: %u\n", len);
-    printf("Device ID: %04x\n", device_desc->idProduct);
 
-    instance->device_address = device_desc->idProduct;
+    // Get device address from epx since it's already configured
+    instance->device_address = epx->dev_addr;
     instance->bulk_in = NULL;
     instance->bulk_out = NULL;
 
-    for (uint8_t i = 1; i < MAX_ENDPOINTS; i++) {
-        endpoint_t *ep = &eps[i];
-        
-        if (!ep->configured) {
-            printf("Endpoint %u not configured, skipping\n", i);
-            continue;
-        }
+    uint8_t *cur = (uint8_t *)ptr;
+    uint8_t *end = cur + len;
 
-        printf("Checking endpoint %u: addr=%02x, type=%u\n", 
-               i, ep->ep_addr, ep->type);
+    while (cur < end) {
+        if (cur[1] == USB_DT_ENDPOINT) {
+            usb_endpoint_descriptor_t *epd = (usb_endpoint_descriptor_t *)cur;
+            show_endpoint_descriptor(epd);
 
-        if (ep->type == USB_TRANSFER_TYPE_BULK) {
-            if ((ep->ep_addr & USB_DIR_IN) && !instance->bulk_in) {
-                instance->bulk_in = ep;
-                printf("Found Bulk IN endpoint\n");
-            }
-            
-            if ((ep->ep_addr & USB_DIR_OUT) && !instance->bulk_out) {
-                instance->bulk_out = ep;
-                printf("Found Bulk OUT endpoint\n");
+            if (epd->bmAttributes == USB_TRANSFER_TYPE_BULK) {
+                endpoint_t *ep = next_endpoint(instance->device_address, epd, NULL);
+                
+                if (epd->bEndpointAddress & USB_DIR_IN) {
+                    instance->bulk_in = ep;
+                    printf("Found Bulk IN endpoint\n");
+                } else {
+                    instance->bulk_out = ep;
+                    printf("Found Bulk OUT endpoint\n");
+                }
             }
         }
-
-        if (instance->bulk_in && instance->bulk_out) {
-            printf("Both Bulk IN and OUT endpoints found\n");
-            break;
-        }
+        cur += cur[0];
     }
 
     if (!instance->bulk_in || !instance->bulk_out) {

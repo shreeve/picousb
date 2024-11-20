@@ -33,6 +33,11 @@ void enquire_ep2_out(void *arg) {
     bulk_transfer(ep, buf, len);
 }
 
+void on_device_active(device_t *dev) {
+    printf("Device %u is active\n", dev->dev_addr);
+    reset_ftdi(dev);
+}
+
 int main() {
     usb_debug(1);
     usb_init();
