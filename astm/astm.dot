@@ -1,0 +1,67 @@
+digraph ASTM {
+    rankdir=LR; // Layout the graph left to right for readability
+    node [shape=ellipse, style=filled, fillcolor=lightblue];
+
+    // Receiving Device States
+    Idle [label="Idle"];
+    Awake [label="Awake"];
+    Waiting_Recv [label="Waiting1"];
+    Frame_Received [label="Frame Received"];
+    Have_Data [label="Have Data to Send"];
+
+    // Sending Device States
+    Data_to_Send [label="Data to Send"];
+    Waiting_Send [label="Waiting2"];
+    Next_Frame [label="Next Frame Set Up"];
+    Frame_Ready [label="Frame Ready"];
+    Waiting_After [label="Waiting3"];
+    Old_Frame [label="Old Frame Set Up"];
+    Interrupt_Requested [label="Interrupt Requested"];
+    Contention_Busy_Timer [label="Contention or Busy Timer Running"];
+
+    // Transitions for Receiving Device
+    Idle -> Awake [label="Receive <ENQ>"];
+    Awake -> Idle [label="Busy, Send <NAK>"];
+    Awake -> Waiting_Recv [label="Send <ACK>, Seq = 1, Timer = 30"];
+    Waiting_Recv -> Idle [label="Receive <EOT> or Timeout"];
+    Waiting_Recv -> Frame_Received [label="Get Frame"];
+    Frame_Received -> Have_Data [label="Frame OK"];
+    Frame_Received -> Waiting_Recv [label="Good Frame, Increment Seq, Send <ACK>, Timer = 30"];
+    Frame_Received -> Waiting_Recv [label="Bad Frame, Send <NAK>, Timer = 30"];
+    Have_Data -> Waiting_Recv [label="New Frame, Increment Seq, Send <EOT>, Timer = 30"];
+
+    // Transitions for Sending Device
+    Idle -> Data_to_Send [label="Data available"];
+    Data_to_Send -> Waiting_Send [label="Seq = 1, Send <ENQ>, Timer = 15"];
+    Data_to_Send -> Contention_Busy_Timer [label="Busy"];
+    Contention_Busy_Timer -> Idle;
+    Waiting_Send -> Idle [label="Timeout, Send <EOT>"];
+    Waiting_Send -> Contention_Busy_Timer [label="Receive <ENQ> or <NAK>"];
+    Waiting_Send -> Next_Frame [label="Receive <ACK>, Retries = 0"];
+    Next_Frame -> Frame_Ready;
+    Next_Frame -> Idle [label="Done, Send <EOT>"];
+    Frame_Ready -> Waiting_After [label="Send Frame, Timer = 15"];
+    Waiting_After -> Old_Frame [label="Receive <NAK>, Increment Retries; Or, any other character"];
+    Waiting_After -> Next_Frame [label="Increment Seq, Receive <ACK>, Retries = 0"];
+    Waiting_After -> Idle [label="Timeout, Send <EOT>"];
+    Waiting_After -> Interrupt_Requested [label="Receive <EOT>"];
+    Old_Frame -> Idle [label="Retries = 6, Send <EOT>"];
+    Old_Frame -> Frame_Ready [label="Retries < 6"];
+    Interrupt_Requested -> Next_Frame [label="Ignore, Retries = 0, Increment Seq"];
+    Interrupt_Requested -> Idle [label="Accept, Send <EOT>"];
+
+    // State Styling
+    Idle [fillcolor=lightgray];
+    Interrupt_Requested [fillcolor=green];
+
+    // ASCII Control Characters Table
+    subgraph cluster_legend {
+        label = "ASCII Control Characters";
+        style = dashed;
+        key1 [label="STX = Start of Text"      , shape=box, fillcolor=white];
+        key2 [label="ETX = End of Text"        , shape=box, fillcolor=white];
+        key3 [label="EOT = End of Transmission", shape=box, fillcolor=white];
+        key4 [label="ACK = Acknowledge"        , shape=box, fillcolor=white];
+        key5 [label="NAK = No Acknowledge"     , shape=box, fillcolor=white];
+    }
+}
