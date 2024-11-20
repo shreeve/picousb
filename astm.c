@@ -9,6 +9,7 @@ typedef enum {
     AWAKE,
     WAITING1,
     FRAME_RECEIVED,
+    HAVE_DATA,
     DATA_TO_SEND,
     CONTENTION,
     WAITING2,
@@ -68,6 +69,25 @@ uint8_t get_chr() {
     return get_chr_timeout_us(1000);
 }
 
+// void send_data(uint8_t *data, size_t length) {
+//     if (length <= 5) {
+//         // Direct UART write for small data
+//         for (size_t i = 0; i < length; i++) {
+//             uart_putc(uart0, data[i]);
+//         }
+//     } else {
+//         // Use DMA for larger data
+//         memcpy(put_str, data, length);
+//         dma_channel_set_trans_count(dma_tx_channel, length, false);
+//         dma_channel_start(dma_tx_channel);
+//         while (dma_channel_is_busy(dma_tx_channel));
+//     }
+// }
+//
+// SDK_INLINE void send_byte(uint8_t byte) {
+//     send_data((uint8_t *) &byte, 1);
+// }
+
 void state_machine() {
     uint8_t chr;
 
@@ -82,12 +102,15 @@ void state_machine() {
             }
             break;
 
+        // ==[ Receiving device ]===============================================
+
         case AWAKE:
             if (false) { // TODO: If we're busy
                 put_chr(NAK);
                 state = IDLE;
             } else {
                 put_chr(ACK);
+                sequence = 1;
                 set_timeout(30, IDLE);
                 state = WAITING1;
             }
@@ -114,15 +137,29 @@ void state_machine() {
 
         case FRAME_RECEIVED:
             if (true) { // TODO: Frame was good
-                put_chr(ACK);
                 // TODO: Do something useful with the frame
+                if (++sequence > 8) sequence = 1;
+                put_chr(ACK);
             } else { // TODO: Frame was bad
-                put_chr(NAK);
                 // TODO: Toss out this bad frame
+                put_chr(NAK);
             }
             set_timeout(30, IDLE);
             state = WAITING1;
             break;
+
+        case HAVE_DATA:
+            if (false) {
+                // TODO: Repeat frame
+            } else {
+                // TODO: New frame
+                if (++sequence > 8) sequence = 1;
+            }
+            put_chr(EOT);
+            set_timeout(30, IDLE);
+            break;
+
+        // ==[ Sending device ]=================================================
 
         case DATA_TO_SEND:
             if (false) { // TODO: If we're busy sending
@@ -147,7 +184,7 @@ void state_machine() {
                         break;
                     case ACK:
                         retries = 0;
-                        state = NEXT_FRAME_SETUP;
+                        state = FRAME_READY;
                         break;
                     default:
                         break;
@@ -160,8 +197,9 @@ void state_machine() {
                 put_chr(EOT);
                 state = IDLE;
             } else {
-                put_str(); // TODO: Send frame
+                put_str(???); // TODO: Send frame
                 set_timeout(15, WAITING3);
+                state = WAITING3;
             }
             break;
 
@@ -179,7 +217,7 @@ void state_machine() {
                         break;
                     case EOT:
                         put_chr(EOT);
-                        state = IDLE;
+                        state = INTERRUPT_REQUESTED;
                         break;
                     case NAK:
                         retries++;
@@ -193,6 +231,17 @@ void state_machine() {
                         }
                         break;
                 }
+            }
+            break;
+
+        case INTERRUPT_REQUESTED:
+            if (false) { // TODO: Ignore the interrupt request
+                retries = 0;
+                if (++sequence > 8) sequence = 1;
+                state = FRAME_READY;
+            } else { // TODO: Accept the interrupt request
+                put_chr(EOT);
+                state = IDLE;
             }
             break;
 
@@ -213,22 +262,3 @@ int main() {
 
     return 0;
 }
-
-// void send_data(uint8_t *data, size_t length) {
-//     if (length <= 5) {
-//         // Direct UART write for small data
-//         for (size_t i = 0; i < length; i++) {
-//             uart_putc(uart0, data[i]);
-//         }
-//     } else {
-//         // Use DMA for larger data
-//         memcpy(put_str, data, length);
-//         dma_channel_set_trans_count(dma_tx_channel, length, false);
-//         dma_channel_start(dma_tx_channel);
-//         while (dma_channel_is_busy(dma_tx_channel));
-//     }
-// }
-//
-// SDK_INLINE void send_byte(uint8_t byte) {
-//     send_data((uint8_t *) &byte, 1);
-// }
