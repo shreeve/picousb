@@ -9,24 +9,18 @@
 // Thanks: rppicomidi has a nice ring buffer implementation
 // =============================================================================
 
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <malloc.h>
 
 #include "pico.h"
-#include "hardware/sync.h"
 #include "pico/assert.h"
 #include "pico/lock_core.h"
 
-// ==[ Init, Reset, Destroy ]===================================================
+#include "ring.h"
 
-typedef struct {
-    lock_core_t core;
-    uint8_t    *data;
-    uint16_t    size;
-    uint16_t    wptr;
-    uint16_t    rptr;
-} ring_t;
+// ==[ Init, Reset, Destroy ]===================================================
 
 void ring_init_with_spin_lock(ring_t *r, uint size, uint spin_lock_num) {
     assert(r);
@@ -58,28 +52,26 @@ void ring_destroy(ring_t *r) {
     spin_unlock(r->core.spin_lock, save);
 }
 
-
-
 // ==[ Used, Free, Empty, Full ]================================================
 
-static inline uint16_t ring_used_unsafe(ring_t *r) {
+inline uint16_t ring_used_unsafe(ring_t *r) {
     int32_t used = (int32_t) r->wptr - (int32_t) r->rptr;
     if (used < 0) used += r->size + 1;
     return (uint16_t) used;
 }
 
-static inline uint16_t ring_free_unsafe(ring_t *r) {
+inline uint16_t ring_free_unsafe(ring_t *r) {
     return r->size - ring_used_unsafe(r);
 }
 
-static inline uint16_t ring_used(ring_t *r) {
+inline uint16_t ring_used(ring_t *r) {
     uint32_t save = spin_lock_blocking(r->core.spin_lock);
     uint16_t used = ring_used_unsafe(r);
     spin_unlock(r->core.spin_lock, save);
     return used;
 }
 
-static inline uint16_t ring_free(ring_t *r) {
+inline uint16_t ring_free(ring_t *r) {
     uint32_t save = spin_lock_blocking(r->core.spin_lock);
     uint16_t free = ring_free_unsafe(r);
     spin_unlock(r->core.spin_lock, save);
@@ -154,35 +146,29 @@ ring_read_internal(ring_t *r, const void *ptr, uint16_t len, bool block) {
     } while (true);
 }
 
-// ==[ Try ]====================================================================
-
-uint16_t ring_try_write(ring_t *r, const void *ptr, uint16_t len) {
-    return ring_write_internal(r, ptr, len, false);
-}
+// ==[ Read and write ]=========================================================
 
 uint16_t ring_try_read(ring_t *r, void *ptr, uint16_t len) {
     return ring_read_internal(r, ptr, len, false);
 }
 
-// ==[ Blocking ]===============================================================
-
-uint16_t ring_write_blocking(ring_t *r, const void *ptr, uint16_t len) {
-    return ring_write_internal(r, ptr, len, true);
+uint16_t ring_try_write(ring_t *r, const void *ptr, uint16_t len) {
+    return ring_write_internal(r, ptr, len, false);
 }
 
 uint16_t ring_read_blocking(ring_t *r, void *ptr, uint16_t len) {
     return ring_read_internal(r, ptr, len, true);
 }
 
-// ==[ String printing ]========================================================
+uint16_t ring_write_blocking(ring_t *r, const void *ptr, uint16_t len) {
+    return ring_write_internal(r, ptr, len, true);
+}
 
-#if 1
+// ==[ Debugging: We should probably remove this or improve it ]================
 
 #include <stdarg.h>
 
-#define RING_BUFFER_SIZE ((1 << 8) - 1)
-
-static char ring_buffer[RING_BUFFER_SIZE];
+char ring_buffer[RING_BUFFER_SIZE];
 
 uint16_t ring_printf(ring_t *r, const char *fmt, ...) {
     va_list args;
@@ -191,7 +177,3 @@ uint16_t ring_printf(ring_t *r, const char *fmt, ...) {
     va_end(args);
     return ring_write_blocking(r, ring_buffer, len);
 }
-
-#endif
-
-// =============================================================================
