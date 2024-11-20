@@ -58,6 +58,8 @@ void ring_destroy(ring_t *r) {
     spin_unlock(r->core.spin_lock, save);
 }
 
+
+
 // ==[ Used, Free, Empty, Full ]================================================
 
 static inline uint16_t ring_used_unsafe(ring_t *r) {
@@ -84,11 +86,11 @@ static inline uint16_t ring_free(ring_t *r) {
     return free;
 }
 
-static inline bool ring_is_empty(ring_t *r) {
+bool ring_is_empty(ring_t *r) {
     return ring_used(r) == 0;
 }
 
-static inline bool ring_is_full(ring_t *r) {
+bool ring_is_full(ring_t *r) {
     return ring_free(r) == 0;
 }
 

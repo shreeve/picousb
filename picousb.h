@@ -25,6 +25,8 @@
 #include "usb_common.h"           // USB 2.0 definitions
 #include "helpers.h"              // Helper functions
 
+#include "ring.h"
+
 // ==[ Constants ]==============================================================
 
 #define MAX_HUBS        1 // root +  0
@@ -172,6 +174,35 @@ void reset_ftdi(device_t *dev);
 // ==[ Classes ]================================================================
 
 // ==[ Drivers ]================================================================
+
+typedef struct driver_instance_t driver_instance_t;
+
+
+
+typedef struct driver_t {
+    const char *name;
+    uint8_t bInterfaceClass;
+    uint8_t bInterfaceSubClass;
+    void (* const init  )(void);
+    bool (* const open  )(driver_instance_t *instance, void *config_buffer, uint16_t len);
+    bool (* const config)(driver_instance_t *instance);
+    void (* const close )(driver_instance_t *instance);
+    void (* const send_data)(driver_instance_t *instance, const uint8_t *data, uint16_t len);
+    int (* const read_ring)(driver_instance_t *instance, uint8_t *buffer, uint16_t len);
+    int (* const write_ring)(driver_instance_t *instance, const uint8_t *data, uint16_t len);
+} driver_t;
+
+typedef struct driver_instance_t {
+    driver_t driver;
+    uint8_t device_address;
+    endpoint_t *bulk_in;
+    endpoint_t *bulk_out;
+    ring_t *rx_ring;
+    bool configured;
+} driver_instance_t;
+
+bool cdc_open(driver_instance_t *instance, uint8_t dev_addr);
+void cdc_send(driver_instance_t *instance, const uint8_t *data, uint16_t len);
 
 // ==[ Enumeration ]============================================================
 
