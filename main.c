@@ -37,13 +37,7 @@ int main() {
     usb_debug(1);
     usb_init();
 
-    rx_ring = ring_new(1024);
-    if (!rx_ring) {
-        printf("Failed to create ring buffer\n");
-        return -1;
-    }
-
-    cdc_instance = driver_instance_register("CDC", rx_ring);
+    cdc_instance = driver_init("CDC", 1024);
     if (!cdc_instance) {
         printf("Failed to register CDC driver instance\n");
         return -1;

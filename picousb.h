@@ -177,8 +177,6 @@ void reset_ftdi(device_t *dev);
 
 typedef struct driver_instance_t driver_instance_t;
 
-
-
 typedef struct driver_t {
     const char *name;
     uint8_t bInterfaceClass;
@@ -201,7 +199,9 @@ typedef struct driver_instance_t {
     bool configured;
 } driver_instance_t;
 
-bool cdc_open(driver_instance_t *instance, uint8_t dev_addr);
+driver_instance_t* driver_init(const char *driver_name, uint16_t bufsize);
+
+bool cdc_open(driver_instance_t *instance, void *ptr, uint16_t len);
 void cdc_send(driver_instance_t *instance, const uint8_t *data, uint16_t len);
 
 // ==[ Enumeration ]============================================================
