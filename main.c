@@ -40,9 +40,9 @@ int main() {
     usb_debug(1);
     usb_init();
 
-    cdc_driver->init("CDC", 1024);
-    if (!cdc_driver) {
-        printf("Failed to register CDC driver instance\n");
+    
+    if (!driver_init(cdc_driver, "CDC", 1024)) {
+        printf("Failed too register CDC driver instance\n");
         return -1;
     }
 
@@ -60,7 +60,7 @@ int main() {
                 last_ticks  = timer_ticks;
 
                 if (last_ticks % 5) {
-                    cdc_driver->send_data((uint8_t *) "Hello, world!\r\n", 14);
+                    cdc_driver->send_data((uint8_t *)"Hello, world!\r\n", 14);
                 }
 
                 if (last_ticks % 10) {

@@ -30,6 +30,7 @@
 
 #define MAX_HUBS        1 // root +  0
 #define MAX_DEVICES     2 // dev0 +  1
+#define MAX_DRIVERS    16 // epx  + 15
 #define MAX_ENDPOINTS  16 // epx  + 15
 #define MAX_DRIVERS    16 // TODO: Is this too many?
 #define MAX_CTRL_BUF  320 // Size of shared control transfer buffer
@@ -193,7 +194,6 @@ typedef struct driver_t {
     void (*read_ring)(void);
     void (*write_ring)(endpoint_t *ep, uint16_t bytes_done);
 
-    driver_t* (*init)(char *name, uint16_t bufsize);
     bool (*open_impl)(driver_t *self, void *ptr, uint16_t len);
     void (*config_impl)(driver_t *self);
     void (*close_impl)(driver_t *self);
@@ -202,7 +202,7 @@ typedef struct driver_t {
     void (*write_ring_impl)(driver_t *self);
 } driver_t;
 
-driver_t* driver_init(driver_t *driver, char *driver_name, uint16_t bufsize);
+bool driver_init(driver_t *driver, char *driver_name, uint16_t bufsize);
 
 bool cdc_open(driver_t *driver, void *ptr, uint16_t len);
 void cdc_send(driver_t *driver, const uint8_t *data, uint16_t len);
@@ -213,6 +213,7 @@ void close_trampoline(driver_t *self);
 void send_data_trampoline(driver_t *self, const uint8_t *data, uint16_t len);
 void read_ring_trampoline(driver_t *self, uint16_t bytes_done);
 void write_ring_trampoline(driver_t *self);
+
 
 // ==[ Enumeration ]============================================================
 

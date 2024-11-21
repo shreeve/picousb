@@ -683,14 +683,12 @@ void reset_ftdi(device_t *dev) {
 static inline int write_ring(driver_t *driver, const uint8_t *data, uint16_t len) {
     if (!driver || !driver->rx_buffer)
         return -1;
-
     return ring_write_blocking(driver->rx_buffer, data, len);
 }
 
 static inline int read_ring(driver_t *driver, uint8_t *buffer, uint16_t len) {
     if (!driver || !driver->rx_buffer)
         return -1;
-
     bool available = ring_is_empty(driver->rx_buffer);
     if (!available) return 0;
 
@@ -701,7 +699,6 @@ static inline int read_ring(driver_t *driver, uint8_t *buffer, uint16_t len) {
 
 static driver_t drivers[MAX_DRIVERS];
 static uint8_t driver_count = 0;
-
 
 driver_t* find_driver(uint8_t topclass, uint8_t subclass, uint8_t protocol) {
     for (uint8_t i = 0; i < driver_count; i++) {
@@ -728,7 +725,6 @@ const driver_t driver_templates[] = {
         .tx_endpoint         = NULL,
         .rx_buffer           = NULL,
 
-        .init                = driver_init,
         .open                = (bool (*)(void *, uint16_t))open_trampoline,
         .config              = (void (*)(void))config_trampoline,
         .close               = (void (*)(void))close_trampoline,
@@ -745,15 +741,14 @@ const driver_t driver_templates[] = {
     }
 };
 
-driver_t* driver_init(driver_t *driver, char *driver_name, uint16_t bufsize) {
-    const driver_t *template = NULL;
-
+bool driver_init(driver_t *driver, char *driver_name, uint16_t bufsize) {
     if (driver_count >= MAX_DRIVERS) {
         printf("No more room for drivers\n");
-        return NULL;
+        return false;
     }
 
-    for (int i = 0; i < sizeof(driver_templates)/sizeof(driver_t); i++) {
+    const driver_t *template = NULL;
+    for (int i = 0; i < sizeof(driver_templates) / sizeof(driver_t); i++) {
         if (strcmp(driver_templates[i].name, driver_name) == 0) {
             template = &driver_templates[i];
             break;
@@ -762,20 +757,20 @@ driver_t* driver_init(driver_t *driver, char *driver_name, uint16_t bufsize) {
 
     if (!template) {
         printf("Could not find driver template named '%s'\n", driver_name);
-        return NULL;
+        return false;
     }
 
     ring_t *rx_buffer = ring_new(bufsize);
     if (!rx_buffer) {
         printf("Failed to create ring buffer\n");
-        return NULL;
+        return false;
     }
-
+    
     driver_t *new_driver = &drivers[driver_count++];
     memcpy(new_driver, template, sizeof(driver_t));
     new_driver->rx_buffer = rx_buffer;
 
-    return new_driver;
+    return true;
 }
 
 driver_t* driver_instance_from_endpoint(endpoint_t *ep) {
@@ -821,7 +816,6 @@ bool cdc_open(driver_t *driver, void *ptr, uint16_t len) {
 
             if (epd->bmAttributes == USB_TRANSFER_TYPE_BULK) {
                 endpoint_t *ep = next_endpoint(epx->dev_addr, epd, NULL);
-
                 if (epd->bEndpointAddress & USB_DIR_IN) {
                     driver->rx_endpoint = ep;
                     printf("Found Bulk IN endpoint\n");
@@ -891,7 +885,6 @@ bool setup_drivers(void *ptr, device_t *dev) {
 
         if (cur[1] == USB_DT_INTERFACE) {
             usb_interface_descriptor_t *ifd = (usb_interface_descriptor_t *)cur;
-
             driver_t *matched_driver = driver_instance_for_interface(
                 ifd->bInterfaceClass,
                 ifd->bInterfaceSubClass,
