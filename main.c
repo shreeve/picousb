@@ -13,6 +13,11 @@ bool timer_callback(struct repeating_timer *t) {
 
 char *buf = (char[1024]) { 0 };
 
+void on_device_active(device_t *dev) {
+    printf("STRONG: Device %u is active\n", dev->dev_addr);
+    // reset_ftdi(dev);
+}
+
 void poll_ep1_in(void *arg) {
     endpoint_t *ep = &eps[1];
     uint16_t len = ep->maxsize;
