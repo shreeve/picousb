@@ -690,10 +690,10 @@ static inline int write_ring(driver_t *driver, const uint8_t *data, uint16_t len
 static inline int read_ring(driver_t *driver, uint8_t *buffer, uint16_t len) {
     if (!driver || !driver->rx_buffer)
         return -1;
-    
+
     bool available = ring_is_empty(driver->rx_buffer);
     if (!available) return 0;
-    
+
     uint16_t to_read = (available < len) ? available : len;
     return ring_read_blocking(driver->rx_buffer, buffer, to_read);
 }
@@ -702,7 +702,7 @@ static inline int read_ring(driver_t *driver, uint8_t *buffer, uint16_t len) {
 static driver_t drivers[MAX_DRIVERS];
 static uint8_t driver_count = 0;
 
-      
+
 driver_t* find_driver(uint8_t topclass, uint8_t subclass, uint8_t protocol) {
     for (uint8_t i = 0; i < driver_count; i++) {
         driver_t *driver = &drivers[i];
@@ -716,6 +716,7 @@ driver_t* find_driver(uint8_t topclass, uint8_t subclass, uint8_t protocol) {
     return NULL;
 }
 
+driver_t* driver_init(driver_t *driver, char *driver_name, uint16_t bufsize);
 
 const driver_t driver_templates[] = {
     {

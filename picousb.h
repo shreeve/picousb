@@ -175,7 +175,9 @@ void reset_ftdi(device_t *dev);
 
 // ==[ Drivers ]================================================================
 
-typedef struct {
+typedef struct driver_t driver_t;
+
+typedef struct driver_t {
     const char *name;
     uint8_t      if_topclass;
     uint8_t      if_subclass;
