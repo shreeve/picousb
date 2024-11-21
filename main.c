@@ -1,7 +1,7 @@
 #include "picousb.h"
 
 ring_t *rx_ring;
-driver_instance_t *cdc_instance;
+client_t *cdc_instance;
 
 // ==[ Manage timer ticks ]==
 
