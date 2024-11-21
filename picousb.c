@@ -692,23 +692,32 @@ static inline int read_ring(driver_t *driver, uint8_t *buffer, uint16_t len) {
 }
 
 
+
 const driver_t driver_templates[] = {
     {
         .name                = "CDC",
-        .if_topclass        = 0xFF,
-        .if_subclass        = 0xFF,
-        .if_protocol        = 0xFF,
-        .rx_endpoint        = NULL,
-        .tx_endpoint        = NULL,
-        .rx_buffer          = NULL,
+        .if_topclass         = 0xFF,
+        .if_subclass         = 0xFF,
+        .if_protocol         = 0xFF,
+        .rx_endpoint         = NULL,
+        .tx_endpoint         = NULL,
+        .rx_buffer           = NULL,
 
-        .init               = NULL,
-        .open               = cdc_open,
-        .config             = reset_ftdi,
-        .close              = NULL,
-        .send_data          = cdc_send,
-        .read_ring          = read_ring,
-        .write_ring         = write_ring
+        .init                = (void (*)(void))init_trampoline,
+        .open                = (bool (*)(void *, uint16_t))open_trampoline,
+        .config              = (void (*)(void))config_trampoline,
+        .close               = (void (*)(void))close_trampoline,
+        .send_data           = (void (*)(const uint8_t *, uint16_t))send_data_trampoline,
+        .read_ring           = (void (*)(void))read_ring_trampoline,
+        .write_ring          = (void (*)(void))write_ring_trampoline,
+
+        .init_impl           = driver_init,
+        .open_impl           = cdc_open,
+        .config_impl         = reset_ftdi,
+        .close_impl          = NULL,
+        .send_data_impl      = cdc_send,
+        .read_ring_impl      = read_ring,
+        .write_ring_impl     = write_ring
     }
 };
 
@@ -737,7 +746,7 @@ driver_t* driver_init(const char *driver_name, uint16_t bufsize) {
     }
 
     const driver_t *template = NULL;
-    for (int i = 0; i < sizeof(driver_templates)/sizeof(driver_t); i++) {
+    for (int i = 0; i < sizeof(driver_templates) / sizeof(driver_t); i++) {
         if (strcmp(driver_templates[i].name, driver_name) == 0) {
             template = &driver_templates[i];
             break;
@@ -756,17 +765,12 @@ driver_t* driver_init(const char *driver_name, uint16_t bufsize) {
     }
 
     driver_t *driver = &drivers[driver_count++];
-    
-    memcpy(&driver, template, sizeof(driver_t));
-    
+    memcpy(driver, template, sizeof(driver_t));
     driver->rx_buffer = rx_buffer;
-
-    if (driver->init) {
-        driver->init();
-    }
 
     return driver;
 }
+
 
 driver_t* driver_instance_from_endpoint(endpoint_t *ep) {
     for (uint8_t i = 0; i < driver_count; i++) {
@@ -863,7 +867,7 @@ bool setup_drivers(void *ptr, device_t *dev) {
             );
 
             if (matched_driver) {
-                matched_driver->open(matched_driver, ptr, cfd->wTotalLength);
+                matched_driver->open(ptr, cfd->wTotalLength);
             }
         }
 
@@ -1265,7 +1269,7 @@ void isr_usbctrl() {
         driver_t *driver = driver_instance_from_endpoint(ep);
 
         if (driver) {
-            driver->write_ring(driver, ep->user_buf, ep->bytes_done);
+            driver->write_ring(ep->user_buf, ep->bytes_done);
         }
     }
 

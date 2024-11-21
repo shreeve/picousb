@@ -186,19 +186,56 @@ typedef struct driver_t {
     endpoint_t  *rx_endpoint;
     endpoint_t  *tx_endpoint;
     ring_t      *rx_buffer;
-    void (* const init  )(void);
-    bool (* const open  )(driver_t *instance, void *config_buffer, uint16_t len);
-    bool (* const config)(driver_t *instance);
-    void (* const close )(driver_t *instance);
-    void (* const send_data)(driver_t *instance, const uint8_t *data, uint16_t len);
-    int  (* const read_ring)(driver_t *instance, uint8_t *buffer, uint16_t len);
-    int  (* const write_ring)(driver_t *instance, const uint8_t *data, uint16_t len);
+
+    void (*init)(char *name, uint16_t bufsize);
+    bool (*open)(void *ptr, uint16_t len);
+    void (*config)(void);
+    void (*close)(void);
+    void (*send_data)(const uint8_t *data, uint16_t len);
+    void (*read_ring)(void);
+    void (*write_ring)(endpoint_t *ep, uint16_t bytes_done);
+
+    void (*init_impl)(driver_t *self, char *name, uint16_t bufsize);
+    bool (*open_impl)(driver_t *self, void *ptr, uint16_t len);
+    void (*config_impl)(driver_t *self);
+    void (*close_impl)(driver_t *self);
+    void (*send_data_impl)(driver_t *self, const uint8_t *data, uint16_t len);
+    void (*read_ring_impl)(driver_t *self, endpoint_t *ep, uint16_t bytes_done);
+    void (*write_ring_impl)(driver_t *self);
 } driver_t;
 
 driver_t driver_init(const char *driver_name, uint16_t bufsize);
 
 bool cdc_open(driver_t *driver, void *ptr, uint16_t len);
 void cdc_send(driver_t *driver, const uint8_t *data, uint16_t len);
+
+void init_trampoline(driver_t *self, char *name, uint16_t bufsize) {
+    if (self->init_impl) self->init_impl(self, name, bufsize);
+}
+
+bool open_trampoline(driver_t *self, void *ptr, uint16_t len) {
+    return self->open_impl ? self->open_impl(self, ptr, len) : false;
+}
+
+void config_trampoline(driver_t *self) {
+    if (self->config_impl) self->config_impl(self);
+}
+
+void close_trampoline(driver_t *self) {
+    if (self->close_impl) self->close_impl(self);
+}
+
+void send_data_trampoline(driver_t *self, const uint8_t *data, uint16_t len) {
+    if (self->send_data_impl) self->send_data_impl(self, data, len);
+}
+
+void read_ring_trampoline(driver_t *self, endpoint_t *ep, uint16_t bytes_done) {
+    if (self->read_ring_impl) self->read_ring_impl(self, ep, bytes_done);
+}
+
+void write_ring_trampoline(driver_t *self) {
+    if (self->write_ring_impl) self->write_ring_impl(self);
+}
 
 // ==[ Enumeration ]============================================================
 

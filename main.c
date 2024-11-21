@@ -3,7 +3,7 @@
 #include "ring.h"
 
 ring_t *rx_ring;
-driver_instance_t *cdc_instance;
+driver_t *cdc_driver;
 
 // ==[ Manage timer ticks ]==
 
@@ -42,9 +42,9 @@ int main() {
     usb_debug(1);
     usb_init();
 
-    cdc_instance = driver_init("CDC", 1024);
-    if (!cdc_instance) {
-        printf("Failed to register CDC driver instance\n");
+    cdc_driver->init("CDC", 1024);
+    if (!cdc_driver) {
+        printf("Failed too register CDC driver instance\n");
         return -1;
     }
 
@@ -62,7 +62,7 @@ int main() {
                 last_ticks  = timer_ticks;
 
                 if (last_ticks % 5) {
-                    cdc_instance->driver.send_data(cdc_instance, (uint8_t *)"Hello, world!\r\n", 14);
+                    cdc_driver->send_data((uint8_t *)"Hello, world!\r\n", 14);
                 }
 
                 if (last_ticks % 10) {
