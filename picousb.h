@@ -464,10 +464,10 @@ typedef enum {
     TRANSFER_INVALID, // not used yet
 } transfer_status_t;
 
-const uint32_t USB_SIE_CTRL_BASE = USB_SIE_CTRL_PULLDOWN_EN_BITS   // Enable
-                                 | USB_SIE_CTRL_VBUS_EN_BITS       // Allow VBUS
-                                 | USB_SIE_CTRL_KEEP_ALIVE_EN_BITS // Low speed
-                                 | USB_SIE_CTRL_SOF_EN_BITS;       // Full speed
+static const uint32_t USB_SIE_CTRL_BASE = USB_SIE_CTRL_PULLDOWN_EN_BITS   // Enable
+                                        | USB_SIE_CTRL_VBUS_EN_BITS       // Allow VBUS
+                                        | USB_SIE_CTRL_KEEP_ALIVE_EN_BITS // Low speed
+                                        | USB_SIE_CTRL_SOF_EN_BITS;       // Full speed
 
 SDK_INLINE const char *transfer_type(uint8_t bits) {
     switch (bits & USB_TRANSFER_TYPE_BITS) {
