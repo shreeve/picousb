@@ -27,7 +27,7 @@
 #include "helpers.h"              // Helper functions
 #include "ring.h"                 // Multi-core and IRQ safe ring buffer
 
-// ==[ PicoUSB ]================================================================
+// ==[ Defines ]================================================================
 
 #define MAX_HUBS        1 // root +  0
 #define MAX_DEVICES     2 // dev0 +  1
