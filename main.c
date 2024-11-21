@@ -9,7 +9,7 @@ bool timer_callback(struct repeating_timer *t) {
     return true; // Keep the timer running
 }
 
-// ==[ Polling with a static buffer ]==
+// ==[ Application specific ]==
 
 char *buf = (char[1024]) { 0 };
 
