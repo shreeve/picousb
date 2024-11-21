@@ -143,7 +143,7 @@ typedef struct {
     uint8_t    data_pid  ; // Toggle between DATA0/DATA1 packets
     uint16_t   bytes_left; // Bytes left to transfer
     uint16_t   bytes_done; // Bytes done transferring
-    endpoint_c cb        ; // Callback function
+    endpoint_c callback  ; // Callback function
 } endpoint_t;
 
 extern endpoint_t eps[MAX_ENDPOINTS], *epx;
@@ -209,7 +209,7 @@ typedef struct {
             uint8_t    ep_num    ; // Endpoint number (direction not included)
             uint8_t   *user_buf  ; // User buffer in DPSRAM, RAM, or flash
             uint16_t   len       ; // Bytes transferred
-            endpoint_c cb        ; // Callback function
+            endpoint_c callback  ; // Callback function
         } transfer;
 
         // Generic function callback

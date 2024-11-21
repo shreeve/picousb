@@ -411,6 +411,7 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     epx->user_buf   = ctrl_buf;
     epx->bytes_left = setup->wLength;
     epx->bytes_done = 0;
+    epx->callback   = transfer_zlp;
 
     // Flip the endpoint direction if there is no data phase
     if (!epx->bytes_left) epx->ep_addr ^= USB_DIR_IN;
@@ -471,7 +472,7 @@ void finish_transfer(endpoint_t *ep) {
         .transfer.ep_num   = ep->ep_addr & 0xf, // Endpoint number (EP0-EP15)
         .transfer.user_buf = ep->user_buf,      // User buffer
         .transfer.len      = ep->bytes_done,    // Buffer length
-        .transfer.cb       = ep->cb,            // Callback fn
+        .transfer.callback  = ep->callback,     // Callback fn
         .transfer.status   = TRANSFER_SUCCESS,  // Transfer status
     };
 
@@ -970,7 +971,7 @@ void usb_task() {
                 uint8_t    ep_num   = task.transfer.ep_num;   // Endpoint number
                 uint8_t   *user_buf = task.transfer.user_buf; // User buffer
                 uint16_t   len      = task.transfer.len;      // Buffer length
-                endpoint_c cb       = task.transfer.cb;       // Callback fn
+                endpoint_c callback = task.transfer.callback; // Callback fn
                 uint8_t    status   = task.transfer.status;   // Transfer status
 
                 // Get the endpoint
