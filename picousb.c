@@ -206,7 +206,7 @@ void print_endpoints() {
         printf("  Device Address: 0x%02x\n", ep->dev_addr);
         printf("  Endpoint Addr:  0x%02x\n", ep->ep_addr);
         printf("  Max Size:       0x%04x\n", ep->maxsize);
-        printf("  Type:          %s\n", 
+        printf("  Type:          %s\n",
             ep->type == USB_TRANSFER_TYPE_CONTROL ? "Control" :
             ep->type == USB_TRANSFER_TYPE_ISOCHRONOUS ? "Isochronous" :
             ep->type == USB_TRANSFER_TYPE_BULK ? "Bulk" :
@@ -685,17 +685,17 @@ void reset_ftdi(device_t *dev) {
 static inline int write_ring(driver_instance_t *instance, const uint8_t *data, uint16_t len) {
     if (!instance || !instance->rx_ring)
         return -1;
-    
+
     return ring_write_blocking(instance->rx_ring, data, len);
 }
 
 static inline int read_ring(driver_instance_t *instance, uint8_t *buffer, uint16_t len) {
     if (!instance || !instance->rx_ring)
         return -1;
-    
+
     bool available = ring_is_empty(instance->rx_ring);
     if (!available) return 0;
-    
+
     uint16_t to_read = (available < len) ? available : len;
     return ring_read_blocking(instance->rx_ring, buffer, to_read);
 }
@@ -758,9 +758,8 @@ driver_instance_t* driver_init(const char *driver_name, uint16_t bufsize) {
     }
 
     driver_instance_t *instance = &driver_instances[driver_instance_count++];
-    
     memcpy(&instance->driver, template, sizeof(driver_t));
-    
+
     instance->device_address = 0;
     instance->bulk_in = NULL;
     instance->bulk_out = NULL;
@@ -801,7 +800,7 @@ driver_instance_t* driver_instance_for_interface(uint8_t topclass, uint8_t subcl
 // ==[ Driver Implementation for CDC ]=============================================
 bool cdc_open(driver_instance_t *instance, void *ptr, uint16_t len) {
     usb_configuration_descriptor_t *config_desc = (usb_configuration_descriptor_t *)ptr;
-    
+
     printf("CDC Open: Attempting to configure driver\n");
     printf("Total config length: %u\n", len);
 
@@ -820,7 +819,7 @@ bool cdc_open(driver_instance_t *instance, void *ptr, uint16_t len) {
 
             if (epd->bmAttributes == USB_TRANSFER_TYPE_BULK) {
                 endpoint_t *ep = next_endpoint(instance->device_address, epd, NULL);
-                
+
                 if (epd->bEndpointAddress & USB_DIR_IN) {
                     instance->bulk_in = ep;
                     printf("Found Bulk IN endpoint\n");
@@ -865,8 +864,8 @@ bool setup_drivers(void *ptr, device_t *dev) {
 
         if (cur[1] == USB_DT_INTERFACE) {
             usb_interface_descriptor_t *ifd = (usb_interface_descriptor_t *)cur;
-            
             driver_instance_t *matched_instance = driver_instance_for_interface(
+
                 ifd->bInterfaceClass,
                 ifd->bInterfaceSubClass
             );
