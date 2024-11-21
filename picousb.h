@@ -67,7 +67,7 @@ typedef struct {
     // Nothing yet
 } hub_t;
 
-static hub_t hubs[MAX_HUBS], *root = hubs;
+extern hub_t hubs[MAX_HUBS], *root;
 
 // ==[ Devices ]================================================================
 

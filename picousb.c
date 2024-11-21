@@ -17,6 +17,8 @@ static queue_t *queue = &((queue_t) { 0 });
 
 // ==[ Hubs ]===================================================================
 
+hub_t hubs[MAX_HUBS], *root = hubs;
+
 // ==[ Devices ]================================================================
 
 device_t *get_device(uint8_t dev_addr) {
