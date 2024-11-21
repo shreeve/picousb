@@ -673,22 +673,22 @@ void reset_ftdi(device_t *dev) {
     }
 }
 
-static inline int write_ring(driver_t *instance, const uint8_t *data, uint16_t len) {
-    if (!instance || !instance->rx_buffer)
+static inline int write_ring(driver_t *driver, const uint8_t *data, uint16_t len) {
+    if (!driver || !driver->rx_buffer)
         return -1;
     
-    return ring_write_blocking(instance->rx_buffer, data, len);
+    return ring_write_blocking(driver->rx_buffer, data, len);
 }
 
-static inline int read_ring(driver_t *instance, uint8_t *buffer, uint16_t len) {
-    if (!instance || !instance->rx_buffer)
+static inline int read_ring(driver_t *driver, uint8_t *buffer, uint16_t len) {
+    if (!driver || !driver->rx_buffer)
         return -1;
     
-    bool available = ring_is_empty(instance->rx_buffer);
+    bool available = ring_is_empty(driver->rx_buffer);
     if (!available) return 0;
     
     uint16_t to_read = (available < len) ? available : len;
-    return ring_read_blocking(instance->rx_buffer, buffer, to_read);
+    return ring_read_blocking(driver->rx_buffer, buffer, to_read);
 }
 
 
@@ -712,8 +712,8 @@ const driver_t driver_templates[] = {
     }
 };
 
-#define MAX_DRIVER_INSTANCES 16
-static driver_t drivers[MAX_DRIVER_INSTANCES];
+
+static driver_t drivers[MAX_DRIVERS];
 static uint8_t driver_count = 0;
 
       
@@ -731,8 +731,8 @@ driver_t* find_driver(uint8_t topclass, uint8_t subclass, uint8_t protocol) {
 }
 
 driver_t* driver_init(const char *driver_name, uint16_t bufsize) {
-    if (driver_count >= MAX_DRIVER_INSTANCES) {
-        printf("No more room for driver instances\n");
+    if (driver_count >= MAX_DRIVERS) {
+        printf("No more room for drivers\n");
         return NULL;
     }
 
@@ -755,25 +755,24 @@ driver_t* driver_init(const char *driver_name, uint16_t bufsize) {
         return NULL;
     }
 
-    driver_t *instance = &drivers[driver_count++];
+    driver_t *driver = &drivers[driver_count++];
     
     memcpy(&driver, template, sizeof(driver_t));
     
-
-    instance->rx_buffer = rx_buffer;
+    driver->rx_buffer = rx_buffer;
 
     if (driver->init) {
         driver->init();
     }
 
-    return instance;
+    return driver;
 }
 
 driver_t* driver_instance_from_endpoint(endpoint_t *ep) {
     for (uint8_t i = 0; i < driver_count; i++) {
-        driver_t *instance = &drivers[i];
-        if (instance->rx_endpoint == ep || instance->tx_endpoint == ep) {
-            return instance;
+        driver_t *driver = &drivers[i];
+        if (driver->rx_endpoint == ep || driver->tx_endpoint == ep) {
+            return driver;
         }
     }
     return NULL;
@@ -857,13 +856,13 @@ bool setup_drivers(void *ptr, device_t *dev) {
         if (cur[1] == USB_DT_INTERFACE) {
             usb_interface_descriptor_t *ifd = (usb_interface_descriptor_t *)cur;
             
-            driver_t *matched_instance = driver_instance_for_interface(
+            driver_t *matched_driver = driver_instance_for_interface(
                 ifd->bInterfaceClass,
                 ifd->bInterfaceSubClass
             );
 
-            if (matched_instance) {
-                matched_instance->driver.open(matched_instance, ptr, cfd->wTotalLength);
+            if (matched_driver) {
+                matched_driver->open(matched_driver, ptr, cfd->wTotalLength);
             }
         }
 
@@ -1262,10 +1261,10 @@ void isr_usbctrl() {
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_TRANS_COMPLETE_BITS;
 
-        driver_t *instance = driver_instance_from_endpoint(ep);
+        driver_t *driver = driver_instance_from_endpoint(ep);
 
-        if (instance && instance->configured) {
-            instance->driver.write_ring(instance, ep->user_buf, ep->bytes_done);
+        if (driver) {
+            driver->write_ring(driver, ep->user_buf, ep->bytes_done);
         }
     }
 

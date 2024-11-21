@@ -31,6 +31,7 @@
 
 #define MAX_HUBS        1 // root +  0
 #define MAX_DEVICES     2 // dev0 +  1
+#define MAX_DRIVERS    16 // epx  + 15
 #define MAX_ENDPOINTS  16 // epx  + 15
 #define MAX_CTRL_BUF  320 // Large enough to handle a full config descriptor
 
