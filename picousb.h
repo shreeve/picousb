@@ -184,14 +184,7 @@ typedef struct {
 } driver_t;
 
 const driver_t drivers[] = {
-    {
-        .name   = "CDC",
-        .init   = cdch_init,
-        .open   = cdch_open,
-        .config = cdch_config,
-        .cb     = cdch_cb,
-        .close  = cdch_close,
-    }
+    // FIXME: Replace all this with the new drivers code
 };
 
 enum {
