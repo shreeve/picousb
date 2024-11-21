@@ -176,34 +176,34 @@ void reset_ftdi(device_t *dev);
 
 // ==[ Drivers ]================================================================
 
-typedef struct driver_instance_t driver_instance_t;
-
-typedef struct driver_t {
+typedef struct {
     const char *name;
     uint8_t bInterfaceClass;
     uint8_t bInterfaceSubClass;
-    void (* const init  )(void);
-    bool (* const open  )(driver_instance_t *instance, void *config_buffer, uint16_t len);
-    bool (* const config)(driver_instance_t *instance);
-    void (* const close )(driver_instance_t *instance);
-    void (* const send_data)(driver_instance_t *instance, const uint8_t *data, uint16_t len);
-    int (* const read_ring)(driver_instance_t *instance, uint8_t *buffer, uint16_t len);
-    int (* const write_ring)(driver_instance_t *instance, const uint8_t *data, uint16_t len);
+    void (* const init      )(void);
+    bool (* const open      )(client_t *clt, void *config_buffer, uint16_t len);
+    bool (* const config    )(client_t *clt);
+    int  (* const read_ring )(client_t *clt, uint8_t *buffer, uint16_t len);
+    int  (* const write_ring)(client_t *clt, const uint8_t *data, uint16_t len);
+    void (* const send_data )(client_t *clt, const uint8_t *data, uint16_t len);
+    void (* const close     )(client_t *clt);
 } driver_t;
 
-typedef struct driver_instance_t {
-    driver_t driver;
-    uint8_t device_address;
+// ==[ Clients ]================================================================
+
+typedef struct client_t {
+    driver_t    driver;
+    uint8_t     device_address;
     endpoint_t *bulk_in;
     endpoint_t *bulk_out;
-    ring_t *rx_ring;
-    bool configured;
-} driver_instance_t;
+    ring_t     *rx_ring;
+    bool        configured;
+} client_t;
 
-driver_instance_t* driver_init(const char *driver_name, uint16_t bufsize);
+client_t *driver_init(const char *driver_name, uint16_t bufsize);
 
-bool cdc_open(driver_instance_t *instance, void *ptr, uint16_t len);
-void cdc_send(driver_instance_t *instance, const uint8_t *data, uint16_t len);
+bool cdc_open(client_t *clt, void *ptr, uint16_t len);
+void cdc_send(client_t *clt, const uint8_t *data, uint16_t len);
 
 // ==[ Enumeration ]============================================================
 
