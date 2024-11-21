@@ -26,8 +26,6 @@
 #include "helpers.h"              // Helper functions
 #include "ring.h"                 // Multi-core and IRQ safe ring buffer
 
-typedef struct client_t client_t; // Forward declaration
-
 // ==[ Constants ]==============================================================
 
 #define MAX_HUBS        1 // root +  0
