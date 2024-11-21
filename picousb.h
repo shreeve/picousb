@@ -31,7 +31,7 @@
 #define MAX_HUBS        1 // root +  0
 #define MAX_DEVICES     2 // dev0 +  1
 #define MAX_ENDPOINTS  16 // epx  + 15
-#define MAX_CLIENTS    16 // Number of driver clients allowed
+#define MAX_DRIVERS    16 // TODO: Is this too many?
 #define MAX_CTRL_BUF  320 // Size of shared control transfer buffer
 
 #define MAKE_U16(x, y) (((x) << 8) | ((y)     ))
@@ -183,19 +183,34 @@ typedef struct {
     endpoint_t  *rx_endpoint;
     endpoint_t  *tx_endpoint;
     ring_t      *rx_buffer;
-    void (* const init      )(void);
-    bool (* const open      )(driver_t *driver, void *config_buffer, uint16_t len);
-    bool (* const config    )(driver_t *driver);
-    int  (* const read_ring )(driver_t *driver,       uint8_t *data, uint16_t len);
-    int  (* const write_ring)(driver_t *driver, const uint8_t *data, uint16_t len);
-    void (* const send_data )(driver_t *driver, const uint8_t *data, uint16_t len);
-    void (* const close     )(driver_t *driver);
+
+    bool (*open)(void *ptr, uint16_t len);
+    void (*config)(void);
+    void (*close)(void);
+    void (*send_data)(const uint8_t *data, uint16_t len);
+    void (*read_ring)(void);
+    void (*write_ring)(endpoint_t *ep, uint16_t bytes_done);
+
+    driver_t* (*init)(char *name, uint16_t bufsize);
+    bool (*open_impl)(driver_t *self, void *ptr, uint16_t len);
+    void (*config_impl)(driver_t *self);
+    void (*close_impl)(driver_t *self);
+    void (*send_data_impl)(driver_t *self, const uint8_t *data, uint16_t len);
+    void (*read_ring_impl)(driver_t *self, uint16_t bytes_done);
+    void (*write_ring_impl)(driver_t *self);
 } driver_t;
 
-driver_t *driver_init(const char *driver_name, uint16_t bufsize);
+driver_t* driver_init(driver_t *driver, char *driver_name, uint16_t bufsize);
 
 bool cdc_open(driver_t *driver, void *ptr, uint16_t len);
 void cdc_send(driver_t *driver, const uint8_t *data, uint16_t len);
+
+bool open_trampoline(driver_t *self, void *ptr, uint16_t len);
+void config_trampoline(driver_t *self);
+void close_trampoline(driver_t *self);
+void send_data_trampoline(driver_t *self, const uint8_t *data, uint16_t len);
+void read_ring_trampoline(driver_t *self, uint16_t bytes_done);
+void write_ring_trampoline(driver_t *self);
 
 // ==[ Enumeration ]============================================================
 
