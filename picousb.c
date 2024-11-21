@@ -220,8 +220,6 @@ void print_endpoints() {
     }
 }
 
-
-
 endpoint_t eps[MAX_ENDPOINTS], *epx = eps;
 
 // ==[ Buffers ]================================================================
