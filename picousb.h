@@ -5,8 +5,8 @@
 // PicoUSB - A smaller than tiny USB Host library for the Raspberry Pi Pico/W
 //
 // Author: Steve Shreeve <steve.shreeve@gmail.com>
-//   Date: November 15, 2024
 // Author: Babak Rasouli <b@bak.rasou.li>
+//   Date: November 20, 2024
 //  Legal: Same license as the Raspberry Pi Pico SDK
 //
 // Thanks to Ha Thach for TinyUSB and https://github.com/hathach/tinyusb
