@@ -194,14 +194,14 @@ void clear_endpoints() {
 void print_endpoints() {
     printf("\nEndpoint Status:\n");
     printf("─────────────────────────────────────────────────────────────\n");
-    
+
     for (uint8_t i = 0; i < MAX_ENDPOINTS; i++) {
         endpoint_t *ep = &eps[i];
-        
+
         if (!ep->configured) {
             continue;
         }
-        
+
         printf("EP%u%s:\n", ep->ep_addr & 0xf, ep_in(ep) ? " IN" : " OUT");
         printf("  Device Address: 0x%02x\n", ep->dev_addr);
         printf("  Endpoint Addr:  0x%02x\n", ep->ep_addr);
