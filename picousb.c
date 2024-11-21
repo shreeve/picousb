@@ -691,6 +691,7 @@ bool setup_drivers(void *ptr, device_t *dev) {
 
     // Iterate through each descriptor
     for ( ; cur < end ; cur += *cur ) {
+        if (!*cur) panic("Invalid descriptor");
         uint8_t type = cur[1];
 
         // Debug output
