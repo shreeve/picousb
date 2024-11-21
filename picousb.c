@@ -858,7 +858,8 @@ bool setup_drivers(void *ptr, device_t *dev) {
             
             driver_t *matched_driver = driver_instance_for_interface(
                 ifd->bInterfaceClass,
-                ifd->bInterfaceSubClass
+                ifd->bInterfaceSubClass,
+                ifd->bInterfaceProtocol
             );
 
             if (matched_driver) {
