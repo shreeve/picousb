@@ -1146,12 +1146,7 @@ void isr_usbctrl() {
 
                 // Start the next transaction or finish the transfer
                 if (epz->bytes_left) {
-                    queue_add_blocking(queue, &((task_t) {
-                        .type         = TASK_CALLBACK,
-                        .guid         = guid++,
-                        .callback.fn  = start_transaction,
-                        .callback.arg = (void *) epz,
-                    }));
+                    queue_callback(start_transaction, (void *) epz);
                 } else {
                     finish_transfer(ep);
                 }
