@@ -195,7 +195,6 @@ typedef struct driver_t {
     void (*read_ring)(void);
     void (*write_ring)(endpoint_t *ep, uint16_t bytes_done);
 
-   driver_t* (*init)(char *name, uint16_t bufsize);
     bool (*open_impl)(driver_t *self, void *ptr, uint16_t len);
     void (*config_impl)(driver_t *self);
     void (*close_impl)(driver_t *self);
@@ -204,7 +203,7 @@ typedef struct driver_t {
     void (*write_ring_impl)(driver_t *self);
 } driver_t;
 
-driver_t* driver_init(driver_t *driver, char *driver_name, uint16_t bufsize);
+bool driver_init(driver_t *driver, char *driver_name, uint16_t bufsize);
 
 bool cdc_open(driver_t *driver, void *ptr, uint16_t len);
 void cdc_send(driver_t *driver, const uint8_t *data, uint16_t len);

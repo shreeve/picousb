@@ -42,8 +42,8 @@ int main() {
     usb_debug(1);
     usb_init();
 
-    cdc_driver->init("CDC", 1024);
-    if (!cdc_driver) {
+    
+    if (!driver_init(cdc_driver, "CDC", 1024)) {
         printf("Failed too register CDC driver instance\n");
         return -1;
     }

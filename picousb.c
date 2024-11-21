@@ -720,7 +720,7 @@ const driver_t driver_templates[] = {
         .tx_endpoint         = NULL,
         .rx_buffer           = NULL,
 
-        .init                = driver_init,
+
         .open                = (bool (*)(void *, uint16_t))open_trampoline,
         .config              = (void (*)(void))config_trampoline,
         .close               = (void (*)(void))close_trampoline,
@@ -737,10 +737,10 @@ const driver_t driver_templates[] = {
     }
 };
 
-driver_t* driver_init(driver_t *driver, char *driver_name, uint16_t bufsize) {
+bool driver_init(driver_t *driver, char *driver_name, uint16_t bufsize) {
     if (driver_count >= MAX_DRIVERS) {
         printf("No more room for drivers\n");
-        return NULL;
+        return false;
     }
 
     const driver_t *template = NULL;
@@ -753,20 +753,20 @@ driver_t* driver_init(driver_t *driver, char *driver_name, uint16_t bufsize) {
 
     if (!template) {
         printf("Could not find driver template named '%s'\n", driver_name);
-        return NULL;
+        return false;
     }
 
     ring_t *rx_buffer = ring_new(bufsize);
     if (!rx_buffer) {
         printf("Failed to create ring buffer\n");
-        return NULL;
+        return false;
     }
-
+    
     driver_t *new_driver = &drivers[driver_count++];
     memcpy(new_driver, template, sizeof(driver_t));
     new_driver->rx_buffer = rx_buffer;
 
-    return new_driver;
+    return true;
 }
 
 driver_t* driver_instance_from_endpoint(endpoint_t *ep) {
