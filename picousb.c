@@ -1,5 +1,17 @@
-#include "picousb.h"              // Weak functions
-#include "ring.h"
+#include "picousb.h"
+
+// =============================================================================
+// PicoUSB - A smaller than tiny USB Host library for the Raspberry Pi Pico/W
+//
+// Author: Steve Shreeve <steve.shreeve@gmail.com>
+//   Date: November 20, 2024
+//  Legal: Same license as the Raspberry Pi Pico SDK
+//
+// Thanks to Ha Thach for TinyUSB and https://github.com/hathach/tinyusb
+// Thanks to Miroslav Nemecek for his https://github.com/Panda381/PicoLibSDK
+// =============================================================================
+
+// Globals for task handling
 static uint32_t guid = 1;
 static queue_t *queue = &((queue_t) { 0 });
 
