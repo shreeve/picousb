@@ -60,6 +60,11 @@ int main() {
         if (devices[1].state == DEVICE_READY) {
             if (last_ticks != timer_ticks) {
                 last_ticks  = timer_ticks;
+
+                if (last_ticks % 5) {
+                    cdc_instance->driver.send_data(cdc_instance, (uint8_t *)"Hello, world!\r\n", 14);
+                }
+
                 if (last_ticks % 10) {
                     queue_callback(poll_ep1_in, NULL);
                 } else {

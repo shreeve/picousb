@@ -673,29 +673,35 @@ void reset_ftdi(device_t *dev) {
     }
 }
 
-static inline int write_ring(driver_instance_t *instance, const uint8_t *data, uint16_t len) {
-    if (!instance || !instance->rx_ring)
+static inline int write_ring(driver_t *instance, const uint8_t *data, uint16_t len) {
+    if (!instance || !instance->rx_buffer)
         return -1;
     
-    return ring_write_blocking(instance->rx_ring, data, len);
+    return ring_write_blocking(instance->rx_buffer, data, len);
 }
 
-static inline int read_ring(driver_instance_t *instance, uint8_t *buffer, uint16_t len) {
-    if (!instance || !instance->rx_ring)
+static inline int read_ring(driver_t *instance, uint8_t *buffer, uint16_t len) {
+    if (!instance || !instance->rx_buffer)
         return -1;
     
-    bool available = ring_is_empty(instance->rx_ring);
+    bool available = ring_is_empty(instance->rx_buffer);
     if (!available) return 0;
     
     uint16_t to_read = (available < len) ? available : len;
-    return ring_read_blocking(instance->rx_ring, buffer, to_read);
+    return ring_read_blocking(instance->rx_buffer, buffer, to_read);
 }
+
 
 const driver_t driver_templates[] = {
     {
         .name                = "CDC",
-        .bInterfaceClass    = 0xFF,
-        .bInterfaceSubClass = 0xFF,
+        .if_topclass        = 0xFF,
+        .if_subclass        = 0xFF,
+        .if_protocol        = 0xFF,
+        .rx_endpoint        = NULL,
+        .tx_endpoint        = NULL,
+        .rx_buffer          = NULL,
+
         .init               = NULL,
         .open               = cdc_open,
         .config             = reset_ftdi,
@@ -707,24 +713,25 @@ const driver_t driver_templates[] = {
 };
 
 #define MAX_DRIVER_INSTANCES 16
-static driver_instance_t driver_instances[MAX_DRIVER_INSTANCES];
-static uint8_t driver_instance_count = 0;
+static driver_t drivers[MAX_DRIVER_INSTANCES];
+static uint8_t driver_count = 0;
 
-// Find an unconfigured driver instance matching class/subclass
-driver_instance_t* find_driver(uint8_t topclass, uint8_t subclass) {
-    for (uint8_t i = 0; i < driver_instance_count; i++) {
-        driver_instance_t *instance = &driver_instances[i];
-        if (!instance->configured && 
-            instance->driver.bInterfaceClass == topclass &&
-            instance->driver.bInterfaceSubClass == subclass) {
-            return instance;
+      
+driver_t* find_driver(uint8_t topclass, uint8_t subclass, uint8_t protocol) {
+    for (uint8_t i = 0; i < driver_count; i++) {
+        driver_t *driver = &drivers[i];
+        if (
+            driver->if_topclass== topclass &&
+            driver->if_subclass == subclass &&
+            driver->if_protocol == protocol) {
+            return driver;
         }
     }
     return NULL;
 }
 
-driver_instance_t* driver_init(const char *driver_name, uint16_t bufsize) {
-    if (driver_instance_count >= MAX_DRIVER_INSTANCES) {
+driver_t* driver_init(const char *driver_name, uint16_t bufsize) {
+    if (driver_count >= MAX_DRIVER_INSTANCES) {
         printf("No more room for driver instances\n");
         return NULL;
     }
@@ -742,64 +749,57 @@ driver_instance_t* driver_init(const char *driver_name, uint16_t bufsize) {
         return NULL;
     }
 
-    ring_t *rx_ring = ring_new(bufsize);
-    if (!rx_ring) {
+    ring_t *rx_buffer = ring_new(bufsize);
+    if (!rx_buffer) {
         printf("Failed to create ring buffer\n");
         return NULL;
     }
 
-    driver_instance_t *instance = &driver_instances[driver_instance_count++];
+    driver_t *instance = &drivers[driver_count++];
     
-    memcpy(&instance->driver, template, sizeof(driver_t));
+    memcpy(&driver, template, sizeof(driver_t));
     
-    instance->device_address = 0;
-    instance->bulk_in = NULL;
-    instance->bulk_out = NULL;
-    instance->rx_ring = rx_ring;
-    instance->configured = false;
 
-    if (instance->driver.init) {
-        instance->driver.init();
+    instance->rx_buffer = rx_buffer;
+
+    if (driver->init) {
+        driver->init();
     }
 
     return instance;
 }
 
-driver_instance_t* driver_instance_from_endpoint(endpoint_t *ep) {
-    for (uint8_t i = 0; i < driver_instance_count; i++) {
-        driver_instance_t *instance = &driver_instances[i];
-        if (instance->configured && instance->device_address == ep->dev_addr) {
-            if (instance->bulk_in == ep || instance->bulk_out == ep) {
-                return instance;
-            }
-        }
-    }
-    return NULL;
-}
-
-driver_instance_t* driver_instance_for_interface(uint8_t topclass, uint8_t subclass) {
-    for (uint8_t i = 0; i < driver_instance_count; i++) {
-        driver_instance_t *instance = &driver_instances[i];
-        if (!instance->configured && 
-            instance->driver.bInterfaceClass == topclass &&
-            instance->driver.bInterfaceSubClass == subclass) {
+driver_t* driver_instance_from_endpoint(endpoint_t *ep) {
+    for (uint8_t i = 0; i < driver_count; i++) {
+        driver_t *instance = &drivers[i];
+        if (instance->rx_endpoint == ep || instance->tx_endpoint == ep) {
             return instance;
         }
     }
     return NULL;
 }
 
+driver_t* driver_instance_for_interface(uint8_t topclass, uint8_t subclass, uint8_t protocol) {
+    for (uint8_t i = 0; i < driver_count; i++) {
+        driver_t *driver = &drivers[i];
+        if (driver->if_topclass == topclass &&
+            driver->if_subclass == subclass &&
+            driver->if_protocol == protocol) {
+            return driver;
+        }
+    }
+    return NULL;
+}
+
 // ==[ Driver Implementation for CDC ]=============================================
-bool cdc_open(driver_instance_t *instance, void *ptr, uint16_t len) {
+bool cdc_open(driver_t *driver, void *ptr, uint16_t len) {
     usb_configuration_descriptor_t *config_desc = (usb_configuration_descriptor_t *)ptr;
     
     printf("CDC Open: Attempting to configure driver\n");
     printf("Total config length: %u\n", len);
 
-    // Get device address from epx since it's already configured
-    instance->device_address = epx->dev_addr;
-    instance->bulk_in = NULL;
-    instance->bulk_out = NULL;
+    driver->rx_endpoint = NULL;
+    driver->tx_endpoint = NULL;
 
     uint8_t *cur = (uint8_t *)ptr;
     uint8_t *end = cur + len;
@@ -810,13 +810,13 @@ bool cdc_open(driver_instance_t *instance, void *ptr, uint16_t len) {
             show_endpoint_descriptor(epd);
 
             if (epd->bmAttributes == USB_TRANSFER_TYPE_BULK) {
-                endpoint_t *ep = next_endpoint(instance->device_address, epd, NULL);
+                endpoint_t *ep = next_endpoint(epx->dev_addr, epd, NULL);
                 
                 if (epd->bEndpointAddress & USB_DIR_IN) {
-                    instance->bulk_in = ep;
+                    driver->rx_endpoint = ep;
                     printf("Found Bulk IN endpoint\n");
                 } else {
-                    instance->bulk_out = ep;
+                    driver->tx_endpoint = ep;
                     printf("Found Bulk OUT endpoint\n");
                 }
             }
@@ -824,7 +824,7 @@ bool cdc_open(driver_instance_t *instance, void *ptr, uint16_t len) {
         cur += cur[0];
     }
 
-    if (!instance->bulk_in || !instance->bulk_out) {
+    if (!driver->rx_endpoint || !driver->tx_endpoint) {
         printf("Failed to find Bulk IN or Bulk OUT endpoints\n");
         return false;
     }
@@ -832,13 +832,13 @@ bool cdc_open(driver_instance_t *instance, void *ptr, uint16_t len) {
     return true;
 }
 
-void cdc_send(driver_instance_t *instance, const uint8_t *data, uint16_t len) {
-    if (!instance->bulk_out) {
+void cdc_send(driver_t *driver, const uint8_t *data, uint16_t len) {
+    if (!driver->tx_endpoint) {
         printf("Bulk OUT endpoint not set for CDC driver\n");
         return;
     }
 
-    bulk_transfer(instance->bulk_out, (uint8_t*)data, len);
+    bulk_transfer(driver->tx_endpoint, (uint8_t*)data, len);
 }
 
 // ==[ Setup Drivers ]============================================================
@@ -857,7 +857,7 @@ bool setup_drivers(void *ptr, device_t *dev) {
         if (cur[1] == USB_DT_INTERFACE) {
             usb_interface_descriptor_t *ifd = (usb_interface_descriptor_t *)cur;
             
-            driver_instance_t *matched_instance = driver_instance_for_interface(
+            driver_t *matched_instance = driver_instance_for_interface(
                 ifd->bInterfaceClass,
                 ifd->bInterfaceSubClass
             );
@@ -1262,7 +1262,7 @@ void isr_usbctrl() {
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_TRANS_COMPLETE_BITS;
 
-        driver_instance_t *instance = driver_instance_from_endpoint(ep);
+        driver_t *instance = driver_instance_from_endpoint(ep);
 
         if (instance && instance->configured) {
             instance->driver.write_ring(instance, ep->user_buf, ep->bytes_done);
