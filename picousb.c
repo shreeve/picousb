@@ -713,8 +713,6 @@ driver_t* find_driver(uint8_t topclass, uint8_t subclass, uint8_t protocol) {
     return NULL;
 }
 
-driver_t *driver_init(driver_t *driver, char *driver_name, uint16_t bufsize);
-
 const driver_t driver_templates[] = {
     {
         .name                = "CDC",
