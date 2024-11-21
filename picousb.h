@@ -33,7 +33,8 @@ typedef struct client_t client_t; // Forward declaration
 #define MAX_HUBS        1 // root +  0
 #define MAX_DEVICES     2 // dev0 +  1
 #define MAX_ENDPOINTS  16 // epx  + 15
-#define MAX_CTRL_BUF  320 // Large enough to handle a full config descriptor
+#define MAX_CLIENTS    16 // Number of driver clients allowed
+#define MAX_CTRL_BUF  320 // Size of shared control transfer buffer
 
 #define MAKE_U16(x, y) (((x) << 8) | ((y)     ))
 #define SWAP_U16(x)    (((x) >> 8) | ((x) << 8))
