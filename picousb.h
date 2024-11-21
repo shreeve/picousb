@@ -177,32 +177,25 @@ void reset_ftdi(device_t *dev);
 
 typedef struct {
     const char *name;
-    uint8_t bInterfaceClass;
-    uint8_t bInterfaceSubClass;
+    uint8_t      if_topclass;
+    uint8_t      if_subclass;
+    uint8_t      if_protocol;
+    endpoint_t  *rx_endpoint;
+    endpoint_t  *tx_endpoint;
+    ring_t      *rx_buffer;
     void (* const init      )(void);
-    bool (* const open      )(client_t *clt, void *config_buffer, uint16_t len);
-    bool (* const config    )(client_t *clt);
-    int  (* const read_ring )(client_t *clt, uint8_t *buffer, uint16_t len);
-    int  (* const write_ring)(client_t *clt, const uint8_t *data, uint16_t len);
-    void (* const send_data )(client_t *clt, const uint8_t *data, uint16_t len);
-    void (* const close     )(client_t *clt);
+    bool (* const open      )(driver_t *driver, void *config_buffer, uint16_t len);
+    bool (* const config    )(driver_t *driver);
+    int  (* const read_ring )(driver_t *driver,       uint8_t *data, uint16_t len);
+    int  (* const write_ring)(driver_t *driver, const uint8_t *data, uint16_t len);
+    void (* const send_data )(driver_t *driver, const uint8_t *data, uint16_t len);
+    void (* const close     )(driver_t *driver);
 } driver_t;
 
-// ==[ Clients ]================================================================
+driver_t *driver_init(const char *driver_name, uint16_t bufsize);
 
-typedef struct client_t {
-    driver_t    driver;
-    uint8_t     device_address;
-    endpoint_t *bulk_in;
-    endpoint_t *bulk_out;
-    ring_t     *rx_ring;
-    bool        configured;
-} client_t;
-
-client_t *driver_init(const char *driver_name, uint16_t bufsize);
-
-bool cdc_open(client_t *clt, void *ptr, uint16_t len);
-void cdc_send(client_t *clt, const uint8_t *data, uint16_t len);
+bool cdc_open(driver_t *driver, void *ptr, uint16_t len);
+void cdc_send(driver_t *driver, const uint8_t *data, uint16_t len);
 
 // ==[ Enumeration ]============================================================
 
