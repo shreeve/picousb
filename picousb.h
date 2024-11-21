@@ -213,7 +213,6 @@ void send_data_trampoline(driver_t *self, const uint8_t *data, uint16_t len);
 void read_ring_trampoline(driver_t *self, uint16_t bytes_done);
 void write_ring_trampoline(driver_t *self);
 
-
 // ==[ Enumeration ]============================================================
 
 // ==[ Callbacks ]==============================================================
