@@ -78,11 +78,11 @@ inline uint16_t ring_free(ring_t *r) {
     return free;
 }
 
-bool ring_is_empty(ring_t *r) {
+inline bool ring_is_empty(ring_t *r) {
     return ring_used(r) == 0;
 }
 
-bool ring_is_full(ring_t *r) {
+inline bool ring_is_full(ring_t *r) {
     return ring_free(r) == 0;
 }
 
@@ -148,19 +148,19 @@ ring_read_internal(ring_t *r, const void *ptr, uint16_t len, bool block) {
 
 // ==[ Read and write ]=========================================================
 
-uint16_t ring_try_read(ring_t *r, void *ptr, uint16_t len) {
+inline uint16_t ring_try_read(ring_t *r, void *ptr, uint16_t len) {
     return ring_read_internal(r, ptr, len, false);
 }
 
-uint16_t ring_try_write(ring_t *r, const void *ptr, uint16_t len) {
+inline uint16_t ring_try_write(ring_t *r, const void *ptr, uint16_t len) {
     return ring_write_internal(r, ptr, len, false);
 }
 
-uint16_t ring_read_blocking(ring_t *r, void *ptr, uint16_t len) {
+inline uint16_t ring_read_blocking(ring_t *r, void *ptr, uint16_t len) {
     return ring_read_internal(r, ptr, len, true);
 }
 
-uint16_t ring_write_blocking(ring_t *r, const void *ptr, uint16_t len) {
+inline uint16_t ring_write_blocking(ring_t *r, const void *ptr, uint16_t len) {
     return ring_write_internal(r, ptr, len, true);
 }
 
