@@ -969,11 +969,9 @@ void usb_task() {
                 callback_t callback = task.transfer.callback; // Callback struct
                 uint8_t    status   = task.transfer.status;   // Transfer status
 
-                // Get the endpoint and device
                 endpoint_t *ep  = get_endpoint(dev_addr, ep_num);
                 device_t   *dev = get_device(ep->dev_addr);
 
-                // Handle the transfer
                 if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(ep) : enumerate(dev);
                 } else if (ep->callback.fn) {
