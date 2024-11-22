@@ -639,8 +639,12 @@ void show_string() {
 
 void show_string_blocking(device_t *dev, uint8_t index) {
     ctrl_idx = index; // Set the index of the Unicode string descriptor to fetch
-    get_string_descriptor(dev, index);
-    while (ctrl_idx) { usb_task(); }
+
+    get_string_descriptor(dev, index); do { usb_task(); } while (epx->active);
+    show_string();
+    transfer_zlp(epx)                ; do { usb_task(); } while (epx->active);
+
+    // while (ctrl_idx) { usb_task(); }
 }
 
 // ==[ Drivers ]================================================================
