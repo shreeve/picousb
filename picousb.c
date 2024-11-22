@@ -890,6 +890,7 @@ SDK_WEAK void on_device_enumerated(device_t *dev) {
 SDK_WEAK void on_device_configured(device_t *dev) {
     printf("Device %u is now configured\n", dev->dev_addr);
 }
+
 // ==[ Tasks ]==================================================================
 
 SDK_INJECT const char *task_name(uint8_t type) {
@@ -964,7 +965,7 @@ void usb_task() {
                 device_t   *dev = get_device(ep->dev_addr);
 
                 // Handle the transfer
-                if (dev->state < DEVICE_ENUMERATED) {
+                if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(ep) : enumerate(dev);
                 } else if (ep->callback) {
                     ep->callback((void *) ep);
