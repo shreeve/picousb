@@ -114,7 +114,7 @@ typedef enum {
                   | EP_CTRL_INTERRUPT_PER_DOUBLE_BUFFER,
 } buffering_t;
 
-typedef void (*endpoint_c)(uint8_t *buf, uint16_t len);
+typedef void (*callback_t)(void *arg);
 
 typedef struct {
 
@@ -143,7 +143,7 @@ typedef struct {
     uint8_t    data_pid  ; // Toggle between DATA0/DATA1 packets
     uint16_t   bytes_left; // Bytes left to transfer
     uint16_t   bytes_done; // Bytes done transferring
-    endpoint_c callback  ; // Callback function
+    callback_t callback  ; // Callback function
 } endpoint_t;
 
 extern endpoint_t eps[MAX_ENDPOINTS], *epx;
@@ -209,18 +209,18 @@ typedef struct {
             uint8_t    ep_num    ; // Endpoint number (direction not included)
             uint8_t   *user_buf  ; // User buffer in DPSRAM, RAM, or flash
             uint16_t   len       ; // Bytes transferred
-            endpoint_c callback  ; // Callback function
+            callback_t callback  ; // Callback function
         } transfer;
 
         // Generic function callback
         struct {
-            void (*fn) (void *); // Function pointer
-            void *arg          ; // One argument
+            callback_t fn ; // Callback function
+            void      *arg; // One argument
         } callback;
     };
 } task_t;
 
-void queue_callback(void (*fn)(void *), void *arg);
+void queue_callback(callback_t fn, void *arg);
 void usb_task();
 
 // ==[ Interrupts ]=============================================================

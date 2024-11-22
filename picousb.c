@@ -917,14 +917,14 @@ SDK_INJECT const char *task_name(uint8_t type) {
     panic("Unknown task queued");
 }
 
-SDK_INJECT const char *callback_name(void (*fn) (void *)) {
+SDK_INJECT const char *callback_name(callback_t fn) {
     if (fn == enumerate        ) return "enumerate"        ;
     if (fn == start_transaction) return "start_transaction";
     if (fn == transfer_zlp     ) return "transfer_zlp"     ;
     return "user defined function";
 }
 
-SDK_INLINE void queue_callback(void (*fn)(void *), void *arg) {
+SDK_INLINE void queue_callback(callback_t fn, void *arg) {
     queue_add_blocking(queue, &((task_t) {
         .type         = TASK_CALLBACK,
         .guid         = guid++,
@@ -971,7 +971,7 @@ void usb_task() {
                 uint8_t    ep_num   = task.transfer.ep_num;   // Endpoint number
                 uint8_t   *user_buf = task.transfer.user_buf; // User buffer
                 uint16_t   len      = task.transfer.len;      // Buffer length
-                endpoint_c callback = task.transfer.callback; // Callback fn
+                callback_t callback = task.transfer.callback; // Callback fn
                 uint8_t    status   = task.transfer.status;   // Transfer status
 
                 // Get the endpoint
