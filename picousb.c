@@ -597,12 +597,9 @@ void show_endpoint_descriptor(void *ptr) {
 }
 
 void unicode_to_utf8(uint8_t *src, uint8_t *dst) {
-
-    // Prepare to parse Unicode string
     uint8_t   len =              *src / 2 - 1;
     uint16_t *uni = (uint16_t *) (src + 2);
 
-    // Convert string from Unicode to UTF-8
     char *utf = (char *) dst;
     char *cur = utf;
     while (len--) {
