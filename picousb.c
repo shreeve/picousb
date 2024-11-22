@@ -949,16 +949,13 @@ void usb_task() {
                 }
                 last_attempt = time_us_64();
 
-                // Initialize dev0
                 clear_device(0);
                 dev0->state = DEVICE_DETECTED;
                 dev0->speed = task.connect.speed;
 
-                // Show the device connection and speed
                 char *str = dev0->speed == LOW_SPEED ? "low" : "full";
                 printf("Device connected (%s speed)\n", str);
 
-                // Start enumeration
                 printf("Start enumeration\n");
                 enumerate(dev0);
 
