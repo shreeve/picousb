@@ -889,7 +889,7 @@ void enumerate(void *arg) {
             show_string_blocking(dev, dev->product     );
             show_string_blocking(dev, dev->serial      );
 
-            dev->state = DEVICE_ACTIVE;
+            dev->state = DEVICE_ENUMERATED;
             printf("Enumeration completed\n"); // FIXME: Remove this
 
             on_device_active(dev);
@@ -979,19 +979,16 @@ void usb_task() {
                 // Handle the transfer
                 device_t *dev = get_device(ep->dev_addr);
 
-                if (len && dev->state < DEVICE_READY) {
-                    printf("Calling transfer_zlp\n");
-                    transfer_zlp(ep);
-                } else if (dev->state < DEVICE_ACTIVE) {
-                    printf("Calling enumerate\n");
-                    enumerate(dev);
+                if (dev->state < DEVICE_ENUMERATED) {
+                    len ? transfer_zlp(ep) : enumerate(dev);
+                } else if (ep->callback) {
+                    ep->callback((void *) ep);
                 } else if (dev->state < DEVICE_READY) {
                     printf("Calling reset_ftdi\n");
                     reset_ftdi(dev);
                 } else {
                     printf("Transfer completed\n");
                 }
-
            }   break;
 
             case TASK_CALLBACK: {
