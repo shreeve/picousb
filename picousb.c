@@ -881,16 +881,15 @@ void enumerate(void *arg) {
 
         case ENUMERATION_GET_CONFIG_FULL: {
             printf("Starting SET_CONFIG\n");
-            set_configuration(dev, 1); // TODO: Verify this keeps nuke ctrl_buf!
-
+            set_configuration(dev, 1); // FIXME: Does this invalidate ctrl_buf?
         }   break;
 
         case ENUMERATION_SET_CONFIG:
+            setup_drivers(ctrl_buf, dev); // FIXME: Can we really use ctrl_buf?
+
             show_string_blocking(dev, dev->manufacturer);
             show_string_blocking(dev, dev->product     );
             show_string_blocking(dev, dev->serial      );
-            setup_drivers(ctrl_buf, dev);
-
 
             dev->state = DEVICE_ENUMERATED;
             printf("Enumeration completed\n"); // FIXME: Remove this
