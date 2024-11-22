@@ -637,15 +637,17 @@ void show_string(void *arg) {
     printf("[String #%u]: \"%s\"\n", index, utf);
 }
 
-void set_callback(callback_t *callback, void (*fn)(void *), void *arg) {
-    *callback = (callback_t) { .fn = fn, .arg = arg };
-}
-
 void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
-    get_string_descriptor(dev, index); while (epx->active) usb_task();
+
+    // Request a string descriptor, wait for the transfer to finish, show value
+    get_string_descriptor(dev, index);
+    while ( epx->active) usb_task();
     show_string((void *) (uintptr_t) index);
-    queue_callback(transfer_zlp, (void *) epx); while (!epx->active) usb_task();
-    while (epx->active) usb_task();
+
+    // Queue a ZLP, wait for it to start, wait for it to finish
+    queue_callback(transfer_zlp, (void *) epx);
+    while (!epx->active) usb_task();
+    while ( epx->active) usb_task();
 }
 
 // ==[ Drivers ]================================================================
