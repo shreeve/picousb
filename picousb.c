@@ -643,11 +643,9 @@ void set_callback(callback_t *callback, void (*fn)(void *), void *arg) {
 
 void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
     set_callback(&epx->callback, show_string, (void *) (uintptr_t) index);
-    get_string_descriptor(dev, index);
-    while (epx->active) { usb_task(); }
-    set_callback(&epx->callback, transfer_zlp, (void *) epx); // FIXME: auto-swap for epx if NULL?
-    while (epx->active) { usb_task(); }
+    get_string_descriptor(dev, index); while (epx->active) { usb_task(); }
     set_callback(&epx->callback, NULL, NULL);
+    transfer_zlp(epx)                ; while (epx->active) { usb_task(); }
 }
 
 // ==[ Drivers ]================================================================
