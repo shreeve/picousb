@@ -54,7 +54,6 @@ void clear_devices() {
 // ==[ Endpoints ]==============================================================
 
 static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared control transfer buffer
-static volatile uint8_t ctrl_idx = 0;  // Shared control transfer string index
 
 endpoint_t eps[MAX_ENDPOINTS], *epx = eps;
 
