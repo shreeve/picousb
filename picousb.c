@@ -630,16 +630,24 @@ void unicode_to_utf8(uint8_t *src, uint8_t *dst) {
     *cur++ = 0;
 }
 
-void show_string(uint8_t index) {
+void show_string(void *arg) {
     static uint8_t utf[MAX_CTRL_BUF] = { 0 };
+    uint8_t index = (uint8_t) (uintptr_t) arg;
     unicode_to_utf8(ctrl_buf, utf);
     printf("[String #%u]: \"%s\"\n", index, utf);
 }
 
+void set_callback(callback_t *callback, void (*fn)(void *), void *arg) {
+    *callback = (callback_t) { .fn = fn, .arg = arg };
+}
+
 void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
-    get_string_descriptor(dev, index); while (epx->active) { usb_task(); }
-    show_string(index);
-    transfer_zlp(epx)                ; while (epx->active) { usb_task(); }
+    set_callback(&epx->callback, show_string, (void *) (uintptr_t) index);
+    get_string_descriptor(dev, index);
+    while (epx->active) { usb_task(); }
+    set_callback(&epx->callback, transfer_zlp, (void *) epx); // FIXME: auto-swap for epx if NULL?
+    while (epx->active) { usb_task(); }
+    set_callback(&epx->callback, NULL, NULL);
 }
 
 // ==[ Drivers ]================================================================
@@ -907,14 +915,14 @@ SDK_INJECT const char *task_name(uint8_t type) {
     panic("Unknown task queued");
 }
 
-SDK_INJECT const char *callback_name(callback_t fn) {
-    if (fn == enumerate        ) return "enumerate"        ;
-    if (fn == start_transaction) return "start_transaction";
-    if (fn == transfer_zlp     ) return "transfer_zlp"     ;
+SDK_INJECT const char *callback_name(callback_t callback) {
+    if (callback.fn == enumerate        ) return "enumerate"        ;
+    if (callback.fn == start_transaction) return "start_transaction";
+    if (callback.fn == transfer_zlp     ) return "transfer_zlp"     ;
     return "user defined function";
 }
 
-SDK_INLINE void queue_callback(callback_t fn, void *arg) {
+SDK_INLINE void queue_callback(void (*fn)(void *), void *arg) {
     queue_add_blocking(queue, &((task_t) {
         .type         = TASK_CALLBACK,
         .guid         = guid++,
@@ -961,7 +969,7 @@ void usb_task() {
                 uint8_t    ep_num   = task.transfer.ep_num;   // Endpoint number
                 uint8_t   *user_buf = task.transfer.user_buf; // User buffer
                 uint16_t   len      = task.transfer.len;      // Buffer length
-                callback_t callback = task.transfer.callback; // Callback fn
+                callback_t callback = task.transfer.callback; // Callback struct
                 uint8_t    status   = task.transfer.status;   // Transfer status
 
                 // Get the endpoint and device
@@ -971,15 +979,16 @@ void usb_task() {
                 // Handle the transfer
                 if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(ep) : enumerate(dev);
-                } else if (ep->callback) {
-                    ep->callback((void *) ep);
+                } else if (ep->callback.fn) {
+                    void *arg = ep->callback.arg;
+                    ep->callback.fn(arg ? arg : (void *) ep);
                 } else {
                     printf("Transfer completed\n");
                 }
            }   break;
 
             case TASK_CALLBACK: {
-                printf("Calling %s\n", callback_name(task.callback.fn));
+                printf("Calling %s\n", callback_name(task.callback));
                 task.callback.fn(task.callback.arg);
             }   break;
 

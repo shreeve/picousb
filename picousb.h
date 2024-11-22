@@ -115,7 +115,10 @@ typedef enum {
                   | EP_CTRL_INTERRUPT_PER_DOUBLE_BUFFER,
 } buffering_t;
 
-typedef void (*callback_t)(void *arg);
+typedef struct {
+    void (*fn)(void *); // Callback function pointer
+    void *arg;           // Argument for the callback
+} callback_t;
 
 typedef struct {
 
@@ -212,15 +215,12 @@ typedef struct {
             callback_t callback  ; // Callback function
         } transfer;
 
-        // Generic function callback
-        struct {
-            callback_t fn ; // Callback function
-            void      *arg; // One argument
-        } callback;
+        // Callback function
+        callback_t callback;
     };
 } task_t;
 
-void queue_callback(callback_t fn, void *arg);
+void queue_callback(void (*fn)(void *), void *arg);
 void usb_task();
 
 // ==[ Interrupts ]=============================================================
