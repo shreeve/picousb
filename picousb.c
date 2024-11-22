@@ -562,6 +562,20 @@ void show_configuration_descriptor(void *ptr) {
     printf("\n");
 }
 
+void show_interface_descriptor(void *ptr) {
+    usb_interface_descriptor_t *d = (usb_interface_descriptor_t *) ptr;
+
+    printf("Interface Descriptor:\n");
+    printf("  Interface:    %u\n"    , d->bInterfaceNumber);
+    printf("  Alternate:    %u\n"    , d->bAlternateSetting);
+    printf("  Endpoints:    %u\n"    , d->bNumEndpoints);
+    printf("  Class:        0x%02x\n", d->bInterfaceClass);
+    printf("  Subclass:     0x%02x\n", d->bInterfaceClass);
+    printf("  Protocol:     0x%02x\n", d->bInterfaceProtocol);
+    printf("  Name:         [#%u]\n" , d->iInterface);
+    printf("\n");
+}
+
 void get_configuration_descriptor(device_t *dev, uint8_t len) {
     printf("Get configuration descriptor\n");
 
@@ -717,6 +731,7 @@ bool setup_drivers(void *ptr, device_t *dev) {
             // Interface Descriptor
             case USB_DT_INTERFACE:
                 ifd = (usb_interface_descriptor_t *) cur;
+                show_interface_descriptor(ifd);
 
                 // Special case CDC needs two interfaces: CDC Control + CDC Data
                 if (ias                     == 1             &&
