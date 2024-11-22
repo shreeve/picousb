@@ -1033,16 +1033,10 @@ Transfer completed
    1 │XFER   │   18 │ Device 1                              Task #50   │
    1 │XFER   │   32 │ Device 1                              Task #28   │
    1 │XFER   │   32 │ Device 1                              Task #43   │
-   1 │ZLP    │ IN   │ Device 0                            │ Task #14   │
-   1 │ZLP    │ IN   │ Device 1                            │ Task #32   │
+   1 │ZLP    │ IN   │ Device 0                            │ Task #XX   │
+   1 │ZLP    │ IN   │ Device 1                            │ Task #XX   │
    2 │ZLP    │ OUT  │ Device 0                            │            │
-   1 │ZLP    │ OUT  │ Device 0                            │ Task #12   │
-   1 │ZLP    │ OUT  │ Device 0                            │ Task #6    │
+   2 │ZLP    │ OUT  │ Device 0                            │ Task #XX   │
    6 │ZLP    │ OUT  │ Device 1                            │            │
-   1 │ZLP    │ OUT  │ Device 1                            │ Task #20   │
-   1 │ZLP    │ OUT  │ Device 1                            │ Task #24   │
-   1 │ZLP    │ OUT  │ Device 1                            │ Task #30   │
-   1 │ZLP    │ OUT  │ Device 1                            │ Task #37   │
-   1 │ZLP    │ OUT  │ Device 1                            │ Task #46   │
-   1 │ZLP    │ OUT  │ Device 1                            │ Task #53   │
+   6 │ZLP    │ OUT  │ Device 1                            │ Task #XX   │
 ```
