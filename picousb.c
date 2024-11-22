@@ -411,7 +411,6 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     epx->user_buf   = ctrl_buf;
     epx->bytes_left = setup->wLength;
     epx->bytes_done = 0;
-    epx->callback   = transfer_zlp;
 
     // Flip the endpoint direction if there is no data phase
     if (!epx->bytes_left) epx->ep_addr ^= USB_DIR_IN;
