@@ -837,7 +837,7 @@ void enumerate(void *arg) {
 
         case ENUMERATION_GET_MAXSIZE: {
             device_t *dev  = next_device();
-            dev->state     = DEVICE_DISCOVERY;
+            dev->state     = dev0->state;
             dev->speed     = dev0->speed;
             dev->maxsize0  = ((usb_device_descriptor_t *) ctrl_buf)
                                  ->bMaxPacketSize0;
