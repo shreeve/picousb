@@ -837,7 +837,7 @@ void enumerate(void *arg) {
 
         case ENUMERATION_GET_MAXSIZE: {
             device_t *dev  = next_device();
-            dev->state     = DEVICE_ENUMERATING;
+            dev->state     = DEVICE_DISCOVERY;
             dev->speed     = dev0->speed;
             dev->maxsize0  = ((usb_device_descriptor_t *) ctrl_buf)
                                  ->bMaxPacketSize0;
@@ -953,7 +953,7 @@ void usb_task() {
 
                 // Initialize dev0
                 clear_device(0);
-                dev0->state = DEVICE_ENUMERATING;
+                dev0->state = DEVICE_DISCOVERY;
                 dev0->speed = task.connect.speed;
 
                 // Show the device connection and speed
