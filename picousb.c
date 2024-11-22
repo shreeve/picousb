@@ -596,25 +596,7 @@ void show_endpoint_descriptor(void *ptr) {
     printf("\n");
 }
 
-void get_string_descriptor_blocking(device_t *dev, uint8_t index) {
-    control_transfer(dev, &((usb_setup_packet_t) {
-        .bmRequestType = USB_DIR_IN
-                       | USB_REQ_TYPE_STANDARD
-                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
-        .bRequest      = USB_REQUEST_GET_DESCRIPTOR,
-        .wValue        = MAKE_U16(USB_DT_STRING, index),
-        .wIndex        = 0,
-        .wLength       = MAX_CTRL_BUF,
-    }));
-
-    do { usb_task(); } while (epx->active); // This transfer...
-    do { usb_task(); } while (epx->active); // The ZLP...
-}
-
-void show_string_blocking(device_t *dev, uint8_t index) {
-
-    // Request a string and wait for it
-    get_string_descriptor_blocking(dev, index);
+void show_unicode(uint8_t index) {
     uint8_t *ptr = ctrl_buf;
 
     // Prepare to parse Unicode string
@@ -640,6 +622,18 @@ void show_string_blocking(device_t *dev, uint8_t index) {
     *cur++ = 0;
 
     printf("[String #%u]: \"%s\"\n", index, utf);
+}
+
+void get_string_descriptor(device_t *dev, uint8_t index) {
+    control_transfer(dev, &((usb_setup_packet_t) {
+        .bmRequestType = USB_DIR_IN
+                       | USB_REQ_TYPE_STANDARD
+                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
+        .bRequest      = USB_REQUEST_GET_DESCRIPTOR,
+        .wValue        = MAKE_U16(USB_DT_STRING, index),
+        .wIndex        = 0,
+        .wLength       = MAX_CTRL_BUF,
+    }));
 }
 
 // ==[ Drivers ]================================================================
@@ -872,9 +866,9 @@ void enumerate(void *arg) {
             dev->state = DEVICE_CONFIGURED;
             on_device_configured(dev); // Notify that device is configured
 
-            // show_string_blocking(dev, dev->manufacturer);
-            // show_string_blocking(dev, dev->product     );
-            // show_string_blocking(dev, dev->serial      );
+            get_string_descriptor(dev, dev->manufacturer);
+            get_string_descriptor(dev, dev->product     );
+            get_string_descriptor(dev, dev->serial      );
 
             // activate_drivers(dev);
             break;
