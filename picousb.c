@@ -123,12 +123,11 @@ void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
              | ((ep->interval || 1) - 1) << 16 // Polling interval minus 1 ms
              | ((uint32_t) ep->buf) & 0xfc0;   // DSPRAM offset: 64-byte aligned
 
-    // Control endpoints start with DATA0, otherwise start with DATA1
-    ep->data_pid = 0;
+    // NOTE: Endpoints should start with DATA0. However, there are some devices
+    // that are non-standard and start at DATA1. Linux just hard codes these
+    // values, so we do too.
 
-    // NOTE: Devices should start with DATA0, but some start with DATA1.
-    //
-    // The easiest way to handle this is to simply hard code it, as Linux does.
+    ep->data_pid = 0;
 
     if (ep->dev_addr) {
         device_t *dev = get_device(ep->dev_addr);
