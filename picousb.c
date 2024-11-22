@@ -952,7 +952,7 @@ void usb_task() {
 
                 // Initialize dev0
                 clear_device(0);
-                dev0->state = DEVICE_DISCOVERY;
+                dev0->state = DEVICE_DETECTED;
                 dev0->speed = task.connect.speed;
 
                 // Show the device connection and speed
