@@ -1025,14 +1025,12 @@ Transfer completed
    5 │SSR    │      │ 01010000 00000000 00000010 00001001 │ 0x50000209 │
   17 │SSR    │      │ 01010000 00000100 00000010 00000101 │ 0x50040205 │
    1 │SSR    │      │ 01010000 00000100 00000010 00001001 │ 0x50040209 │
-   1 │XFER   │    8 │ Device 0                              Task #4    │
-   1 │XFER   │    9 │ Device 1                              Task #22   │
-   1 │XFER   │   10 │ Device 1                              Task #34   │
-   1 │XFER   │   18 │ Device 0                              Task #10   │
-   1 │XFER   │   18 │ Device 1                              Task #18   │
-   1 │XFER   │   18 │ Device 1                              Task #50   │
-   1 │XFER   │   32 │ Device 1                              Task #28   │
-   1 │XFER   │   32 │ Device 1                              Task #43   │
+   1 │XFER   │    8 │ Device 0                              Task #XX   │
+   1 │XFER   │    9 │ Device 1                              Task #XX   │
+   1 │XFER   │   10 │ Device 1                              Task #XX   │
+   1 │XFER   │   18 │ Device 0                              Task #XX   │
+   2 │XFER   │   18 │ Device 1                              Task #XX   │
+   2 │XFER   │   32 │ Device 1                              Task #XX   │
    1 │ZLP    │ IN   │ Device 0                            │ Task #XX   │
    1 │ZLP    │ IN   │ Device 1                            │ Task #XX   │
    2 │ZLP    │ OUT  │ Device 0                            │            │
