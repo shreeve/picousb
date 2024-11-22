@@ -141,13 +141,6 @@ void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
     ep->configured = true;
 }
 
-SDK_INJECT void reset_endpoint(endpoint_t *ep) {
-    ep->active     = false;
-    ep->setup      = false;
-    ep->bytes_left = 0;
-    ep->bytes_done = 0;
-}
-
 void setup_epx() {
     setup_endpoint(epx, 0, &((usb_endpoint_descriptor_t) {
         .bLength          = sizeof(usb_endpoint_descriptor_t),
@@ -157,6 +150,13 @@ void setup_epx() {
         .wMaxPacketSize   = 0,
         .bInterval        = 0,
     }), ctrl_buf);
+}
+
+SDK_INJECT void reset_endpoint(endpoint_t *ep) {
+    ep->active     = false;
+    ep->setup      = false;
+    ep->bytes_left = 0;
+    ep->bytes_done = 0;
 }
 
 endpoint_t *get_endpoint(uint8_t dev_addr, uint8_t ep_num) {
