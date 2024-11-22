@@ -943,7 +943,6 @@ void usb_task() {
             case TASK_CONNECT: {
                 static uint64_t last_attempt;
 
-                // Ignore rapid device connects
                 if (last_attempt && (time_us_64() - last_attempt < 1000000)) {
                     printf("Connections allowed only once every second\n");
                     break;
