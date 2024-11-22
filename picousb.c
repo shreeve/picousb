@@ -282,7 +282,6 @@ void start_transaction(void *arg) {
 
     // Debug output
     if (!ep->bytes_done) {
-        printf("\n");
         printf(DEBUG_ROW);
         printf( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transaction started");
         show_endpoint(ep);
@@ -709,7 +708,6 @@ bool setup_drivers(void *ptr, device_t *dev) {
         uint8_t type = cur[1];
 
         // Debug output
-        printf("\n");
         hexdump("Detail", cur, *cur, 1);
         printf("\n");
 
