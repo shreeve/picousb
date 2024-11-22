@@ -762,17 +762,6 @@ bool setup_drivers(void *ptr, device_t *dev) {
                     //
                     //     break;
                     // }
-
-                    // Complain if we didn't find a matching driver
-                    if (i == DRIVER_COUNT - 1) {
-                        printf("Interface %u skipped: " \
-                               "Class=%u, Subclass=%u, Protocol=%u\n",
-                            ifd->bInterfaceNumber,
-                            ifd->bInterfaceClass,
-                            ifd->bInterfaceSubClass,
-                            ifd->bInterfaceProtocol
-                        );
-                    }
                 }
                 break;
 
