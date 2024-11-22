@@ -631,20 +631,16 @@ void unicode_to_utf8(uint8_t *src, uint8_t *dst) {
     *cur++ = 0;
 }
 
-void show_string() {
+void show_string(uint8_t index) {
     static uint8_t utf[MAX_CTRL_BUF] = { 0 };
     unicode_to_utf8(ctrl_buf, utf);
-    printf("[String #%u]: \"%s\"\n", ctrl_idx, utf);
+    printf("[String #%u]: \"%s\"\n", index, utf);
 }
 
 void show_string_blocking(device_t *dev, uint8_t index) {
-    ctrl_idx = index; // Set the index of the Unicode string descriptor to fetch
-
-    get_string_descriptor(dev, index); do { usb_task(); } while (epx->active);
-    show_string();
-    transfer_zlp(epx)                ; do { usb_task(); } while (epx->active);
-
-    // while (ctrl_idx) { usb_task(); }
+    get_string_descriptor(dev, index); while (epx->active) { usb_task(); }
+    show_string(index);
+    transfer_zlp(epx)                ; while (epx->active) { usb_task(); }
 }
 
 // ==[ Drivers ]================================================================
