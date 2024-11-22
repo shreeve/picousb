@@ -765,7 +765,7 @@ enum {
     ENUMERATION_GET_CONFIG_SHORT,
     ENUMERATION_GET_CONFIG_FULL,
     ENUMERATION_SET_CONFIG,
-    ENUMERATION_END,
+    ENUMERATION_FINISH,
 };
 
 void set_device_address(device_t *dev) {
@@ -808,11 +808,15 @@ void enumerate(void *arg) {
         case ENUMERATION_START:
             printf("Enumeration started\n");
 
+            // Explicit fall through
+
+        case ENUMERATION_GET_MAXSIZE:
+
             printf("Starting GET_MAXSIZE\n");
             get_device_descriptor(dev);
             break;
 
-        case ENUMERATION_GET_MAXSIZE: {
+        case ENUMERATION_SET_ADDRESS: {
             device_t *dev  = next_device();
             dev->state     = dev0->state;
             dev->speed     = dev0->speed;
@@ -824,7 +828,7 @@ void enumerate(void *arg) {
             set_device_address(dev);
         }   break;
 
-        case ENUMERATION_SET_ADDRESS: {
+        case ENUMERATION_GET_DEVICE: {
             device_t *dev = get_device(new_addr);
             dev->state    = DEVICE_ADDRESSED;
             clear_device(0);
@@ -833,7 +837,7 @@ void enumerate(void *arg) {
             get_device_descriptor(dev);
         }   break;
 
-        case ENUMERATION_GET_DEVICE: {
+        case ENUMERATION_GET_CONFIG_SHORT: {
             load_device_descriptor(ctrl_buf, dev);
             show_device_descriptor(ctrl_buf);
 
@@ -842,7 +846,7 @@ void enumerate(void *arg) {
             get_configuration_descriptor(dev, len);
         }   break;
 
-        case ENUMERATION_GET_CONFIG_SHORT: {
+        case ENUMERATION_GET_CONFIG_FULL: {
             uint16_t size =
                 ((usb_configuration_descriptor_t *) ctrl_buf)->wTotalLength;
             if (size > MAX_CTRL_BUF) {
@@ -855,7 +859,7 @@ void enumerate(void *arg) {
             get_configuration_descriptor(dev, len);
         }   break;
 
-        case ENUMERATION_GET_CONFIG_FULL: {
+        case ENUMERATION_SET_CONFIG: {
             enumerate_descriptors(ctrl_buf, dev);
             dev->state = DEVICE_ENUMERATED;
             on_device_enumerated(dev); // Notify that device is enumerated
@@ -864,15 +868,15 @@ void enumerate(void *arg) {
             set_configuration(dev, 1);
         }   break;
 
-        case ENUMERATION_SET_CONFIG:
+        case ENUMERATION_FINISH:
             dev->state = DEVICE_CONFIGURED;
             on_device_configured(dev); // Notify that device is configured
-
-            // activate_drivers(dev);
 
             // show_string_blocking(dev, dev->manufacturer);
             // show_string_blocking(dev, dev->product     );
             // show_string_blocking(dev, dev->serial      );
+
+            // activate_drivers(dev);
             break;
     }
 }
