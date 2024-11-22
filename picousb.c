@@ -1125,7 +1125,7 @@ void isr_usbctrl() {
                 epz = (!epn && ep->ecr == epx->ecr) ? ep : &eps[epn];
 
                 // Show epn details
-                char *str = (char[MAX_CTRL_BUF]) { 0 };
+                char *str = (char[16]) { 0 };
                 sprintf(str, "│ECR%u", epn);
                 bindump(str, *epz->ecr);
                 sprintf(str, "│BCR%u", epn);
