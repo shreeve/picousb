@@ -596,15 +596,14 @@ void show_endpoint_descriptor(void *ptr) {
     printf("\n");
 }
 
-void show_unicode(uint8_t index) {
-    uint8_t *ptr = ctrl_buf;
+void unicode_to_utf8(uint8_t *src, uint8_t *dst) {
 
     // Prepare to parse Unicode string
-    uint8_t   len =              *ptr / 2 - 1;
-    uint16_t *uni = (uint16_t *) (ptr + 2);
+    uint8_t   len =              *src / 2 - 1;
+    uint16_t *uni = (uint16_t *) (src + 2);
 
     // Convert string from Unicode to UTF-8
-    char *utf = (char[MAX_CTRL_BUF]) { 0 };
+    char *utf = (char *) dst;
     char *cur = utf;
     while (len--) {
         uint16_t u = *uni++;
@@ -620,8 +619,6 @@ void show_unicode(uint8_t index) {
         }
     }
     *cur++ = 0;
-
-    printf("[String #%u]: \"%s\"\n", index, utf);
 }
 
 void get_string_descriptor(device_t *dev, uint8_t index) {
