@@ -474,11 +474,13 @@ void finish_transfer(endpoint_t *ep) {
         .transfer.status   = TRANSFER_SUCCESS,  // Transfer status
     };
 
-    // Reset the endpoint
-    reset_endpoint(ep);
-
     // Queue the transfer task
     queue_add_blocking(queue, &transfer_task);
+
+    // TODO: Should reset go BEFORE the queue_add_blocking???
+
+    // Reset the endpoint
+    reset_endpoint(ep);
 }
 
 // ==[ Descriptors ]============================================================
