@@ -970,11 +970,7 @@ void usb_task() {
                 device_t   *dev = get_device(ep->dev_addr);
 
                 // Handle the transfer
-                if (ctrl_idx) { // FIXME: Can we replace with a callback?
-                    show_string();
-                    ctrl_idx = 0;
-                    transfer_zlp(ep);
-                } else if (dev->state < DEVICE_CONFIGURED) {
+                if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(ep) : enumerate(dev);
                 } else if (ep->callback) {
                     ep->callback((void *) ep);
