@@ -887,6 +887,9 @@ SDK_WEAK void on_device_enumerated(device_t *dev) {
     printf("Device %u is now enumerated\n", dev->dev_addr);
 }
 
+SDK_WEAK void on_device_configured(device_t *dev) {
+    printf("Device %u is now configured\n", dev->dev_addr);
+}
 // ==[ Tasks ]==================================================================
 
 SDK_INJECT const char *task_name(uint8_t type) {
