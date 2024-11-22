@@ -667,8 +667,8 @@ static uint16_t interface_len(usb_interface_descriptor_t *ifd,
     return len;
 }
 
-// Setup drivers for a device from its configuration descriptor
-bool setup_drivers(void *ptr, device_t *dev) {
+// Enumerate and process the configuration descriptors for a device
+bool enumerate_descriptors(void *ptr, device_t *dev) {
     usb_configuration_descriptor_t   *cfd; // Configuration descriptor
     usb_interface_assoc_descriptor_t *iad; // Interface association descriptor
     usb_interface_descriptor_t       *ifd; // Interface descriptor
@@ -856,22 +856,23 @@ void enumerate(void *arg) {
         }   break;
 
         case ENUMERATION_GET_CONFIG_FULL: {
+            enumerate_descriptors(ctrl_buf, dev);
+            dev->state = DEVICE_ENUMERATED;
+            on_device_enumerated(dev); // Notify that device is enumerated
+
             printf("Starting SET_CONFIG\n");
-            set_configuration(dev, 1); // FIXME: Does this invalidate ctrl_buf?
+            set_configuration(dev, 1);
         }   break;
 
         case ENUMERATION_SET_CONFIG:
-            on_device_enumerated(dev);
+            dev->state = DEVICE_CONFIGURED;
+            on_device_configured(dev); // Notify that device is configured
 
-            setup_drivers(ctrl_buf, dev); // FIXME: Can we really use ctrl_buf?
+            // activate_drivers(dev);
 
-            show_string_blocking(dev, dev->manufacturer);
-            show_string_blocking(dev, dev->product     );
-            show_string_blocking(dev, dev->serial      );
-
-            dev->state = DEVICE_ENUMERATED;
-            printf("Enumeration completed\n"); // FIXME: Remove this
-
+            // show_string_blocking(dev, dev->manufacturer);
+            // show_string_blocking(dev, dev->product     );
+            // show_string_blocking(dev, dev->serial      );
             break;
     }
 }
@@ -879,7 +880,7 @@ void enumerate(void *arg) {
 // ==[ Callbacks ]==============================================================
 
 SDK_WEAK void on_device_enumerated(device_t *dev) {
-    printf("WEAK: Device %u is now enumerated\n", dev->dev_addr);
+    printf("Device %u is now enumerated\n", dev->dev_addr);
 }
 
 // ==[ Tasks ]==================================================================
