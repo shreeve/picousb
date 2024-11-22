@@ -631,15 +631,12 @@ void unicode_to_utf8(uint8_t *src, uint8_t *dst) {
     *cur++ = 0;
 }
 
-void show_string(uint8_t index) {
+void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
     static uint8_t utf[MAX_CTRL_BUF] = { 0 };
-    unicode_to_utf8(ctrl_buf, utf);
-    printf("[String #%u]: \"%s\"\n", index, utf);
-}
 
-void show_string_blocking(device_t *dev, uint8_t index) {
     get_string_descriptor(dev, index); while (epx->active) { usb_task(); }
-    show_string(index);
+    unicode_to_utf8(ctrl_buf, utf)   ;
+    printf("[String #%u]: \"%s\"\n", index, utf);
     transfer_zlp(epx)                ; while (epx->active) { usb_task(); }
 }
 
@@ -889,9 +886,9 @@ SDK_WEAK void on_device_enumerated(device_t *dev) {
 SDK_WEAK void on_device_configured(device_t *dev) {
     printf("Device %u is now configured\n", dev->dev_addr);
 
-    show_string_blocking(dev, dev->manufacturer);
-    show_string_blocking(dev, dev->product     );
-    show_string_blocking(dev, dev->serial      );
+    show_string_descriptor_blocking(dev, dev->manufacturer);
+    show_string_descriptor_blocking(dev, dev->product     );
+    show_string_descriptor_blocking(dev, dev->serial      );
 
  // activate_drivers(dev);
 }
