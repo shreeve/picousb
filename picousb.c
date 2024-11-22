@@ -472,7 +472,7 @@ void finish_transfer(endpoint_t *ep) {
         .transfer.ep_num   = ep->ep_addr & 0xf, // Endpoint number (EP0-EP15)
         .transfer.user_buf = ep->user_buf,      // User buffer
         .transfer.len      = ep->bytes_done,    // Buffer length
-        .transfer.callback  = ep->callback,     // Callback fn
+        .transfer.callback = ep->callback,      // Callback function
         .transfer.status   = TRANSFER_SUCCESS,  // Transfer status
     };
 
