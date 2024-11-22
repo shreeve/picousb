@@ -631,12 +631,15 @@ void unicode_to_utf8(uint8_t *src, uint8_t *dst) {
     *cur++ = 0;
 }
 
-void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
+void show_string(uint8_t index) {
     static uint8_t utf[MAX_CTRL_BUF] = { 0 };
-
-    get_string_descriptor(dev, index); while (epx->active) { usb_task(); }
     unicode_to_utf8(ctrl_buf, utf);
     printf("[String #%u]: \"%s\"\n", index, utf);
+}
+
+void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
+    get_string_descriptor(dev, index); while (epx->active) { usb_task(); }
+    show_string(index);
     transfer_zlp(epx)                ; while (epx->active) { usb_task(); }
 }
 
