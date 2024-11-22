@@ -53,7 +53,8 @@ void clear_devices() {
 
 // ==[ Endpoints ]==============================================================
 
-static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared buffer for control transfers
+static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared control transfer buffer
+static volatile uint8_t ctrl_idx = 0;  // Shared control transfer string index
 
 endpoint_t eps[MAX_ENDPOINTS], *epx = eps;
 
@@ -596,6 +597,18 @@ void show_endpoint_descriptor(void *ptr) {
     printf("\n");
 }
 
+void get_string_descriptor(device_t *dev, uint8_t index) {
+    control_transfer(dev, &((usb_setup_packet_t) {
+        .bmRequestType = USB_DIR_IN
+                       | USB_REQ_TYPE_STANDARD
+                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
+        .bRequest      = USB_REQUEST_GET_DESCRIPTOR,
+        .wValue        = MAKE_U16(USB_DT_STRING, index),
+        .wIndex        = 0,
+        .wLength       = MAX_CTRL_BUF,
+    }));
+}
+
 void unicode_to_utf8(uint8_t *src, uint8_t *dst) {
     uint8_t   len =              *src / 2 - 1;
     uint16_t *uni = (uint16_t *) (src + 2);
@@ -618,16 +631,16 @@ void unicode_to_utf8(uint8_t *src, uint8_t *dst) {
     *cur++ = 0;
 }
 
-void get_string_descriptor(device_t *dev, uint8_t index) {
-    control_transfer(dev, &((usb_setup_packet_t) {
-        .bmRequestType = USB_DIR_IN
-                       | USB_REQ_TYPE_STANDARD
-                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
-        .bRequest      = USB_REQUEST_GET_DESCRIPTOR,
-        .wValue        = MAKE_U16(USB_DT_STRING, index),
-        .wIndex        = 0,
-        .wLength       = MAX_CTRL_BUF,
-    }));
+void show_string() {
+    static uint8_t utf[MAX_CTRL_BUF] = { 0 };
+    unicode_to_utf8(ctrl_buf, utf);
+    printf("[String #%u]: \"%s\"\n", ctrl_idx, utf);
+}
+
+void show_string_blocking(device_t *dev, uint8_t index) {
+    ctrl_idx = index; // Set the index of the Unicode string descriptor to fetch
+    get_string_descriptor(dev, index);
+    while (ctrl_idx) { usb_task(); }
 }
 
 // ==[ Drivers ]================================================================
@@ -860,9 +873,9 @@ void enumerate(void *arg) {
             dev->state = DEVICE_CONFIGURED;
             on_device_configured(dev); // Notify that device is configured
 
-            get_string_descriptor(dev, dev->manufacturer);
-            get_string_descriptor(dev, dev->product     );
-            get_string_descriptor(dev, dev->serial      );
+            show_string_blocking(dev, dev->manufacturer);
+            show_string_blocking(dev, dev->product     );
+            show_string_blocking(dev, dev->serial      );
 
             // activate_drivers(dev);
             break;
@@ -953,7 +966,11 @@ void usb_task() {
                 device_t   *dev = get_device(ep->dev_addr);
 
                 // Handle the transfer
-                if (dev->state < DEVICE_CONFIGURED) {
+                if (ctrl_idx) { // FIXME: Can we replace with a callback?
+                    show_string();
+                    ctrl_idx = 0;
+                    transfer_zlp(ep);
+                } else if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(ep) : enumerate(dev);
                 } else if (ep->callback) {
                     ep->callback((void *) ep);
