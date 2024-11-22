@@ -861,6 +861,8 @@ void enumerate(void *arg) {
         }   break;
 
         case ENUMERATION_SET_CONFIG:
+            on_device_enumerated(dev);
+
             setup_drivers(ctrl_buf, dev); // FIXME: Can we really use ctrl_buf?
 
             show_string_blocking(dev, dev->manufacturer);
@@ -870,16 +872,14 @@ void enumerate(void *arg) {
             dev->state = DEVICE_ENUMERATED;
             printf("Enumeration completed\n"); // FIXME: Remove this
 
-            on_device_active(dev);
-
             break;
     }
 }
 
 // ==[ Callbacks ]==============================================================
 
-SDK_WEAK void on_device_active(device_t *dev) {
-    printf("WEAK: Device %u is now active\n", dev->dev_addr);
+SDK_WEAK void on_device_enumerated(device_t *dev) {
+    printf("WEAK: Device %u is now enumerated\n", dev->dev_addr);
 }
 
 // ==[ Tasks ]==================================================================

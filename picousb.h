@@ -180,7 +180,7 @@ void reset_ftdi(device_t *dev);
 
 // ==[ Callbacks ]==============================================================
 
-void on_device_active();
+void on_device_enumerated();
 
 // ==[ Tasks ]==================================================================
 
