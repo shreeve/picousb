@@ -642,30 +642,6 @@ void show_string_blocking(device_t *dev, uint8_t index) {
     printf("[String #%u]: \"%s\"\n", index, utf);
 }
 
-// ==[ Classes ]================================================================
-
-// Resets an FTDI device and configures its baud rate and line settings
-void reset_ftdi(device_t *dev) {
-    static uint8_t (states[MAX_DEVICES]) = { 0 };
-    uint8_t state = ++states[dev->dev_addr];
-
-    printf("FTDI reset step %u\n", state);
-
-    switch (state) {
-        case 1: command(dev, 0x40,  0,  0    , 1, 0); break; // reset interface
-        case 2: command(dev, 0x40,  9, 16    , 1, 0); break; // set latency=16ms
-        case 3: command(dev, 0x40,  3, 0x4138, 1, 0); break; // set baud=9600
-        case 4: command(dev, 0x40,  1, 0x0303, 1, 0); break; // enable DTR/RTS
-        case 5: command(dev, 0x40,  2, 0x1311, 1, 0); break; // flow control on
-        default:
-            states[dev->dev_addr] = 0;
-            dev->state = DEVICE_READY;
-            usb_debug(1);
-            printf("FTDI reset complete\n");
-            break;
-    }
-}
-
 // ==[ Drivers ]================================================================
 
 // Determine the length of an interface descriptor by adding up all its elements
@@ -984,9 +960,6 @@ void usb_task() {
                     len ? transfer_zlp(ep) : enumerate(dev);
                 } else if (ep->callback) {
                     ep->callback((void *) ep);
-                } else if (dev->state < DEVICE_READY) {
-                    printf("Calling reset_ftdi\n");
-                    reset_ftdi(dev);
                 } else {
                     printf("Transfer completed\n");
                 }
