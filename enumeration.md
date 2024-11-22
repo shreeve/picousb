@@ -6,7 +6,7 @@
 <img width="675" alt="picousb" src="https://github.com/user-attachments/assets/4497092d-e661-4c98-b3d1-2d399c40ba4a">
 </kbd>
 
-#### Example console output (March 3, 2024)
+#### Example console output (November 22, 2024)
 
 ```
 ==[ PicoUSB Host ]==
