@@ -55,25 +55,25 @@ void clear_devices() {
 
 static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared control transfer buffer
 
-endpoint_t eps[MAX_ENDPOINTS], *epx = eps;
+pipe_t eps[MAX_ENDPOINTS], *epx = eps;
 
-SDK_INJECT const char *ep_dir(endpoint_t *ep) {
+SDK_INJECT const char *ep_dir(pipe_t *ep) {
     return ep->ep_addr & USB_DIR_IN ? "IN" : "OUT";
 }
 
-SDK_INJECT bool ep_in(endpoint_t *ep) {
+SDK_INJECT bool ep_in(pipe_t *ep) {
     return ep->ep_addr & USB_DIR_IN;
 }
 
-SDK_INJECT void show_endpoint(endpoint_t *ep) {
+SDK_INJECT void show_endpoint(pipe_t *ep) {
     printf(" │ %-3uEP%-2d%3s │\n", ep->dev_addr, ep->ep_addr & 0xf, ep_dir(ep));
 }
 
-void setup_endpoint(endpoint_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
+void setup_endpoint(pipe_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
                     uint8_t *user_buf) {
 
     // Populate the endpoint (clears all fields not present)
-    *ep = (endpoint_t) {
+    *ep = (pipe_t) {
         .dev_addr = ep->dev_addr,
         .ep_addr  = usb->bEndpointAddress, // Thus, 0x81 is EP1/IN
         .type     = usb->bmAttributes,
@@ -152,16 +152,16 @@ void setup_epx() {
     }), ctrl_buf);
 }
 
-SDK_INJECT void reset_endpoint(endpoint_t *ep) {
+SDK_INJECT void reset_endpoint(pipe_t *ep) {
     ep->active     = false;
     ep->setup      = false;
     ep->bytes_left = 0;
     ep->bytes_done = 0;
 }
 
-endpoint_t *get_endpoint(uint8_t dev_addr, uint8_t ep_num) {
+pipe_t *get_endpoint(uint8_t dev_addr, uint8_t ep_num) {
     for (uint8_t i = 0; i < MAX_ENDPOINTS; i++) {
-        endpoint_t *ep = &eps[i];
+        pipe_t *ep = &eps[i];
         if (ep->configured) {
             if ((ep->dev_addr == dev_addr) && ((ep->ep_addr & 0xf) == ep_num))
                 return ep;
@@ -171,11 +171,11 @@ endpoint_t *get_endpoint(uint8_t dev_addr, uint8_t ep_num) {
     return NULL;
 }
 
-endpoint_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
+pipe_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
                           uint8_t *user_buf) {
     if (!(usb->bEndpointAddress & 0xf)) panic("EP0 cannot be requested");
     for (uint8_t i = 1; i < MAX_ENDPOINTS; i++) {
-        endpoint_t *ep = &eps[i];
+        pipe_t *ep = &eps[i];
         if (!ep->configured) {
             ep->dev_addr = dev_addr;
             setup_endpoint(ep, i, usb, user_buf);
@@ -187,8 +187,8 @@ endpoint_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
 }
 
 void clear_endpoint(uint8_t dev_addr, uint8_t ep_num) {
-    endpoint_t *ep = get_endpoint(dev_addr, ep_num);
-    memclr(ep, sizeof(endpoint_t));
+    pipe_t *ep = get_endpoint(dev_addr, ep_num);
+    memclr(ep, sizeof(pipe_t));
 }
 
 void clear_endpoints() {
@@ -197,7 +197,7 @@ void clear_endpoints() {
 
 // ==[ Buffers ]================================================================
 
-uint16_t start_buffer(endpoint_t *ep, uint8_t buf_id) {
+uint16_t start_buffer(pipe_t *ep, uint8_t buf_id) {
     bool     in  = ep_in(ep);                         // Inbound buffer?
     bool     run = ep->bytes_left > ep->maxsize;      // Continue to run?
     uint8_t  pid = ep->data_pid;                      // Set DATA0/DATA1
@@ -226,7 +226,7 @@ uint16_t start_buffer(endpoint_t *ep, uint8_t buf_id) {
     return bcr;
 }
 
-uint16_t finish_buffer(endpoint_t *ep, uint8_t buf_id, io_rw_32 bcr) {
+uint16_t finish_buffer(pipe_t *ep, uint8_t buf_id, io_rw_32 bcr) {
     bool     in   = ep_in(ep);                   // Inbound buffer?
     bool     full = bcr & USB_BUF_CTRL_FULL;     // Is buffer full? (populated)
     uint16_t len  = bcr & USB_BUF_CTRL_LEN_MASK; // Buffer length
@@ -253,7 +253,7 @@ uint16_t finish_buffer(endpoint_t *ep, uint8_t buf_id, io_rw_32 bcr) {
 // ==[ Transactions ]===========================================================
 
 void start_transaction(void *arg) {
-    endpoint_t *ep = (endpoint_t *) arg;
+    pipe_t *ep = (pipe_t *) arg;
     io_rw_32 *ecr = ep->ecr;
     io_rw_32 *bcr = ep->bcr, hold;
     uint32_t fire = USB_BUF_CTRL_AVAIL;
@@ -311,7 +311,7 @@ void start_transaction(void *arg) {
     *bcr = hold | fire;
 }
 
-void finish_transaction(endpoint_t *ep) {
+void finish_transaction(pipe_t *ep) {
     io_rw_32 *ecr = ep->ecr;
     io_rw_32 *bcr = ep->bcr;
 
@@ -350,7 +350,7 @@ SDK_INJECT const char *transfer_type(uint8_t bits) {
 // TODO: Abort a transfer if not yet started and return true on success
 
 // Start a new transfer
-void start_transfer(endpoint_t *ep) {
+void start_transfer(pipe_t *ep) {
     if (!ep->user_buf) panic("Transfer has an invalid memory pointer");
     if ( ep->active  ) panic("Transfer already active on endpoint");
     ep->active = true;
@@ -384,7 +384,7 @@ void start_transfer(endpoint_t *ep) {
 
 // Send a ZLP transfer out
 void transfer_zlp(void *arg) {
-    endpoint_t *ep = (endpoint_t *) arg;
+    pipe_t *ep = (pipe_t *) arg;
 
     // Force direction to OUT
     ep->ep_addr &= ~USB_DIR_IN;
@@ -429,7 +429,7 @@ void command(device_t *dev, uint8_t bmRequestType, uint8_t bRequest,
 }
 
 // Send a bulk transfer and pass a data buffer
-void bulk_transfer(endpoint_t *ep, uint8_t *ptr, uint16_t len) {
+void bulk_transfer(pipe_t *ep, uint8_t *ptr, uint16_t len) {
     if (!ep->configured)                     panic("Endpoint not configured");
     if ( ep->type != USB_TRANSFER_TYPE_BULK) panic("Not a bulk endpoint");
 
@@ -441,7 +441,7 @@ void bulk_transfer(endpoint_t *ep, uint8_t *ptr, uint16_t len) {
 }
 
 // Finish a transfer
-void finish_transfer(endpoint_t *ep) {
+void finish_transfer(pipe_t *ep) {
 
     // Panic if the endpoint is not active
     if (!ep->active) panic("Endpoints must be active to finish");
@@ -970,7 +970,7 @@ void usb_task() {
                 callback_t callback = task.transfer.callback; // Callback struct
                 uint8_t    status   = task.transfer.status;   // Transfer status
 
-                endpoint_t *ep  = get_endpoint(dev_addr, ep_num);
+                pipe_t *ep  = get_endpoint(dev_addr, ep_num);
                 device_t   *dev = get_device(ep->dev_addr);
 
                 if (dev->state < DEVICE_CONFIGURED) {
@@ -1044,7 +1044,7 @@ void isr_usbctrl() {
     uint8_t dev_addr =  dar & USB_ADDR_ENDP_ADDRESS_BITS;     // 7 bits (lowest)
     uint8_t ep_num   = (dar & USB_ADDR_ENDP_ENDPOINT_BITS) >> // 4 bits (higher)
                               USB_ADDR_ENDP_ENDPOINT_LSB;
-    endpoint_t *ep = get_endpoint(dev_addr, ep_num);
+    pipe_t *ep = get_endpoint(dev_addr, ep_num);
 
     // Show system state
     printf( "\n=> %u) New ISR", guid++);
@@ -1115,7 +1115,7 @@ void isr_usbctrl() {
         bindump(dbl ? "│BUF/2" : "│BUF/1", bits);
 
         // Finish transactions on each pending endpoint
-        endpoint_t *epz;
+        pipe_t *epz;
         for (uint8_t epn = 0; epn < MAX_ENDPOINTS && bits; epn++, mask <<= 2) {
             if (bits &   mask) {
                 bits &= ~mask;
