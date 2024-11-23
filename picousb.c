@@ -57,24 +57,24 @@ static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared control transfer buffer
 
 pipe_t pipes[MAX_PIPES], *ctrl = pipes;
 
-SDK_INJECT const char *ep_dir(pipe_t *ep) {
-    return ep->ep_addr & USB_DIR_IN ? "IN" : "OUT";
+SDK_INJECT const char *ep_dir(pipe_t *pp) {
+    return pp->ep_addr & USB_DIR_IN ? "IN" : "OUT";
 }
 
-SDK_INJECT bool ep_in(pipe_t *ep) {
-    return ep->ep_addr & USB_DIR_IN;
+SDK_INJECT bool ep_in(pipe_t *pp) {
+    return pp->ep_addr & USB_DIR_IN;
 }
 
-SDK_INJECT void show_pipe(pipe_t *ep) {
-    printf(" │ %-3uEP%-2d%3s │\n", ep->dev_addr, ep->ep_addr & 0xf, ep_dir(ep));
+SDK_INJECT void show_pipe(pipe_t *pp) {
+    printf(" │ %-3uEP%-2d%3s │\n", pp->dev_addr, pp->ep_addr & 0xf, ep_dir(pp));
 }
 
-void setup_endpoint(pipe_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
+void setup_endpoint(pipe_t *pp, uint8_t epn, usb_endpoint_descriptor_t *usb,
                     uint8_t *user_buf) {
 
     // Populate the endpoint (clears all fields not present)
-    *ep = (pipe_t) {
-        .dev_addr = ep->dev_addr,
+    *pp = (pipe_t) {
+        .dev_addr = pp->dev_addr,
         .ep_addr  = usb->bEndpointAddress, // So, 0x81 is EP1/IN
         .type     = usb->bmAttributes,
         .interval = usb->bInterval,
@@ -83,62 +83,62 @@ void setup_endpoint(pipe_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
     };
 
     // Panic if endpoint is not a control or bulk transfer type
-    if (ep->type & 1u) panic("Interrupt and isochronous endpoints not allowed");
+    if (pp->type & 1u) panic("Interrupt and isochronous endpoints not allowed");
 
     // USB 2.0 max packet size is 64 bytes, but isochronous can be up to 1,023!
-    if (ep->maxsize > 64) panic("Packet size is currently limited to 64 bytes");
+    if (pp->maxsize > 64) panic("Packet size is currently limited to 64 bytes");
 
     // Setup hardware registers and data buffers
     if (!epn) { // Shared epx
-        ep->ecr = &usbh_dpram->epx_ctrl;
-        ep->bcr = &usbh_dpram->epx_buf_ctrl;
-        ep->buf = &usbh_dpram->epx_data[0];
-    } else if (ep->ep_addr & 0xf) { // Polled hardware endpoint
+        pp->ecr = &usbh_dpram->epx_ctrl;
+        pp->bcr = &usbh_dpram->epx_buf_ctrl;
+        pp->buf = &usbh_dpram->epx_data[0];
+    } else if (pp->ep_addr & 0xf) { // Polled hardware endpoint
         uint8_t i = epn - 1;
-        ep->ecr = &usbh_dpram->int_ep_ctrl       [i].ctrl;
-        ep->bcr = &usbh_dpram->int_ep_buffer_ctrl[i].ctrl;
-        ep->buf = &usbh_dpram->epx_data         [(i + 2) * 64];
+        pp->ecr = &usbh_dpram->int_ep_ctrl       [i].ctrl;
+        pp->bcr = &usbh_dpram->int_ep_buffer_ctrl[i].ctrl;
+        pp->buf = &usbh_dpram->epx_data         [(i + 2) * 64];
 
         // Setup polled hardware endpoint
         bool ls = false;
-        bool in = ep_in(ep);
+        bool in = ep_in(pp);
         usb_hw->int_ep_addr_ctrl[i] = \
               (ls ? 1 : 0)        << 26    // Preamble: LS on FS hub
             | (in ? 0 : 1)        << 25    // Direction (In=0, Out=1)
-            | (ep->ep_addr & 0xf) << 16    // Endpoint number
-            |  ep->dev_addr;               // Device address
+            | (pp->ep_addr & 0xf) << 16    // Endpoint number
+            |  pp->dev_addr;               // Device address
         usb_hw->int_ep_ctrl |= (1 << epn); // Activate the endpoint
     } else {
         panic("EP0 cannot be polled");
     }
 
     // Set bcr first to prevent any issues when ecr is set
-    *ep->bcr = 0; nop(); nop(); nop(); nop(); nop(); nop();
+    *pp->bcr = 0; nop(); nop(); nop(); nop(); nop(); nop();
 
     // Setup shared epx endpoint and enable double buffering
-    *ep->ecr = EP_CTRL_ENABLE_BITS             // Enable endpoint
+    *pp->ecr = EP_CTRL_ENABLE_BITS             // Enable endpoint
              |  (epn ? SINGLE_BUFFER           // Non-epx are single buffered
                      : DOUBLE_BUFFER)          // And epx are double buffered
-             |   ep->type << 26                // Set transfer type
-             | ((ep->interval || 1) - 1) << 16 // Polling interval minus 1 ms
-             | ((uint32_t) ep->buf) & 0xfc0;   // DSPRAM offset: 64-byte aligned
+             |   pp->type << 26                // Set transfer type
+             | ((pp->interval || 1) - 1) << 16 // Polling interval minus 1 ms
+             | ((uint32_t) pp->buf) & 0xfc0;   // DSPRAM offset: 64-byte aligned
 
     // NOTE: Endpoints should start with DATA0. However, there are some devices
     // that are non-standard and start at DATA1. Linux just hard codes these
     // values, so we do too.
 
-    ep->data_pid = 0;
+    pp->data_pid = 0;
 
-    if (ep->dev_addr) {
-        device_t *dev = get_device(ep->dev_addr);
+    if (pp->dev_addr) {
+        device_t *dev = get_device(pp->dev_addr);
 
         if (dev->vid == 0x0403 && dev->pid == 0xcd18) {
-            ep->data_pid = 1;
+            pp->data_pid = 1;
         }
     }
 
     // Set as configured
-    ep->configured = true;
+    pp->configured = true;
 }
 
 void setup_ctrl() {
@@ -152,22 +152,22 @@ void setup_ctrl() {
     }), ctrl_buf);
 }
 
-SDK_INJECT void reset_endpoint(pipe_t *ep) {
-    ep->active     = false;
-    ep->setup      = false;
-    ep->bytes_left = 0;
-    ep->bytes_done = 0;
+SDK_INJECT void reset_endpoint(pipe_t *pp) {
+    pp->active     = false;
+    pp->setup      = false;
+    pp->bytes_left = 0;
+    pp->bytes_done = 0;
 }
 
 pipe_t *get_endpoint(uint8_t dev_addr, uint8_t ep_num) {
     for (uint8_t i = 0; i < MAX_PIPES; i++) {
-        pipe_t *ep = &pipes[i];
-        if (ep->configured) {
-            if ((ep->dev_addr == dev_addr) && ((ep->ep_addr & 0xf) == ep_num))
-                return ep;
+        pipe_t *pp = &pipes[i];
+        if (pp->configured) {
+            if ((pp->dev_addr == dev_addr) && ((pp->ep_addr & 0xf) == ep_num))
+                return pp;
         }
     }
-    panic("No configured EP%u on device %u", ep_num, dev_addr);
+    panic("No configured pp%u on device %u", ep_num, dev_addr);
     return NULL;
 }
 
@@ -175,11 +175,11 @@ pipe_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
                           uint8_t *user_buf) {
     if (!(usb->bEndpointAddress & 0xf)) panic("EP0 cannot be requested");
     for (uint8_t i = 1; i < MAX_PIPES; i++) {
-        pipe_t *ep = &pipes[i];
-        if (!ep->configured) {
-            ep->dev_addr = dev_addr;
-            setup_endpoint(ep, i, usb, user_buf);
-            return ep;
+        pipe_t *pp = &pipes[i];
+        if (!pp->configured) {
+            pp->dev_addr = dev_addr;
+            setup_endpoint(pp, i, usb, user_buf);
+            return pp;
         }
     }
     panic("No free endpoints remaining");
@@ -187,8 +187,8 @@ pipe_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
 }
 
 void clear_endpoint(uint8_t dev_addr, uint8_t ep_num) {
-    pipe_t *ep = get_endpoint(dev_addr, ep_num);
-    memclr(ep, sizeof(pipe_t));
+    pipe_t *pp = get_endpoint(dev_addr, ep_num);
+    memclr(pp, sizeof(pipe_t));
 }
 
 void clear_endpoints() {
@@ -197,11 +197,11 @@ void clear_endpoints() {
 
 // ==[ Buffers ]================================================================
 
-uint16_t start_buffer(pipe_t *ep, uint8_t buf_id) {
-    bool     in  = ep_in(ep);                         // Inbound buffer?
-    bool     run = ep->bytes_left > ep->maxsize;      // Continue to run?
-    uint8_t  pid = ep->data_pid;                      // Set DATA0/DATA1
-    uint16_t len = MIN(ep->bytes_left, ep->maxsize);  // Determine buffer length
+uint16_t start_buffer(pipe_t *pp, uint8_t buf_id) {
+    bool     in  = ep_in(pp);                         // Inbound buffer?
+    bool     run = pp->bytes_left > pp->maxsize;      // Continue to run?
+    uint8_t  pid = pp->data_pid;                      // Set DATA0/DATA1
+    uint16_t len = MIN(pp->bytes_left, pp->maxsize);  // Determine buffer length
     uint16_t bcr = (in  ? 0 : USB_BUF_CTRL_FULL)      // IN/Recv=0, OUT/Send=1
                  | (run ? 0 : USB_BUF_CTRL_LAST)      // Trigger TRANS_COMPLETE
                  | (pid ?     USB_BUF_CTRL_DATA1_PID  // Use DATA1 if needed
@@ -209,25 +209,25 @@ uint16_t start_buffer(pipe_t *ep, uint8_t buf_id) {
                  | len;                               // Set buffer length
 
     // Toggle DATA0/DATA1 pid
-    ep->data_pid = pid ^ 1u;
+    pp->data_pid = pid ^ 1u;
 
     // OUT: Copy outbound data from the user buffer to the endpoint
     if (!in && len) {
-        uint8_t *src = (uint8_t *) (&ep->user_buf[ep->bytes_done]);
-        uint8_t *dst = (uint8_t *) (ep->buf + buf_id * 64);
+        uint8_t *src = (uint8_t *) (&pp->user_buf[pp->bytes_done]);
+        uint8_t *dst = (uint8_t *) (pp->buf + buf_id * 64);
         memcpy(dst, src, len);
         hexdump(buf_id ? "│OUT/2" : "│OUT/1", src, len, 1);
-        ep->bytes_done += len;
+        pp->bytes_done += len;
     }
 
     // Update byte counts
-    ep->bytes_left -= len;
+    pp->bytes_left -= len;
 
     return bcr;
 }
 
-uint16_t finish_buffer(pipe_t *ep, uint8_t buf_id, io_rw_32 bcr) {
-    bool     in   = ep_in(ep);                   // Inbound buffer?
+uint16_t finish_buffer(pipe_t *pp, uint8_t buf_id, io_rw_32 bcr) {
+    bool     in   = ep_in(pp);                   // Inbound buffer?
     bool     full = bcr & USB_BUF_CTRL_FULL;     // Is buffer full? (populated)
     uint16_t len  = bcr & USB_BUF_CTRL_LEN_MASK; // Buffer length
 
@@ -236,16 +236,16 @@ uint16_t finish_buffer(pipe_t *ep, uint8_t buf_id, io_rw_32 bcr) {
 
     // IN: Copy inbound data from the endpoint to the user buffer
     if (in && len) {
-        uint8_t *src = (uint8_t *) (ep->buf + buf_id * 64);
-        uint8_t *dst = (uint8_t *) &ep->user_buf[ep->bytes_done];
+        uint8_t *src = (uint8_t *) (pp->buf + buf_id * 64);
+        uint8_t *dst = (uint8_t *) &pp->user_buf[pp->bytes_done];
         memcpy(dst, src, len);
         hexdump(buf_id ? "│IN/2" : "│IN/1", dst, len, 1);
-        ep->bytes_done += len;
+        pp->bytes_done += len;
     }
 
     // Short packet (below maxsize) means the transfer is done
-    if (len < ep->maxsize)
-        ep->bytes_left = 0;
+    if (len < pp->maxsize)
+        pp->bytes_left = 0;
 
     return len;
 }
@@ -253,23 +253,23 @@ uint16_t finish_buffer(pipe_t *ep, uint8_t buf_id, io_rw_32 bcr) {
 // ==[ Transactions ]===========================================================
 
 void start_transaction(void *arg) {
-    pipe_t *ep = (pipe_t *) arg;
-    io_rw_32 *ecr = ep->ecr;
-    io_rw_32 *bcr = ep->bcr, hold;
+    pipe_t *pp = (pipe_t *) arg;
+    io_rw_32 *ecr = pp->ecr;
+    io_rw_32 *bcr = pp->bcr, hold;
     uint32_t fire = USB_BUF_CTRL_AVAIL;
 
-    assert(ep->active);
+    assert(pp->active);
 
     // Hold the value for bcr
-    hold = start_buffer(ep, 0);
+    hold = start_buffer(pp, 0);
 
     // If using epx, update the buffering mode
-    if (ep->ecr == ctrl->ecr) {
+    if (pp->ecr == ctrl->ecr) {
         if (hold & USB_BUF_CTRL_LAST) {        // For single buffering:
             *ecr &= ~DOUBLE_BUFFER;            //   Disable double-buffering
             *ecr |=  SINGLE_BUFFER;            //   Enable  single-buffering
         } else {                               // For double buffering:
-            hold |= start_buffer(ep, 1) << 16; //   Merge bcr for buf1
+            hold |= start_buffer(pp, 1) << 16; //   Merge bcr for buf1
             *ecr &= ~SINGLE_BUFFER;            //   Disable single-buffering
             *ecr |=  DOUBLE_BUFFER;            //   Enable  double-buffering
             fire |=  fire << 16;               //   Fire buffers together
@@ -280,27 +280,27 @@ void start_transaction(void *arg) {
     *bcr = hold; nop(); nop(); nop(); nop(); nop(); nop();
 
     // Debug output
-    if (!ep->bytes_done) {
+    if (!pp->bytes_done) {
         printf(DEBUG_ROW);
         printf( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transaction started");
-        show_pipe(ep);
+        show_pipe(pp);
         printf(DEBUG_ROW);
         bindump("│SIE", usb_hw->sie_ctrl);
         bindump("│SSR", usb_hw->sie_status);
         printf(DEBUG_ROW);
         bindump("│DAR", usb_hw->dev_addr_ctrl);
-        bindump("│ECR", *ep->ecr);
+        bindump("│ECR", *pp->ecr);
         bindump("│BCR", hold | fire);
-        if (ep->setup) {
+        if (pp->setup) {
             uint32_t *packet = (uint32_t *) usbh_dpram->setup_packet;
             printf(DEBUG_ROW);
             hexdump("│SETUP", packet, sizeof(usb_setup_packet_t), 1);
             printf(DEBUG_ROW);
-        } else if (!ep->bytes_left) {
-            bool in = ep_in(ep);
+        } else if (!pp->bytes_left) {
+            bool in = ep_in(pp);
             char *str = in ? "IN" : "OUT";
             printf(DEBUG_ROW);
-            printf( "│ZLP\t│ %-4s │ Device %-28u │            │\n", str, ep->dev_addr);
+            printf( "│ZLP\t│ %-4s │ Device %-28u │            │\n", str, pp->dev_addr);
             printf(DEBUG_ROW);
         } else {
             printf(DEBUG_ROW);
@@ -311,21 +311,21 @@ void start_transaction(void *arg) {
     *bcr = hold | fire;
 }
 
-void finish_transaction(pipe_t *ep) {
-    io_rw_32 *ecr = ep->ecr;
-    io_rw_32 *bcr = ep->bcr;
+void finish_transaction(pipe_t *pp) {
+    io_rw_32 *ecr = pp->ecr;
+    io_rw_32 *bcr = pp->bcr;
 
-    assert(ep->active);
+    assert(pp->active);
 
     // Finish based on if we're single or double buffered
     if (*ecr & EP_CTRL_DOUBLE_BUFFERED_BITS) {         // For double buffering:
-        if (finish_buffer(ep, 0, *bcr) == ep->maxsize) //   Finish first buffer
-            finish_buffer(ep, 1, *bcr >> 16);          //   Finish second buffer
+        if (finish_buffer(pp, 0, *bcr) == pp->maxsize) //   Finish first buffer
+            finish_buffer(pp, 1, *bcr >> 16);          //   Finish second buffer
     } else {                                           // For single buffering:
         uint32_t bch = usb_hw->buf_cpu_should_handle;  //   Workaround RP2040-E4
         uint32_t tmp = *bcr;                           //   First, get bcr
         if (bch & 1u) tmp >>= 16;                      //   Shift if needed
-        finish_buffer(ep, 0, tmp);                     //   Then, finish buffer
+        finish_buffer(pp, 0, tmp);                     //   Then, finish buffer
     }
 }
 
@@ -350,20 +350,20 @@ SDK_INJECT const char *transfer_type(uint8_t bits) {
 // TODO: Abort a transfer if not yet started and return true on success
 
 // Start a new transfer
-void start_transfer(pipe_t *ep) {
-    if (!ep->user_buf) panic("Transfer has an invalid memory pointer");
-    if ( ep->active  ) panic("Transfer already active on endpoint");
-    ep->active = true;
+void start_transfer(pipe_t *pp) {
+    if (!pp->user_buf) panic("Transfer has an invalid memory pointer");
+    if ( pp->active  ) panic("Transfer already active on endpoint");
+    pp->active = true;
 
     // Calculate registers
-    uint32_t dar = (ep->ep_addr & 0xf) << 16 | ep->dev_addr;
+    uint32_t dar = (pp->ep_addr & 0xf) << 16 | pp->dev_addr;
     uint32_t sie = USB_SIE_CTRL_BASE;
 
     // Shared epx must be setup each transfer, epn's are already setup
-    if (ep->ecr == ctrl->ecr) {
+    if (pp->ecr == ctrl->ecr) {
         bool ls = false;
-        bool in = ep_in(ep);
-        bool ss = ep->setup && !ep->bytes_done; // Start of a SETUP packet
+        bool in = ep_in(pp);
+        bool ss = pp->setup && !pp->bytes_done; // Start of a SETUP packet
 
         sie |= (!ls ? 0 : USB_SIE_CTRL_PREAMBLE_EN_BITS ) // LS on a FS hub
             |  ( in ?     USB_SIE_CTRL_RECEIVE_DATA_BITS  // IN=Receive
@@ -376,7 +376,7 @@ void start_transfer(pipe_t *ep) {
     usb_hw->sie_ctrl      = sie;
 
     // Get the transaction and buffers ready
-    start_transaction(ep);
+    start_transaction(pp);
 
     // Initiate the transfer
     usb_hw->sie_ctrl      = sie | USB_SIE_CTRL_START_TRANS_BITS;
@@ -384,13 +384,13 @@ void start_transfer(pipe_t *ep) {
 
 // Send a ZLP transfer out
 void transfer_zlp(void *arg) {
-    pipe_t *ep = (pipe_t *) arg;
+    pipe_t *pp = (pipe_t *) arg;
 
     // Force direction to OUT
-    ep->ep_addr &= ~USB_DIR_IN;
-    ep->bytes_left = 0;
+    pp->ep_addr &= ~USB_DIR_IN;
+    pp->bytes_left = 0;
 
-    start_transfer(ep);
+    start_transfer(pp);
 }
 
 // Send a control transfer using an existing setup packet
@@ -429,47 +429,47 @@ void command(device_t *dev, uint8_t bmRequestType, uint8_t bRequest,
 }
 
 // Send a bulk transfer and pass a data buffer
-void bulk_transfer(pipe_t *ep, uint8_t *ptr, uint16_t len) {
-    if (!ep->configured)                     panic("Endpoint not configured");
-    if ( ep->type != USB_TRANSFER_TYPE_BULK) panic("Not a bulk endpoint");
+void bulk_transfer(pipe_t *pp, uint8_t *ptr, uint16_t len) {
+    if (!pp->configured)                     panic("Endpoint not configured");
+    if ( pp->type != USB_TRANSFER_TYPE_BULK) panic("Not a bulk endpoint");
 
-    ep->user_buf   = ptr;
-    ep->bytes_left = len;
-    ep->bytes_done = 0;
+    pp->user_buf   = ptr;
+    pp->bytes_left = len;
+    pp->bytes_done = 0;
 
-    start_transfer(ep);
+    start_transfer(pp);
 }
 
 // Finish a transfer
-void finish_transfer(pipe_t *ep) {
+void finish_transfer(pipe_t *pp) {
 
     // Panic if the endpoint is not active
-    if (!ep->active) panic("Endpoints must be active to finish");
+    if (!pp->active) panic("Endpoints must be active to finish");
 
     // Get the transfer length (actual bytes transferred)
-    uint16_t len = ep->bytes_done;
+    uint16_t len = pp->bytes_done;
 
     // Debug output
     if (len) {
         printf(DEBUG_ROW);
         printf( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n",
-                    len, ep->dev_addr, guid);
-        hexdump("│Data", ep->user_buf, len, 1);
+                    len, pp->dev_addr, guid);
+        hexdump("│Data", pp->user_buf, len, 1);
     } else {
         printf(DEBUG_ROW);
         printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n",
-                    ep_dir(ep), ep->dev_addr, guid);
+                    ep_dir(pp), pp->dev_addr, guid);
     }
 
     // Create the transfer task
     task_t transfer_task = {
         .type              = TASK_TRANSFER,
         .guid              = guid++,
-        .transfer.dev_addr = ep->dev_addr,      // Device address
-        .transfer.ep_num   = ep->ep_addr & 0xf, // Endpoint number (EP0-EP15)
-        .transfer.user_buf = ep->user_buf,      // User buffer
-        .transfer.len      = ep->bytes_done,    // Buffer length
-        .transfer.callback = ep->callback,      // Callback function
+        .transfer.dev_addr = pp->dev_addr,      // Device address
+        .transfer.ep_num   = pp->ep_addr & 0xf, // Endpoint number (EP0-EP15)
+        .transfer.user_buf = pp->user_buf,      // User buffer
+        .transfer.len      = pp->bytes_done,    // Buffer length
+        .transfer.callback = pp->callback,      // Callback function
         .transfer.status   = TRANSFER_SUCCESS,  // Transfer status
     };
 
@@ -479,7 +479,7 @@ void finish_transfer(pipe_t *ep) {
     // TODO: Should reset go BEFORE the queue_add_blocking???
 
     // Reset the endpoint
-    reset_endpoint(ep);
+    reset_endpoint(pp);
 }
 
 // ==[ Descriptors ]============================================================
@@ -603,7 +603,7 @@ void show_pipe_descriptor(void *ptr) {
     printf("Endpoint Descriptor:\n");
     printf("  Length:           %u\n"   , d->bLength);
     printf("  Endpoint Address: 0x%02x" , d->bEndpointAddress);
-    printf(" (EP%u/%s)\n", ep_addr & 0xf, ep_addr & USB_DIR_IN ? "IN" : "OUT");
+    printf(" (pp%u/%s)\n", ep_addr & 0xf, ep_addr & USB_DIR_IN ? "IN" : "OUT");
     printf("  Attributes:       0x%02x" , d->bmAttributes);
     printf(" (%s Transfer Type)\n"      , transfer_type(d->bmAttributes));
     printf("  Max Packet Size:  %u\n"   , d->wMaxPacketSize);
@@ -970,14 +970,14 @@ void usb_task() {
                 callback_t callback = task.transfer.callback; // Callback struct
                 uint8_t    status   = task.transfer.status;   // Transfer status
 
-                pipe_t *ep  = get_endpoint(dev_addr, ep_num);
-                device_t   *dev = get_device(ep->dev_addr);
+                pipe_t *pp  = get_endpoint(dev_addr, ep_num);
+                device_t   *dev = get_device(pp->dev_addr);
 
                 if (dev->state < DEVICE_CONFIGURED) {
-                    len ? transfer_zlp(ep) : enumerate(dev);
-                } else if (ep->callback.fn) {
-                    void *arg = ep->callback.arg;
-                    ep->callback.fn(arg ? arg : (void *) ep);
+                    len ? transfer_zlp(pp) : enumerate(dev);
+                } else if (pp->callback.fn) {
+                    void *arg = pp->callback.arg;
+                    pp->callback.fn(arg ? arg : (void *) pp);
                 } else {
                     printf("Transfer completed\n");
                 }
@@ -1044,7 +1044,7 @@ void isr_usbctrl() {
     uint8_t dev_addr =  dar & USB_ADDR_ENDP_ADDRESS_BITS;     // 7 bits (lowest)
     uint8_t ep_num   = (dar & USB_ADDR_ENDP_ENDPOINT_BITS) >> // 4 bits (higher)
                               USB_ADDR_ENDP_ENDPOINT_LSB;
-    pipe_t *ep = get_endpoint(dev_addr, ep_num);
+    pipe_t *pp = get_endpoint(dev_addr, ep_num);
 
     // Show system state
     printf( "\n=> %u) New ISR", guid++);
@@ -1052,7 +1052,7 @@ void isr_usbctrl() {
     printf( "\n\n");
     printf(DEBUG_ROW);
     printf( "│Frame  │ %4u │ %-35s", sof, "Interrupt Handler");
-    show_pipe(ep);
+    show_pipe(pp);
     printf(DEBUG_ROW);
     bindump("│INT", ints);
     bindump("│SIE", sie);
@@ -1122,7 +1122,7 @@ void isr_usbctrl() {
                 usb_hw_clear->buf_status = mask;
 
                 // Get a handle to the correct endpoint
-                epz = (!epn && ep->ecr == ctrl->ecr) ? ep : &pipes[epn];
+                epz = (!epn && pp->ecr == ctrl->ecr) ? pp : &pipes[epn];
 
                 // Show epn details
                 char *str = (char[16]) { 0 };
@@ -1138,7 +1138,7 @@ void isr_usbctrl() {
                 if (epz->bytes_left) {
                     queue_callback(start_transaction, (void *) epz);
                 } else {
-                    finish_transfer(ep);
+                    finish_transfer(pp);
                 }
             }
         }
