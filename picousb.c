@@ -1099,20 +1099,8 @@ void isr_usbctrl() {
 
                 finish_transaction(cur);
 
-                // Start the next transaction in the transfer or finish if done
-                if (cur->bytes_left) {
-
-                    // FIXME: If we can get away with it, start the next
-                    // transaction right here within the ISR. If this is too
-                    // risky, then queue a task to start the next transaction.
-                    start_transaction(cur);
-
-                    // FIXME: In case we need to queue up a task to start the
-                    // next transaction, the following code can be used.
-                    // queue_callback(start_transaction, (void *) cur);
-                } else {
-                    finish_transfer(cur);
-                }
+                // Either start the next transaction or finish the transfer
+                cur->bytes_left ? start_transaction(cur) : finish_transfer(cur);
             }
         }
 
