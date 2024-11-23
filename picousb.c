@@ -55,7 +55,7 @@ void clear_devices() {
 
 static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared control transfer buffer
 
-pipe_t eps[MAX_ENDPOINTS], *epx = eps;
+pipe_t pipes[MAX_ENDPOINTS], *epx = pipes;
 
 SDK_INJECT const char *ep_dir(pipe_t *ep) {
     return ep->ep_addr & USB_DIR_IN ? "IN" : "OUT";
@@ -161,7 +161,7 @@ SDK_INJECT void reset_endpoint(pipe_t *ep) {
 
 pipe_t *get_endpoint(uint8_t dev_addr, uint8_t ep_num) {
     for (uint8_t i = 0; i < MAX_ENDPOINTS; i++) {
-        pipe_t *ep = &eps[i];
+        pipe_t *ep = &pipes[i];
         if (ep->configured) {
             if ((ep->dev_addr == dev_addr) && ((ep->ep_addr & 0xf) == ep_num))
                 return ep;
@@ -175,7 +175,7 @@ pipe_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
                           uint8_t *user_buf) {
     if (!(usb->bEndpointAddress & 0xf)) panic("EP0 cannot be requested");
     for (uint8_t i = 1; i < MAX_ENDPOINTS; i++) {
-        pipe_t *ep = &eps[i];
+        pipe_t *ep = &pipes[i];
         if (!ep->configured) {
             ep->dev_addr = dev_addr;
             setup_endpoint(ep, i, usb, user_buf);
@@ -192,7 +192,7 @@ void clear_endpoint(uint8_t dev_addr, uint8_t ep_num) {
 }
 
 void clear_endpoints() {
-    memclr(eps, sizeof(eps));
+    memclr(pipes, sizeof(pipes));
 }
 
 // ==[ Buffers ]================================================================
@@ -1122,7 +1122,7 @@ void isr_usbctrl() {
                 usb_hw_clear->buf_status = mask;
 
                 // Get a handle to the correct endpoint
-                epz = (!epn && ep->ecr == epx->ecr) ? ep : &eps[epn];
+                epz = (!epn && ep->ecr == epx->ecr) ? ep : &pipes[epn];
 
                 // Show epn details
                 char *str = (char[16]) { 0 };
