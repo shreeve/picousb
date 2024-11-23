@@ -152,14 +152,14 @@ void setup_ctrl() {
     }), ctrl_buf);
 }
 
-SDK_INJECT void reset_endpoint(pipe_t *pp) {
+SDK_INJECT void reset_pipe(pipe_t *pp) {
     pp->active     = false;
     pp->setup      = false;
     pp->bytes_left = 0;
     pp->bytes_done = 0;
 }
 
-pipe_t *get_endpoint(uint8_t dev_addr, uint8_t ep_num) {
+pipe_t *get_pipe(uint8_t dev_addr, uint8_t ep_num) {
     for (uint8_t i = 0; i < MAX_PIPES; i++) {
         pipe_t *pp = &pipes[i];
         if (pp->configured) {
@@ -171,7 +171,7 @@ pipe_t *get_endpoint(uint8_t dev_addr, uint8_t ep_num) {
     return NULL;
 }
 
-pipe_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
+pipe_t *next_pipe(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
                           uint8_t *user_buf) {
     if (!(usb->bEndpointAddress & 0xf)) panic("EP0 cannot be requested");
     for (uint8_t i = 1; i < MAX_PIPES; i++) {
@@ -186,12 +186,12 @@ pipe_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
     return NULL;
 }
 
-void clear_endpoint(uint8_t dev_addr, uint8_t ep_num) {
-    pipe_t *pp = get_endpoint(dev_addr, ep_num);
+void clear_pipe(uint8_t dev_addr, uint8_t ep_num) {
+    pipe_t *pp = get_pipe(dev_addr, ep_num);
     memclr(pp, sizeof(pipe_t));
 }
 
-void clear_endpoints() {
+void clear_pipes() {
     memclr(pipes, sizeof(pipes));
 }
 
@@ -479,7 +479,7 @@ void finish_transfer(pipe_t *pp) {
     // TODO: Should reset go BEFORE the queue_add_blocking???
 
     // Reset the endpoint
-    reset_endpoint(pp);
+    reset_pipe(pp);
 }
 
 // ==[ Descriptors ]============================================================
@@ -781,7 +781,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
             case USB_DT_ENDPOINT:
                 epd = (usb_endpoint_descriptor_t *) cur;
                 show_pipe_descriptor(epd);
-                next_endpoint(dev->dev_addr, epd, NULL); // user_buf starts NULL
+                next_pipe(dev->dev_addr, epd, NULL); // user_buf starts NULL
                 break;
 
             // Unknown descriptor
@@ -970,7 +970,7 @@ void usb_task() {
                 callback_t callback = task.transfer.callback; // Callback struct
                 uint8_t    status   = task.transfer.status;   // Transfer status
 
-                pipe_t *pp  = get_endpoint(dev_addr, ep_num);
+                pipe_t *pp  = get_pipe(dev_addr, ep_num);
                 device_t   *dev = get_device(pp->dev_addr);
 
                 if (dev->state < DEVICE_CONFIGURED) {
@@ -1044,7 +1044,7 @@ void isr_usbctrl() {
     uint8_t dev_addr =  dar & USB_ADDR_ENDP_ADDRESS_BITS;     // 7 bits (lowest)
     uint8_t ep_num   = (dar & USB_ADDR_ENDP_ENDPOINT_BITS) >> // 4 bits (higher)
                               USB_ADDR_ENDP_ENDPOINT_LSB;
-    pipe_t *pp = get_endpoint(dev_addr, ep_num);
+    pipe_t *pp = get_pipe(dev_addr, ep_num);
 
     // Show system state
     printf( "\n=> %u) New ISR", guid++);
@@ -1224,7 +1224,7 @@ void setup_usb_host() {
     irq_set_enabled(USBCTRL_IRQ, true);
 
     clear_devices();
-    clear_endpoints();
+    clear_pipes();
     setup_ctrl();
 
     printf(DEBUG_ROW);
