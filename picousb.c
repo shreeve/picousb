@@ -388,7 +388,7 @@ void transfer_zlp(void *arg) {
     start_transfer(pp);
 }
 
-// Send a control transfer using an existing setup packet
+// Send a control transfer
 void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     if (!ctrl->configured) panic("Endpoint not configured");
     if ( ctrl->type)       panic("Not a control endpoint");
@@ -396,6 +396,7 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     // Copy the SETUP packet
     memcpy((void*) usbh_dpram->setup_packet, setup, sizeof(usb_setup_packet_t));
 
+    // Configure the pipe
     ctrl->dev_addr   = dev->dev_addr;
     ctrl->ep_num     = 0; // Always EP0
     ctrl->ep_in      = setup->bmRequestType & USB_DIR_IN ? 1 : 0;
