@@ -1087,10 +1087,8 @@ void isr_usbctrl() {
                 bits &= ~mask;
                 usb_hw_clear->buf_status = mask;
 
-// CODE RED: This should be "||" right???
-
                 // Get a handle to the correct pipe
-                cur = (!pair && pp->ecr == ctrl->ecr) ? pp : &pipes[pair];
+                cur = &pipes[pair];
 
                 // Show registers for endpoint control and buffer control
                 char *str = (char[16]) { 0 };
