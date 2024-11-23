@@ -144,7 +144,7 @@ typedef struct {
 
     // Transfer details
     bool       active    ; // Transfer is active
-    bool       setup     ; // Setup packet flag
+    bool       setup     ; // SETUP packet flag
     uint8_t    data_pid  ; // Toggle between DATA0/DATA1 packets
     uint16_t   bytes_left; // Bytes left to transfer
     uint16_t   bytes_done; // Bytes done transferring

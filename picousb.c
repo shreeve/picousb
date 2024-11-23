@@ -393,7 +393,7 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     if (!ctrl->configured) panic("Endpoint not configured");
     if ( ctrl->type)       panic("Not a control endpoint");
 
-    // Copy the setup packet
+    // Copy the SETUP packet
     memcpy((void*) usbh_dpram->setup_packet, setup, sizeof(usb_setup_packet_t));
 
     ctrl->dev_addr   = dev->dev_addr;
@@ -412,7 +412,7 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     start_transfer(ctrl);
 }
 
-// Send a control transfer using a newly constructed setup packet
+// Send a control transfer using a newly constructed SETUP packet
 void command(device_t *dev, uint8_t bmRequestType, uint8_t bRequest,
              uint16_t wValue, uint16_t wIndex, uint16_t wLength) {
     control_transfer(dev, &((usb_setup_packet_t) {
