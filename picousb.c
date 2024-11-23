@@ -211,7 +211,7 @@ uint16_t start_buffer(pipe_t *pp, uint8_t buf_id) {
     // Toggle DATA0/DATA1 pid
     pp->data_pid = pid ^ 1u;
 
-    // OUT: Copy outbound data from the user buffer to the endpoint
+    // OUT: Copy outbound data from the user buffer to the usb controller buffer
     if (!in && len) {
         uint8_t *src = (uint8_t *) (&pp->user_buf[pp->bytes_done]);
         uint8_t *dst = (uint8_t *) (pp->buf + buf_id * 64);
@@ -234,7 +234,7 @@ uint16_t finish_buffer(pipe_t *pp, uint8_t buf_id, io_rw_32 bcr) {
     // Inbound buffers must be full and outbound buffers must be empty
     assert(in == full);
 
-    // IN: Copy inbound data from the endpoint to the user buffer
+    // IN: Copy inbound data from the usb controller buffer to the user buffer
     if (in && len) {
         uint8_t *src = (uint8_t *) (pp->buf + buf_id * 64);
         uint8_t *dst = (uint8_t *) &pp->user_buf[pp->bytes_done];
