@@ -1116,7 +1116,7 @@ void isr_usbctrl() {
 
         // Finish transactions on each pending endpoint
         pipe_t *epz;
-        for (uint8_t epn = 0; epn < MAX_PIPES && bits; epn++, mask <<= 2) {
+        for (uint8_t epn = 0; epn < 16 && bits; epn++, mask <<= 2) {
             if (bits &   mask) {
                 bits &= ~mask;
                 usb_hw_clear->buf_status = mask;
