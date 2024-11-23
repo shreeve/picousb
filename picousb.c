@@ -12,10 +12,6 @@
 // Thanks to Miroslav Nemecek for his https://github.com/Panda381/PicoLibSDK
 // =============================================================================
 
-// Globals for task handling
-static uint32_t guid = 1;
-static queue_t *queue = &((queue_t) { 0 });
-
 // ==[ Hubs ]===================================================================
 
 hub_t hubs[MAX_HUBS], *root = hubs;
@@ -326,6 +322,11 @@ void finish_transaction(pipe_t *pp) {
 
 // ==[ Transfers ]==============================================================
 
+// Globals for task handling
+static uint32_t guid = 1;
+static queue_t *queue = &((queue_t) { 0 });
+
+// Helper variable for common bits
 const uint32_t USB_SIE_CTRL_BASE = USB_SIE_CTRL_PULLDOWN_EN_BITS   // Enable
                                  | USB_SIE_CTRL_VBUS_EN_BITS       // Allow VBUS
                                  | USB_SIE_CTRL_KEEP_ALIVE_EN_BITS // Low speed
