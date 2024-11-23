@@ -669,22 +669,18 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
         hexdump("Detail", cur, *cur, 1);
         printf("\n");
 
-        // Handle each descriptor
         switch (type) {
 
-            // Configuration descriptor
             case USB_DT_CONFIG:
                 cfd = (usb_configuration_descriptor_t *) cur;
                 show_configuration_descriptor(cfd);
                 break;
 
-            // Interface Assocation Descriptor (IAD)
             case USB_DT_INTERFACE_ASSOCIATION:
                 iad = (usb_interface_assoc_descriptor_t *) cur;
                 ias = iad->bInterfaceCount;
                 break;
 
-            // Interface Descriptor
             case USB_DT_INTERFACE:
                 ifd = (usb_interface_descriptor_t *) cur;
                 show_interface_descriptor(ifd);
@@ -716,14 +712,12 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
                 }
                 break;
 
-            // Endpoint descriptor
             case USB_DT_ENDPOINT:
                 epd = (usb_endpoint_descriptor_t *) cur;
                 show_endpoint_descriptor(epd);
                 next_pipe(dev->dev_addr, epd, NULL); // user_buf starts NULL
                 break;
 
-            // Unknown descriptor
             default:
                 // FIXME: Panic for now, but handle more gracefully later
                 panic("Unknown descriptor type: 0x%02x\n", type);
