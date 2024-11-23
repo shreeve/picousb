@@ -634,6 +634,8 @@ void get_string_descriptor(device_t *dev, uint8_t index) {
 
 void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
 
+    // FIXME: This method is pretty crappy... fix with something better
+
     // Request a string descriptor, wait for the transfer to finish, show value
     get_string_descriptor(dev, index);
     while ( ctrl->active) usb_task();
