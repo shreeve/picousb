@@ -1114,8 +1114,8 @@ void isr_usbctrl() {
         printf(DEBUG_ROW);
         bindump(dbl ? "│BUF/2" : "│BUF/1", bits);
 
-        // Finish transactions on each pending endpoint
-        pipe_t *epz;
+        // Finish transactions on each pending pipe
+        pipe_t *cur;
         for (uint8_t pair = 0; pair < 16 && bits; pair++, mask <<= 2) {
             if (bits &   mask) {
                 bits &= ~mask;
@@ -1123,22 +1123,22 @@ void isr_usbctrl() {
 
 // CODE RED: This should be "||" right???
 
-                // Get a handle to the correct endpoint
-                epz = (!pair && pp->ecr == ctrl->ecr) ? pp : &pipes[pair];
+                // Get a handle to the correct pipe
+                cur = (!pair && pp->ecr == ctrl->ecr) ? pp : &pipes[pair];
 
                 // Show registers for endpoint control and buffer control
                 char *str = (char[16]) { 0 };
                 sprintf(str, "│ECR%u", pair);
-                bindump(str, *epz->ecr);
+                bindump(str, *cur->ecr);
                 sprintf(str, "│BCR%u", pair);
-                bindump(str, *epz->bcr);
+                bindump(str, *cur->bcr);
 
                 // Finish the transaction
-                finish_transaction(epz);
+                finish_transaction(cur);
 
                 // Start the next transaction or finish the transfer
-                if (epz->bytes_left) {
-                    queue_callback(start_transaction, (void *) epz);
+                if (cur->bytes_left) {
+                    queue_callback(start_transaction, (void *) cur);
                 } else {
                     finish_transfer(pp);
                 }
