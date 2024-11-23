@@ -1097,12 +1097,19 @@ void isr_usbctrl() {
                 sprintf(str, "│BCR%u", pair);
                 bindump(str, *cur->bcr);
 
-                // Finish the transaction
                 finish_transaction(cur);
 
-                // Start the next transaction or finish the transfer
+                // Start the next transaction in the transfer or finish if done
                 if (cur->bytes_left) {
-                    queue_callback(start_transaction, (void *) cur);
+
+                    // FIXME: If we can get away with it, start the next
+                    // transaction right here within the ISR. If this is too
+                    // risky, then queue a task to start the next transaction.
+                    start_transaction(cur);
+
+                    // FIXME: In case we need to queue up a task to start the
+                    // next transaction, the following code can be used.
+                    // queue_callback(start_transaction, (void *) cur);
                 } else {
                     finish_transfer(pp);
                 }
