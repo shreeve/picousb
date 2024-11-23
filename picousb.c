@@ -89,17 +89,17 @@ void setup_pipe(pipe_t *pp, uint8_t pen, usb_endpoint_descriptor_t *usb,
     if (pp->maxsize > 64) panic("Packet size is currently limited to 64 bytes");
 
     // Setup hardware registers and data buffers
-    if (!pen) { // If using epx (not a polled endpoint)
+    if (!pen) { // If using epx (not a polled hardware endpoint)
         pp->ecr = &usbh_dpram->epx_ctrl;
         pp->bcr = &usbh_dpram->epx_buf_ctrl;
         pp->buf = &usbh_dpram->epx_data[0];
-    } else if (pp->ep_addr & 0xf) { // Polled hardware endpoint
+    } else if (pp->ep_addr & 0xf) { // Using a polled hardware endpoint
         uint8_t i = pen - 1; // these start at one, so adjust
         pp->ecr = &usbh_dpram->int_ep_ctrl       [i].ctrl;
         pp->bcr = &usbh_dpram->int_ep_buffer_ctrl[i].ctrl;
         pp->buf = &usbh_dpram->epx_data         [(i + 2) * 64];
 
-        // Setup polled hardware endpoint
+        // Setup as a polled hardware endpoint
         bool ls = false;
         bool in = ep_in(pp);
         usb_hw->int_ep_addr_ctrl[i] = \
