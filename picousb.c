@@ -1099,7 +1099,6 @@ void isr_usbctrl() {
 
                 finish_transaction(cur);
 
-                // Either start the next transaction or finish the transfer
                 cur->bytes_left ? start_transaction(cur) : finish_transfer(cur);
             }
         }
