@@ -1111,7 +1111,7 @@ void isr_usbctrl() {
                     // next transaction, the following code can be used.
                     // queue_callback(start_transaction, (void *) cur);
                 } else {
-                    finish_transfer(pp);
+                    finish_transfer(cur);
                 }
             }
         }
