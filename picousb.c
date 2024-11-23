@@ -656,7 +656,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
     usb_interface_descriptor_t       *ifd; // Interface descriptor
     usb_endpoint_descriptor_t        *epd; // Endpoint descriptor
 
-    uint8_t *cur = ptr; // Points to a list of other descriptors
+    uint8_t *cur = ptr; // Points to a list of descriptors
     uint8_t *end = cur + ((usb_configuration_descriptor_t *) cur)->wTotalLength;
     uint8_t  ias = 1; // Number of interface associations
 
