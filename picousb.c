@@ -582,6 +582,7 @@ void show_endpoint_descriptor(void *ptr) {
 
     printf("Endpoint Descriptor:\n");
     printf("  Length:             %u\n"   , d->bLength);
+    printf("  Endpoint number:    EP%u\n" , d->bEndpointAddress & 0x0f);
     printf("  Endpoint direction: %s\n"   , ep_dir(in));
     printf("  Attributes:         0x%02x" , d->bmAttributes);
     printf(" (%s Transfer Type)\n"        , transfer_type(d->bmAttributes));
