@@ -45,9 +45,9 @@ void clear_devices() {
 
 // ==[ Pipes ]==================================================================
 
-static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared control transfer buffer
-
 pipe_t pipes[MAX_PIPES], *ctrl = pipes;
+
+static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared control transfer buffer
 
 SDK_INJECT const char *ep_dir(uint8_t in) {
     return in ? "IN" : "OUT";
@@ -323,10 +323,11 @@ static uint32_t guid = 1;
 static queue_t *queue = &((queue_t) { 0 });
 
 // Helper variable for common bits
-const uint32_t USB_SIE_CTRL_BASE = USB_SIE_CTRL_PULLDOWN_EN_BITS   // Enable
-                                 | USB_SIE_CTRL_VBUS_EN_BITS       // Allow VBUS
-                                 | USB_SIE_CTRL_KEEP_ALIVE_EN_BITS // Low speed
-                                 | USB_SIE_CTRL_SOF_EN_BITS;       // Full speed
+static const uint32_t USB_SIE_CTRL_BASE =
+                      USB_SIE_CTRL_PULLDOWN_EN_BITS   // Enable
+                    | USB_SIE_CTRL_VBUS_EN_BITS       // Allow VBUS
+                    | USB_SIE_CTRL_KEEP_ALIVE_EN_BITS // Low speed
+                    | USB_SIE_CTRL_SOF_EN_BITS;       // Full speed
 
 SDK_INJECT const char *transfer_type(uint8_t bits) {
     switch (bits & USB_TRANSFER_TYPE_BITS) {
@@ -342,7 +343,7 @@ SDK_INJECT const char *transfer_type(uint8_t bits) {
 // TODO: Abort a transfer if not yet started and return true on success
 
 // Start a new transfer
-void start_transfer(pipe_t *pp) {
+static void start_transfer(pipe_t *pp) {
     if (!pp->user_buf) panic("Transfer has an invalid memory pointer");
     if ( pp->active  ) panic("Transfer already active on pipe");
     pp->active = true;
@@ -435,7 +436,7 @@ void bulk_transfer(pipe_t *pp, uint8_t *ptr, uint16_t len) {
 }
 
 // Finish a transfer
-void finish_transfer(pipe_t *pp) {
+static void finish_transfer(pipe_t *pp) {
 
     // Panic if the pipe is not active
     if (!pp->active) panic("Pipes must be active to finish");
