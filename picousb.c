@@ -467,7 +467,8 @@ void finish_transfer(pipe_t *pp) {
         .transfer.ep_num   = pp->ep_num,        // Endpoint number (EP0-EP15)
         .transfer.user_buf = pp->user_buf,      // User buffer
         .transfer.len      = pp->bytes_done,    // Buffer length
-        .transfer.callback = pp->callback,      // Callback function
+        .fn                = pp->fn,            // Callback function
+        .arg               = pp->arg,           // Callback argument
     };
 
     // Queue the transfer task
@@ -914,19 +915,19 @@ SDK_INJECT const char *task_name(uint8_t type) {
     panic("Unknown task queued");
 }
 
-SDK_INJECT const char *callback_name(callback_t callback) {
-    if (callback.fn == enumerate        ) return "enumerate"        ;
-    if (callback.fn == start_transaction) return "start_transaction";
-    if (callback.fn == transfer_zlp     ) return "transfer_zlp"     ;
+SDK_INJECT const char *callback_name(callback_t fn) {
+    if (fn == enumerate        ) return "enumerate"        ;
+    if (fn == start_transaction) return "start_transaction";
+    if (fn == transfer_zlp     ) return "transfer_zlp"     ;
     return "user defined function";
 }
 
-SDK_INLINE void queue_callback(void (*fn)(void *), void *arg) {
+SDK_INLINE void queue_callback(callback_t fn, void *arg) {
     queue_add_blocking(queue, &((task_t) {
         .type         = TASK_CALLBACK,
         .guid         = guid++,
-        .callback.fn  = fn,
-        .callback.arg = arg,
+        .fn           = fn,
+        .arg          = arg,
     }));
 }
 
@@ -965,24 +966,25 @@ void usb_task() {
                 uint8_t    ep_num   = task.transfer.ep_num;   // Endpoint number
                 uint8_t   *user_buf = task.transfer.user_buf; // User buffer
                 uint16_t   len      = task.transfer.len;      // Buffer length
-                callback_t callback = task.transfer.callback; // Callback struct
+                callback_t fn       = task.fn;                // Callback fn
+                void      *arg      = task.arg;               // Callback arg
 
                 pipe_t *pp  = get_pipe(dev_addr, ep_num);
                 device_t   *dev = get_device(pp->dev_addr);
 
                 if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(pp) : enumerate(dev);
-                } else if (pp->callback.fn) {
-                    void *arg = pp->callback.arg;
-                    pp->callback.fn(arg ? arg : (void *) pp);
+                } else if (pp->fn) {
+                    void *arg = pp->arg;
+                    pp->fn(arg ? arg : (void *) pp);
                 } else {
                     printf("Transfer completed\n");
                 }
            }   break;
 
             case TASK_CALLBACK: {
-                printf("Calling %s\n", callback_name(task.callback));
-                task.callback.fn(task.callback.arg);
+                printf("Calling %s\n", callback_name(task.fn));
+                task.fn(task.arg);
             }   break;
 
             default:
