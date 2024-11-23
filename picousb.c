@@ -534,20 +534,6 @@ void get_device_descriptor(device_t *dev) {
     get_descriptor(dev, USB_DT_DEVICE, len);
 }
 
-void set_device_address(device_t *dev) {
-    printf("Set device address to %u\n", dev->dev_addr);
-
-    control_transfer(dev0, &((usb_setup_packet_t) {
-        .bmRequestType = USB_DIR_OUT
-                       | USB_REQ_TYPE_STANDARD
-                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
-        .bRequest      = USB_REQUEST_SET_ADDRESS,
-        .wValue        = dev->dev_addr,
-        .wIndex        = 0,
-        .wLength       = 0,
-    }));
-}
-
 void show_configuration_descriptor(void *ptr) {
     usb_configuration_descriptor_t *d = (usb_configuration_descriptor_t *) ptr;
 
@@ -603,20 +589,6 @@ void show_pipe_descriptor(void *ptr) {
     printf("  Max Packet Size:    %u\n"   , d->wMaxPacketSize);
     printf("  Interval:           %u\n"   , d->bInterval);
     printf("\n");
-}
-
-void set_configuration(device_t *dev, uint16_t cfg) {
-    printf("Set configuration to %u\n", cfg);
-
-    control_transfer(dev, &((usb_setup_packet_t) {
-        .bmRequestType = USB_DIR_OUT
-                       | USB_REQ_TYPE_STANDARD
-                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
-        .bRequest      = USB_REQUEST_SET_CONFIGURATION,
-        .wValue        = cfg,
-        .wIndex        = 0,
-        .wLength       = 0,
-    }));
 }
 
 void get_string_descriptor(device_t *dev, uint8_t index) {
@@ -799,6 +771,34 @@ enum {
     ENUMERATION_SET_CONFIG,
     ENUMERATION_FINISH,
 };
+
+void set_device_address(device_t *dev) {
+    printf("Set device address to %u\n", dev->dev_addr);
+
+    control_transfer(dev0, &((usb_setup_packet_t) {
+        .bmRequestType = USB_DIR_OUT
+                       | USB_REQ_TYPE_STANDARD
+                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
+        .bRequest      = USB_REQUEST_SET_ADDRESS,
+        .wValue        = dev->dev_addr,
+        .wIndex        = 0,
+        .wLength       = 0,
+    }));
+}
+
+void set_configuration(device_t *dev, uint16_t cfg) {
+    printf("Set configuration to %u\n", cfg);
+
+    control_transfer(dev, &((usb_setup_packet_t) {
+        .bmRequestType = USB_DIR_OUT
+                       | USB_REQ_TYPE_STANDARD
+                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
+        .bRequest      = USB_REQUEST_SET_CONFIGURATION,
+        .wValue        = cfg,
+        .wIndex        = 0,
+        .wLength       = 0,
+    }));
+}
 
 void enumerate(void *arg) {
     device_t *dev = (device_t *) arg;
