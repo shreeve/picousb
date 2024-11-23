@@ -870,9 +870,9 @@ SDK_WEAK void on_device_configured(device_t *dev) {
 
 SDK_INJECT const char *task_name(uint8_t type) {
     switch (type) {
+        case TASK_CALLBACK: return "TASK_CALLBACK";
         case TASK_CONNECT:  return "TASK_CONNECT";
         case TASK_TRANSFER: return "TASK_TRANSFER";
-        case TASK_CALLBACK: return "TASK_CALLBACK";
         default:            return "UNKNOWN";
     }
     panic("Unknown task queued");
