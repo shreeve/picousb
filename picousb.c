@@ -1116,19 +1116,19 @@ void isr_usbctrl() {
 
         // Finish transactions on each pending endpoint
         pipe_t *epz;
-        for (uint8_t epn = 0; epn < 16 && bits; epn++, mask <<= 2) {
+        for (uint8_t pair = 0; pair < 16 && bits; pair++, mask <<= 2) {
             if (bits &   mask) {
                 bits &= ~mask;
                 usb_hw_clear->buf_status = mask;
 
                 // Get a handle to the correct endpoint
-                epz = (!epn && pp->ecr == ctrl->ecr) ? pp : &pipes[epn];
+                epz = (!pair && pp->ecr == ctrl->ecr) ? pp : &pipes[pair];
 
-                // Show epn details
+                // Show registers for endpoint control and buffer control
                 char *str = (char[16]) { 0 };
-                sprintf(str, "│ECR%u", epn);
+                sprintf(str, "│ECR%u", pair);
                 bindump(str, *epz->ecr);
-                sprintf(str, "│BCR%u", epn);
+                sprintf(str, "│BCR%u", pair);
                 bindump(str, *epz->bcr);
 
                 // Finish the transaction
