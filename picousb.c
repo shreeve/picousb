@@ -72,7 +72,7 @@ SDK_INJECT void show_pipe(pipe_t *pp) {
 void setup_pipe(pipe_t *pp, uint8_t pen, usb_endpoint_descriptor_t *usb,
                     uint8_t *user_buf) {
 
-    // Populate the endpoint (clears all fields not present)
+    // Populate the pipe (clears all fields not present)
     *pp = (pipe_t) {
         .dev_addr = pp->dev_addr,
         .ep_addr  = usb->bEndpointAddress, // So, 0x81 is EP1/IN
@@ -182,7 +182,7 @@ pipe_t *next_pipe(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
             return pp;
         }
     }
-    panic("No free endpoints remaining");
+    panic("No free pipes remaining");
     return NULL;
 }
 
@@ -352,7 +352,7 @@ SDK_INJECT const char *transfer_type(uint8_t bits) {
 // Start a new transfer
 void start_transfer(pipe_t *pp) {
     if (!pp->user_buf) panic("Transfer has an invalid memory pointer");
-    if ( pp->active  ) panic("Transfer already active on endpoint");
+    if ( pp->active  ) panic("Transfer already active on pipe");
     pp->active = true;
 
     // Calculate registers
@@ -443,8 +443,8 @@ void bulk_transfer(pipe_t *pp, uint8_t *ptr, uint16_t len) {
 // Finish a transfer
 void finish_transfer(pipe_t *pp) {
 
-    // Panic if the endpoint is not active
-    if (!pp->active) panic("Endpoints must be active to finish");
+    // Panic if the pipe is not active
+    if (!pp->active) panic("Pipes must be active to finish");
 
     // Get the transfer length (actual bytes transferred)
     uint16_t len = pp->bytes_done;
@@ -478,7 +478,7 @@ void finish_transfer(pipe_t *pp) {
 
     // TODO: Should reset go BEFORE the queue_add_blocking???
 
-    // Reset the endpoint
+    // Reset the pipe
     reset_pipe(pp);
 }
 
