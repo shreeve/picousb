@@ -693,7 +693,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
                 // Special case CDC needs two interfaces: CDC Control + CDC Data
                 if (ias                     == 1             &&
                     ifd->bInterfaceClass    == USB_CLASS_CDC &&
-                    ifd->bInterfaceSubClass == USB_SUBCLASS_CDC_ABSTRACT_CONTROL_MODEL)
+                    ifd->bInterfaceSubClass == 0x02)  // CDC_ACM
                     ias = 2;
 
                 // Try to find a driver for this interface
