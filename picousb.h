@@ -196,7 +196,7 @@ enum {
 };
 
 typedef struct {
-    uint8_t type;
+    uint8_t  type;
     uint32_t guid;
 
     union {
