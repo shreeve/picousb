@@ -997,7 +997,7 @@ void isr_usbctrl() {
     io_rw_32 sie  = usb_hw->sie_ctrl;                   // SIE control
     io_rw_32 ssr  = usb_hw->sie_status;                 // SIE status
     io_ro_32 sof  = usb_hw->sof_rd;                     // Frame number
-    bool     dbl  = ecr & EP_CTRL_DOUBLE_BUFFERED_BITS; // Double buffer on epx?
+    bool     dbl  = ecr & EP_CTRL_DOUBLE_BUFFERED_BITS; // Double buffered epx?
 
     // Fix RP2040-E4 by shifting buffer control registers for affected buffers
     if (!dbl && (usb_hw->buf_cpu_should_handle & 1u)) bcr >>= 16;
