@@ -677,6 +677,7 @@ void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
     queue_callback(transfer_zlp, (void *) epx);
     while (!epx->active) usb_task();
     while ( epx->active) usb_task();
+    usb_task();
 }
 
 // ==[ Drivers ]================================================================
