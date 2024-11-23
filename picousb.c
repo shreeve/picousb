@@ -69,7 +69,7 @@ SDK_INJECT void show_pipe(pipe_t *pp) {
     printf(" │ %-3uEP%-2d%3s │\n", pp->dev_addr, pp->ep_addr & 0xf, ep_dir(pp));
 }
 
-void setup_endpoint(pipe_t *pp, uint8_t epn, usb_endpoint_descriptor_t *usb,
+void setup_endpoint(pipe_t *pp, uint8_t pen, usb_endpoint_descriptor_t *usb,
                     uint8_t *user_buf) {
 
     // Populate the endpoint (clears all fields not present)
@@ -89,12 +89,12 @@ void setup_endpoint(pipe_t *pp, uint8_t epn, usb_endpoint_descriptor_t *usb,
     if (pp->maxsize > 64) panic("Packet size is currently limited to 64 bytes");
 
     // Setup hardware registers and data buffers
-    if (!epn) { // Shared epx
+    if (!pen) { // If using epx (not a polled endpoint)
         pp->ecr = &usbh_dpram->epx_ctrl;
         pp->bcr = &usbh_dpram->epx_buf_ctrl;
         pp->buf = &usbh_dpram->epx_data[0];
     } else if (pp->ep_addr & 0xf) { // Polled hardware endpoint
-        uint8_t i = epn - 1;
+        uint8_t i = pen - 1; // these start at one, so adjust
         pp->ecr = &usbh_dpram->int_ep_ctrl       [i].ctrl;
         pp->bcr = &usbh_dpram->int_ep_buffer_ctrl[i].ctrl;
         pp->buf = &usbh_dpram->epx_data         [(i + 2) * 64];
@@ -107,7 +107,7 @@ void setup_endpoint(pipe_t *pp, uint8_t epn, usb_endpoint_descriptor_t *usb,
             | (in ? 0 : 1)        << 25    // Direction (In=0, Out=1)
             | (pp->ep_addr & 0xf) << 16    // Endpoint number
             |  pp->dev_addr;               // Device address
-        usb_hw->int_ep_ctrl |= (1 << epn); // Activate the endpoint
+        usb_hw->int_ep_ctrl |= (1 << pen); // Activate the endpoint
     } else {
         panic("EP0 cannot be polled");
     }
@@ -117,7 +117,7 @@ void setup_endpoint(pipe_t *pp, uint8_t epn, usb_endpoint_descriptor_t *usb,
 
     // Setup shared epx endpoint and enable double buffering
     *pp->ecr = EP_CTRL_ENABLE_BITS             // Enable endpoint
-             |  (epn ? SINGLE_BUFFER           // Non-epx are single buffered
+             |  (pen ? SINGLE_BUFFER           // Non-epx are single buffered
                      : DOUBLE_BUFFER)          // And epx are double buffered
              |   pp->type << 26                // Set transfer type
              | ((pp->interval || 1) - 1) << 16 // Polling interval minus 1 ms
@@ -359,7 +359,7 @@ void start_transfer(pipe_t *pp) {
     uint32_t dar = (pp->ep_addr & 0xf) << 16 | pp->dev_addr;
     uint32_t sie = USB_SIE_CTRL_BASE;
 
-    // Shared epx must be setup each transfer, epn's are already setup
+    // Shared epx needs setup each transfer, polled endpoints are already setup
     if (pp->ecr == ctrl->ecr) {
         bool ls = false;
         bool in = ep_in(pp);
@@ -1120,6 +1120,8 @@ void isr_usbctrl() {
             if (bits &   mask) {
                 bits &= ~mask;
                 usb_hw_clear->buf_status = mask;
+
+// CODE RED: This should be "||" right???
 
                 // Get a handle to the correct endpoint
                 epz = (!pair && pp->ecr == ctrl->ecr) ? pp : &pipes[pair];
