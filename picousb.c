@@ -462,12 +462,12 @@ void finish_transfer(pipe_t *pp) {
     task_t transfer_task = {
         .type              = TASK_TRANSFER,
         .guid              = guid++,
+        .transfer.status   = TRANSFER_SUCCESS,  // Transfer status
         .transfer.dev_addr = pp->dev_addr,      // Device address
         .transfer.ep_num   = pp->ep_num,        // Endpoint number (EP0-EP15)
         .transfer.user_buf = pp->user_buf,      // User buffer
         .transfer.len      = pp->bytes_done,    // Buffer length
         .transfer.callback = pp->callback,      // Callback function
-        .transfer.status   = TRANSFER_SUCCESS,  // Transfer status
     };
 
     // Queue the transfer task
@@ -960,12 +960,12 @@ void usb_task() {
             }   break;
 
             case TASK_TRANSFER: {
+                uint8_t    status   = task.transfer.status;   // Transfer status
                 uint8_t    dev_addr = task.transfer.dev_addr; // Device address
                 uint8_t    ep_num   = task.transfer.ep_num;   // Endpoint number
                 uint8_t   *user_buf = task.transfer.user_buf; // User buffer
                 uint16_t   len      = task.transfer.len;      // Buffer length
                 callback_t callback = task.transfer.callback; // Callback struct
-                uint8_t    status   = task.transfer.status;   // Transfer status
 
                 pipe_t *pp  = get_pipe(dev_addr, ep_num);
                 device_t   *dev = get_device(pp->dev_addr);
