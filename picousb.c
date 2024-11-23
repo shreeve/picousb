@@ -116,7 +116,7 @@ void setup_pipe(pipe_t *pp, uint8_t pen, usb_endpoint_descriptor_t *usb,
     *pp->bcr = 0; nop(); nop(); nop(); nop(); nop(); nop();
 
     // Setup shared epx endpoint and enable double buffering
-    *pp->ecr = EP_CTRL_ENABLE_BITS             // Enable endpoint
+    *pp->ecr = EP_CTRL_ENABLE_BITS             // Enable the shared epx endpoint
              |  (pen ? SINGLE_BUFFER           // Non-epx are single buffered
                      : DOUBLE_BUFFER)          // And epx are double buffered
              |   pp->type << 26                // Set transfer type
@@ -359,7 +359,7 @@ void start_transfer(pipe_t *pp) {
     uint32_t dar = (pp->ep_addr & 0xf) << 16 | pp->dev_addr;
     uint32_t sie = USB_SIE_CTRL_BASE;
 
-    // Shared epx needs setup each transfer, polled endpoints are already setup
+    // Shared epx needs setup each transfer, polled hardware endpoints are ready
     if (pp->ecr == ctrl->ecr) {
         bool ls = false;
         bool in = ep_in(pp);
