@@ -51,7 +51,7 @@ void clear_devices() {
     memclr(devices, sizeof(devices));
 }
 
-// ==[ Endpoints ]==============================================================
+// ==[ Pipes ]==================================================================
 
 static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared control transfer buffer
 
