@@ -969,8 +969,8 @@ void usb_task() {
                 callback_t fn       = task.fn;                // Callback fn
                 void      *arg      = task.arg;               // Callback arg
 
-                pipe_t *pp  = get_pipe(dev_addr, ep_num);
-                device_t   *dev = get_device(pp->dev_addr);
+                pipe_t   *pp  = get_pipe(dev_addr, ep_num);
+                device_t *dev = get_device(pp->dev_addr);
 
                 if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(pp) : enumerate(dev);
