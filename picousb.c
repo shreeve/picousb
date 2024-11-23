@@ -591,18 +591,6 @@ void show_pipe_descriptor(void *ptr) {
     printf("\n");
 }
 
-void get_string_descriptor(device_t *dev, uint8_t index) {
-    control_transfer(dev, &((usb_setup_packet_t) {
-        .bmRequestType = USB_DIR_IN
-                       | USB_REQ_TYPE_STANDARD
-                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
-        .bRequest      = USB_REQUEST_GET_DESCRIPTOR,
-        .wValue        = MAKE_U16(USB_DT_STRING, index),
-        .wIndex        = 0,
-        .wLength       = MAX_CTRL_BUF,
-    }));
-}
-
 void unicode_to_utf8(uint8_t *src, uint8_t *dst) {
     uint8_t   len =              *src / 2 - 1;
     uint16_t *uni = (uint16_t *) (src + 2);
@@ -630,6 +618,18 @@ void show_string(void *arg) {
     uint8_t index = (uint8_t) (uintptr_t) arg;
     unicode_to_utf8(ctrl_buf, utf);
     printf("[String #%u]: \"%s\"\n", index, utf);
+}
+
+void get_string_descriptor(device_t *dev, uint8_t index) {
+    control_transfer(dev, &((usb_setup_packet_t) {
+        .bmRequestType = USB_DIR_IN
+                       | USB_REQ_TYPE_STANDARD
+                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
+        .bRequest      = USB_REQUEST_GET_DESCRIPTOR,
+        .wValue        = MAKE_U16(USB_DT_STRING, index),
+        .wIndex        = 0,
+        .wLength       = MAX_CTRL_BUF,
+    }));
 }
 
 void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
