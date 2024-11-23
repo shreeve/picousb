@@ -1082,7 +1082,7 @@ void isr_usbctrl() {
 
         // Finish transactions on each pending pipe
         pipe_t *cur;
-        for (uint8_t pair = 0; pair < 16 && bits; pair++, mask <<= 2) {
+        for (uint8_t pair = 0; pair < MAX_PIPES && bits; pair++, mask <<= 2) {
             if (bits &   mask) {
                 bits &= ~mask;
                 usb_hw_clear->buf_status = mask;
