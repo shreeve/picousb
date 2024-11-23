@@ -650,29 +650,6 @@ void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
 
 // ==[ Drivers ]================================================================
 
-// Determine the length of an interface descriptor by adding up all its elements
-static uint16_t interface_len(usb_interface_descriptor_t *ifd,
-                              uint8_t ias, uint16_t max) {
-    uint8_t  *cur = (uint8_t *) ifd;
-    uint16_t  len = 0;
-
-    while (ias--) {
-        len += *cur;
-        cur += *cur;
-        while (len < max) {
-            if  (cur[1] == USB_DT_INTERFACE_ASSOCIATION) return len;
-            if ((cur[1] == USB_DT_INTERFACE) &&
-               ((usb_interface_descriptor_t *) cur)->bAlternateSetting == 0) {
-                break;
-            }
-            len += *cur;
-            cur += *cur;
-        }
-    }
-
-    return len;
-}
-
 // Enumerate and process the configuration descriptors for a device
 bool enumerate_descriptors(void *ptr, device_t *dev) {
     usb_configuration_descriptor_t   *cfd; // Configuration descriptor
@@ -718,11 +695,6 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
                     ifd->bInterfaceClass    == USB_CLASS_CDC &&
                     ifd->bInterfaceSubClass == USB_SUBCLASS_CDC_ABSTRACT_CONTROL_MODEL)
                     ias = 2;
-
-                // Ensure there is enough data for an interface descriptor
-                if (interface_len(ifd, ias, (uint16_t) (end - cur)) <
-                    sizeof(usb_interface_descriptor_t))
-                    panic("Interface descriptor is not big enough");
 
                 // Try to find a driver for this interface
                 for (uint8_t i = 0; i < DRIVER_COUNT; i++) {
