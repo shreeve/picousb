@@ -900,7 +900,13 @@ void usb_task() {
     while (queue_try_remove(queue, &task)) {
         uint8_t type = task.type;
         printf("\n=> %u) New task, %s\n\n", task.guid, task_name(type));
+
+        // NOTE: If a task has a callback, it will run after processing the task
         switch (type) {
+
+            case TASK_CALLBACK: {
+                printf("Calling %s\n", callback_name(task.fn));
+            }   break;
 
             case TASK_CONNECT: {
                 static uint64_t last_attempt;
@@ -917,10 +923,6 @@ void usb_task() {
 
                 char *str = dev0->speed == LOW_SPEED ? "low" : "full";
                 printf("Device connected (%s speed)\n", str);
-
-                printf("Start enumeration\n");
-                enumerate(dev0);
-
             }   break;
 
             case TASK_TRANSFER: {
@@ -943,17 +945,15 @@ void usb_task() {
                 } else {
                     printf("Transfer completed\n");
                 }
-           }   break;
-
-            case TASK_CALLBACK: {
-                printf("Calling %s\n", callback_name(task.fn));
-                task.fn(task.arg);
-            }   break;
+           }    break;
 
             default:
-                printf("Unknown task queued\n");
+                panic("An unknown task type was queued\n");
                 break;
         }
+
+        // Finally, invoke the task callback
+        if (task.fn) task.fn(task.arg);
     }
 }
 
@@ -1047,6 +1047,8 @@ void isr_usbctrl() {
                 .type          = TASK_CONNECT,
                 .guid          = guid++,
                 .connect.speed = speed,
+                .fn            = enumerate,
+                .arg           = (void *) dev0,
             }));
         } else {
             printf(DEBUG_ROW);
