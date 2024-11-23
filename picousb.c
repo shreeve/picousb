@@ -469,13 +469,13 @@ static void finish_transfer(pipe_t *pp) {
         .arg               = pp->arg,           // Callback argument
     };
 
+    // Reset the pipe
+    reset_pipe(pp);
+
     // Queue the transfer task
     queue_add_blocking(queue, &transfer_task);
 
     // TODO: Should reset go BEFORE the queue_add_blocking???
-
-    // Reset the pipe
-    reset_pipe(pp);
 }
 
 // ==[ Descriptors ]============================================================
