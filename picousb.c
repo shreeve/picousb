@@ -57,16 +57,12 @@ static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared control transfer buffer
 
 pipe_t pipes[MAX_PIPES], *ctrl = pipes;
 
-SDK_INJECT const char *ep_dir(pipe_t *pp) {
-    return pp->ep_addr & USB_DIR_IN ? "IN" : "OUT";
-}
-
-SDK_INJECT bool ep_in(pipe_t *pp) {
-    return pp->ep_addr & USB_DIR_IN;
+SDK_INJECT const char *ep_dir(uint8_t in) {
+    return in ? "IN" : "OUT";
 }
 
 SDK_INJECT void show_pipe(pipe_t *pp) {
-    printf(" │ %-3uEP%-2d%3s │\n", pp->dev_addr, pp->ep_addr & 0xf, ep_dir(pp));
+    printf(" │ %-3uEP%-2d%3s │\n", pp->dev_addr, pp->ep_num, ep_dir(pp->ep_in));
 }
 
 void setup_pipe(pipe_t *pp, uint8_t pen, usb_endpoint_descriptor_t *usb,
@@ -75,7 +71,8 @@ void setup_pipe(pipe_t *pp, uint8_t pen, usb_endpoint_descriptor_t *usb,
     // Populate the pipe (clears all fields not present)
     *pp = (pipe_t) {
         .dev_addr = pp->dev_addr,
-        .ep_addr  = usb->bEndpointAddress, // So, 0x81 is EP1/IN
+        .ep_num   = usb->bEndpointAddress & 0x0f,
+        .ep_in    = usb->bEndpointAddress & USB_DIR_IN ? 1 : 0,
         .type     = usb->bmAttributes,
         .interval = usb->bInterval,
         .maxsize  = usb->wMaxPacketSize,
@@ -93,7 +90,7 @@ void setup_pipe(pipe_t *pp, uint8_t pen, usb_endpoint_descriptor_t *usb,
         pp->ecr = &usbh_dpram->epx_ctrl;
         pp->bcr = &usbh_dpram->epx_buf_ctrl;
         pp->buf = &usbh_dpram->epx_data[0];
-    } else if (pp->ep_addr & 0xf) { // Using a polled hardware endpoint
+    } else if (pp->ep_num) { // Using a polled hardware endpoint
         uint8_t i = pen - 1; // these start at one, so adjust
         pp->ecr = &usbh_dpram->int_ep_ctrl       [i].ctrl;
         pp->bcr = &usbh_dpram->int_ep_buffer_ctrl[i].ctrl;
@@ -101,11 +98,10 @@ void setup_pipe(pipe_t *pp, uint8_t pen, usb_endpoint_descriptor_t *usb,
 
         // Setup as a polled hardware endpoint
         bool ls = false;
-        bool in = ep_in(pp);
         usb_hw->int_ep_addr_ctrl[i] = \
               (ls ? 1 : 0)        << 26    // Preamble: LS on FS hub
-            | (in ? 0 : 1)        << 25    // Direction (In=0, Out=1)
-            | (pp->ep_addr & 0xf) << 16    // Endpoint number
+            |  pp->ep_in ? 0 : (1 << 25)   // Direction (In=0, Out=1)
+            |  pp->ep_num         << 16    // Endpoint number
             |  pp->dev_addr;               // Device address
         usb_hw->int_ep_ctrl |= (1 << pen); // Activate the endpoint
     } else {
@@ -163,7 +159,7 @@ pipe_t *get_pipe(uint8_t dev_addr, uint8_t ep_num) {
     for (uint8_t i = 0; i < MAX_PIPES; i++) {
         pipe_t *pp = &pipes[i];
         if (pp->configured) {
-            if ((pp->dev_addr == dev_addr) && ((pp->ep_addr & 0xf) == ep_num))
+            if ((pp->dev_addr == dev_addr) && (pp->ep_num == ep_num))
                 return pp;
         }
     }
@@ -198,7 +194,7 @@ void clear_pipes() {
 // ==[ Buffers ]================================================================
 
 uint16_t start_buffer(pipe_t *pp, uint8_t buf_id) {
-    bool     in  = ep_in(pp);                         // Inbound buffer?
+    bool     in  = pp->ep_in;                         // Inbound buffer?
     bool     run = pp->bytes_left > pp->maxsize;      // Continue to run?
     uint8_t  pid = pp->data_pid;                      // Set DATA0/DATA1
     uint16_t len = MIN(pp->bytes_left, pp->maxsize);  // Determine buffer length
@@ -227,7 +223,7 @@ uint16_t start_buffer(pipe_t *pp, uint8_t buf_id) {
 }
 
 uint16_t finish_buffer(pipe_t *pp, uint8_t buf_id, io_rw_32 bcr) {
-    bool     in   = ep_in(pp);                   // Inbound buffer?
+    bool     in   = pp->ep_in;                   // Inbound buffer?
     bool     full = bcr & USB_BUF_CTRL_FULL;     // Is buffer full? (populated)
     uint16_t len  = bcr & USB_BUF_CTRL_LEN_MASK; // Buffer length
 
@@ -297,10 +293,9 @@ void start_transaction(void *arg) {
             hexdump("│SETUP", packet, sizeof(usb_setup_packet_t), 1);
             printf(DEBUG_ROW);
         } else if (!pp->bytes_left) {
-            bool in = ep_in(pp);
-            char *str = in ? "IN" : "OUT";
             printf(DEBUG_ROW);
-            printf( "│ZLP\t│ %-4s │ Device %-28u │            │\n", str, pp->dev_addr);
+            printf( "│ZLP\t│ %-4s │ Device %-28u │            │\n",
+                ep_dir(pp->ep_in), pp->dev_addr);
             printf(DEBUG_ROW);
         } else {
             printf(DEBUG_ROW);
@@ -356,13 +351,13 @@ void start_transfer(pipe_t *pp) {
     pp->active = true;
 
     // Calculate registers
-    uint32_t dar = (pp->ep_addr & 0xf) << 16 | pp->dev_addr;
+    uint32_t dar = pp->ep_num << 16 | pp->dev_addr;
     uint32_t sie = USB_SIE_CTRL_BASE;
 
     // Shared epx needs setup each transfer, polled hardware endpoints are ready
     if (pp->ecr == ctrl->ecr) {
         bool ls = false;
-        bool in = ep_in(pp);
+        bool in = pp->ep_in;
         bool ss = pp->setup && !pp->bytes_done; // Start of a SETUP packet
 
         sie |= (!ls ? 0 : USB_SIE_CTRL_PREAMBLE_EN_BITS ) // LS on a FS hub
@@ -387,7 +382,7 @@ void transfer_zlp(void *arg) {
     pipe_t *pp = (pipe_t *) arg;
 
     // Force direction to OUT
-    pp->ep_addr &= ~USB_DIR_IN;
+    pp->ep_in = 0; // FIXME: This CLOBBERS the direction, only use for EP0 as is
     pp->bytes_left = 0;
 
     start_transfer(pp);
@@ -402,7 +397,8 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     memcpy((void*) usbh_dpram->setup_packet, setup, sizeof(usb_setup_packet_t));
 
     ctrl->dev_addr   = dev->dev_addr;
-    ctrl->ep_addr    = setup->bmRequestType & USB_DIR_IN; // So, 0x80 is EP0/IN
+    ctrl->ep_num     = 0; // Always EP0
+    ctrl->ep_in      = setup->bmRequestType & USB_DIR_IN ? 1 : 0;
     ctrl->maxsize    = dev->maxsize0;
     ctrl->setup      = true;
     ctrl->data_pid   = 1; // SETUP uses DATA0, so this next packet will be DATA1
@@ -411,7 +407,7 @@ void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     ctrl->bytes_done = 0;
 
     // Flip the endpoint direction if there is no data phase
-    if (!ctrl->bytes_left) ctrl->ep_addr ^= USB_DIR_IN;
+    if (!ctrl->bytes_left) ctrl->ep_in ^= 1;
 
     start_transfer(ctrl);
 }
@@ -458,7 +454,7 @@ void finish_transfer(pipe_t *pp) {
     } else {
         printf(DEBUG_ROW);
         printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n",
-                    ep_dir(pp), pp->dev_addr, guid);
+                    ep_dir(pp->ep_in), pp->dev_addr, guid);
     }
 
     // Create the transfer task
@@ -466,7 +462,7 @@ void finish_transfer(pipe_t *pp) {
         .type              = TASK_TRANSFER,
         .guid              = guid++,
         .transfer.dev_addr = pp->dev_addr,      // Device address
-        .transfer.ep_num   = pp->ep_addr & 0xf, // Endpoint number (EP0-EP15)
+        .transfer.ep_num   = pp->ep_num,        // Endpoint number (EP0-EP15)
         .transfer.user_buf = pp->user_buf,      // User buffer
         .transfer.len      = pp->bytes_done,    // Buffer length
         .transfer.callback = pp->callback,      // Callback function
@@ -598,16 +594,16 @@ void get_configuration_descriptor(device_t *dev, uint8_t len) {
 
 void show_pipe_descriptor(void *ptr) {
     usb_endpoint_descriptor_t *d = (usb_endpoint_descriptor_t *) ptr;
-    uint8_t ep_addr = d->bEndpointAddress;
+    uint8_t in = d->bEndpointAddress & USB_DIR_IN ? 1 : 0;
 
     printf("Endpoint Descriptor:\n");
-    printf("  Length:           %u\n"   , d->bLength);
-    printf("  Endpoint Address: 0x%02x" , d->bEndpointAddress);
-    printf(" (pp%u/%s)\n", ep_addr & 0xf, ep_addr & USB_DIR_IN ? "IN" : "OUT");
-    printf("  Attributes:       0x%02x" , d->bmAttributes);
-    printf(" (%s Transfer Type)\n"      , transfer_type(d->bmAttributes));
-    printf("  Max Packet Size:  %u\n"   , d->wMaxPacketSize);
-    printf("  Interval:         %u\n"   , d->bInterval);
+    printf("  Length:             %u\n"   , d->bLength);
+    printf("  Endpoint number:    %u\n"   , d->bEndpointAddress & 0x0f);
+    printf("  Endpoint direction: %s\n"   , ep_dir(in));
+    printf("  Attributes:         0x%02x" , d->bmAttributes);
+    printf(" (%s Transfer Type)\n"        , transfer_type(d->bmAttributes));
+    printf("  Max Packet Size:    %u\n"   , d->wMaxPacketSize);
+    printf("  Interval:           %u\n"   , d->bInterval);
     printf("\n");
 }
 
