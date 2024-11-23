@@ -213,12 +213,12 @@ typedef struct {
             uint8_t    ep_num    ; // Endpoint number (direction not included)
             uint8_t   *user_buf  ; // User buffer in DPSRAM, RAM, or flash
             uint16_t   len       ; // Bytes transferred
-            callback_t callback  ; // Callback function
         } transfer;
-
-        // Callback function
-        callback_t callback;
     };
+
+    // Callback support
+    callback_t fn  ; // Callback function
+    void      *arg ; // Callback argument
 } task_t;
 
 void queue_callback(callback_t fn, void *arg);
