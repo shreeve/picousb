@@ -31,7 +31,7 @@
 
 #define MAX_HUBS        1 // root +  0
 #define MAX_DEVICES     2 // dev0 +  1
-#define MAX_ENDPOINTS  16 // epx  + 15
+#define MAX_PIPES      16 // ctrl + 15
 #define MAX_CTRL_BUF  320 // Size of shared control transfer buffer
 
 #define MAKE_U16(x, y) (((x) << 8) | ((y)     ))
@@ -107,7 +107,7 @@ typedef struct {
 
 extern device_t devices[MAX_DEVICES], *dev0;
 
-// ==[ Endpoints ]==============================================================
+// ==[ Pipes ]==================================================================
 
 typedef enum {
     SINGLE_BUFFER = EP_CTRL_INTERRUPT_PER_BUFFER,
@@ -139,7 +139,7 @@ typedef struct {
     io_rw_32  *bcr       ; // Buffer control register
 
     // Setup status
-    bool       configured; // Endpoint is configured
+    bool       configured; // Pipe is configured
 
     // Transfer details
     bool       active    ; // Transfer is active
@@ -148,9 +148,9 @@ typedef struct {
     uint16_t   bytes_left; // Bytes left to transfer
     uint16_t   bytes_done; // Bytes done transferring
     callback_t callback  ; // Callback function
-} endpoint_t;
+} pipe_t;
 
-extern endpoint_t eps[MAX_ENDPOINTS], *epx;
+extern pipe_t pipes[MAX_PIPES], *ctrl;
 
 // ==[ Buffers ]================================================================
 
@@ -170,7 +170,7 @@ void transfer_zlp(void *arg);
 void control_transfer(device_t *dev, usb_setup_packet_t *setup);
 void command(device_t *dev, uint8_t bmRequestType, uint8_t bRequest,
              uint16_t wValue, uint16_t wIndex, uint16_t wLength);
-void bulk_transfer(endpoint_t *ep, uint8_t *ptr, uint16_t len);
+void bulk_transfer(pipe_t *pp, uint8_t *ptr, uint16_t len);
 void reset_ftdi(device_t *dev);
 
 // ==[ Descriptors ]============================================================
