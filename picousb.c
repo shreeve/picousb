@@ -69,7 +69,7 @@ SDK_INJECT void show_pipe(pipe_t *pp) {
     printf(" │ %-3uEP%-2d%3s │\n", pp->dev_addr, pp->ep_addr & 0xf, ep_dir(pp));
 }
 
-void setup_endpoint(pipe_t *pp, uint8_t pen, usb_endpoint_descriptor_t *usb,
+void setup_pipe(pipe_t *pp, uint8_t pen, usb_endpoint_descriptor_t *usb,
                     uint8_t *user_buf) {
 
     // Populate the endpoint (clears all fields not present)
@@ -142,7 +142,7 @@ void setup_endpoint(pipe_t *pp, uint8_t pen, usb_endpoint_descriptor_t *usb,
 }
 
 void setup_ctrl() {
-    setup_endpoint(ctrl, 0, &((usb_endpoint_descriptor_t) {
+    setup_pipe(ctrl, 0, &((usb_endpoint_descriptor_t) {
         .bLength          = sizeof(usb_endpoint_descriptor_t),
         .bDescriptorType  = USB_DT_ENDPOINT,
         .bEndpointAddress = 0,
@@ -178,7 +178,7 @@ pipe_t *next_endpoint(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
         pipe_t *pp = &pipes[i];
         if (!pp->configured) {
             pp->dev_addr = dev_addr;
-            setup_endpoint(pp, i, usb, user_buf);
+            setup_pipe(pp, i, usb, user_buf);
             return pp;
         }
     }
