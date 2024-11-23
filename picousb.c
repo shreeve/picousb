@@ -576,7 +576,7 @@ void get_configuration_descriptor(device_t *dev, uint8_t len) {
     get_descriptor(dev, USB_DT_CONFIG, len);
 }
 
-void show_pipe_descriptor(void *ptr) {
+void show_endpoint_descriptor(void *ptr) {
     usb_endpoint_descriptor_t *d = (usb_endpoint_descriptor_t *) ptr;
     uint8_t in = d->bEndpointAddress & USB_DIR_IN ? 1 : 0;
 
@@ -746,7 +746,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
             // Endpoint descriptor
             case USB_DT_ENDPOINT:
                 epd = (usb_endpoint_descriptor_t *) cur;
-                show_pipe_descriptor(epd);
+                show_endpoint_descriptor(epd);
                 next_pipe(dev->dev_addr, epd, NULL); // user_buf starts NULL
                 break;
 
