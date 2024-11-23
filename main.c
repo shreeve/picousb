@@ -41,18 +41,18 @@ void on_device_active(device_t *dev) {
 }
 
 void poll_ep1_in(void *arg) {
-    endpoint_t *ep = &eps[1];
-    uint16_t len = ep->maxsize;
+    pipe_t *pp = &pipes[1];
+    uint16_t len = pp->maxsize;
 
-    bulk_transfer(ep, buf, len);
+    bulk_transfer(pp, buf, len);
 }
 
 void enquire_ep2_out(void *arg) {
-    endpoint_t *ep = &eps[2];
+    pipe_t *pp = &pipes[2];
     buf[0] = 0x06; // ASTM enquire
     uint16_t len = 1;
 
-    bulk_transfer(ep, buf, len);
+    bulk_transfer(pp, buf, len);
 }
 
 int main() {
