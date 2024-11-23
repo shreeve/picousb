@@ -167,11 +167,14 @@ typedef enum {
     TRANSFER_INVALID, // not used yet
 } transfer_status_t;
 
-void transfer_zlp(void *arg);
 void control_transfer(device_t *dev, usb_setup_packet_t *setup);
+void bulk_transfer(pipe_t *pp, uint8_t *ptr, uint16_t len);
+
 void command(device_t *dev, uint8_t bmRequestType, uint8_t bRequest,
              uint16_t wValue, uint16_t wIndex, uint16_t wLength);
-void bulk_transfer(pipe_t *pp, uint8_t *ptr, uint16_t len);
+
+void transfer_zlp(void *arg);
+
 void reset_ftdi(device_t *dev);
 
 // ==[ Descriptors ]============================================================
@@ -221,8 +224,8 @@ typedef struct {
     void      *arg ; // Callback argument
 } task_t;
 
-void queue_callback(callback_t fn, void *arg);
 void usb_task();
+void queue_callback(callback_t fn, void *arg);
 
 // ==[ Interrupts ]=============================================================
 
