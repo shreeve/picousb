@@ -29,7 +29,6 @@
 
 // ==[ Defines ]================================================================
 
-#define MAX_HUBS        1 // root +  0
 #define MAX_DEVICES     2 // dev0 +  1
 #define MAX_PIPES      16 // ctrl + 15
 #define MAX_CTRL_BUF  320 // Size of shared control transfer buffer
@@ -59,14 +58,6 @@
 extern uint8_t usb_debug_level; // Dynamic debug level
 
 void usb_debug(uint8_t level);
-
-// ==[ Hubs ]===================================================================
-
-typedef struct {
-    // Nothing yet
-} hub_t;
-
-extern hub_t hubs[MAX_HUBS], *root;
 
 // ==[ Devices ]================================================================
 

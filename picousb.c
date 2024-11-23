@@ -12,10 +12,6 @@
 // Thanks to Miroslav Nemecek for his https://github.com/Panda381/PicoLibSDK
 // =============================================================================
 
-// ==[ Hubs ]===================================================================
-
-hub_t hubs[MAX_HUBS], *root = hubs;
-
 // ==[ Devices ]================================================================
 
 device_t devices[MAX_DEVICES], *dev0 = devices;
