@@ -55,7 +55,7 @@ void clear_devices() {
 
 static uint8_t ctrl_buf[MAX_CTRL_BUF]; // Shared control transfer buffer
 
-pipe_t pipes[MAX_PIPES], *epx = pipes;
+pipe_t pipes[MAX_PIPES], *ctrl = pipes;
 
 SDK_INJECT const char *ep_dir(pipe_t *ep) {
     return ep->ep_addr & USB_DIR_IN ? "IN" : "OUT";
@@ -75,7 +75,7 @@ void setup_endpoint(pipe_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
     // Populate the endpoint (clears all fields not present)
     *ep = (pipe_t) {
         .dev_addr = ep->dev_addr,
-        .ep_addr  = usb->bEndpointAddress, // Thus, 0x81 is EP1/IN
+        .ep_addr  = usb->bEndpointAddress, // So, 0x81 is EP1/IN
         .type     = usb->bmAttributes,
         .interval = usb->bInterval,
         .maxsize  = usb->wMaxPacketSize,
@@ -141,8 +141,8 @@ void setup_endpoint(pipe_t *ep, uint8_t epn, usb_endpoint_descriptor_t *usb,
     ep->configured = true;
 }
 
-void setup_epx() {
-    setup_endpoint(epx, 0, &((usb_endpoint_descriptor_t) {
+void setup_ctrl() {
+    setup_endpoint(ctrl, 0, &((usb_endpoint_descriptor_t) {
         .bLength          = sizeof(usb_endpoint_descriptor_t),
         .bDescriptorType  = USB_DT_ENDPOINT,
         .bEndpointAddress = 0,
@@ -264,7 +264,7 @@ void start_transaction(void *arg) {
     hold = start_buffer(ep, 0);
 
     // If using epx, update the buffering mode
-    if (ep->ecr == epx->ecr) {
+    if (ep->ecr == ctrl->ecr) {
         if (hold & USB_BUF_CTRL_LAST) {        // For single buffering:
             *ecr &= ~DOUBLE_BUFFER;            //   Disable double-buffering
             *ecr |=  SINGLE_BUFFER;            //   Enable  single-buffering
@@ -360,7 +360,7 @@ void start_transfer(pipe_t *ep) {
     uint32_t sie = USB_SIE_CTRL_BASE;
 
     // Shared epx must be setup each transfer, epn's are already setup
-    if (ep->ecr == epx->ecr) {
+    if (ep->ecr == ctrl->ecr) {
         bool ls = false;
         bool in = ep_in(ep);
         bool ss = ep->setup && !ep->bytes_done; // Start of a SETUP packet
@@ -395,25 +395,25 @@ void transfer_zlp(void *arg) {
 
 // Send a control transfer using an existing setup packet
 void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
-    if (!epx->configured) panic("Endpoint not configured");
-    if ( epx->type)       panic("Not a control endpoint");
+    if (!ctrl->configured) panic("Endpoint not configured");
+    if ( ctrl->type)       panic("Not a control endpoint");
 
     // Copy the setup packet
     memcpy((void*) usbh_dpram->setup_packet, setup, sizeof(usb_setup_packet_t));
 
-    epx->dev_addr   = dev->dev_addr;
-    epx->ep_addr    = setup->bmRequestType & USB_DIR_IN; // Thus, 0x80 is EP0/IN
-    epx->maxsize    = dev->maxsize0;
-    epx->setup      = true;
-    epx->data_pid   = 1; // SETUP uses DATA0, so this next packet will be DATA1
-    epx->user_buf   = ctrl_buf;
-    epx->bytes_left = setup->wLength;
-    epx->bytes_done = 0;
+    ctrl->dev_addr   = dev->dev_addr;
+    ctrl->ep_addr    = setup->bmRequestType & USB_DIR_IN; // So, 0x80 is EP0/IN
+    ctrl->maxsize    = dev->maxsize0;
+    ctrl->setup      = true;
+    ctrl->data_pid   = 1; // SETUP uses DATA0, so this next packet will be DATA1
+    ctrl->user_buf   = ctrl_buf;
+    ctrl->bytes_left = setup->wLength;
+    ctrl->bytes_done = 0;
 
     // Flip the endpoint direction if there is no data phase
-    if (!epx->bytes_left) epx->ep_addr ^= USB_DIR_IN;
+    if (!ctrl->bytes_left) ctrl->ep_addr ^= USB_DIR_IN;
 
-    start_transfer(epx);
+    start_transfer(ctrl);
 }
 
 // Send a control transfer using a newly constructed setup packet
@@ -670,13 +670,13 @@ void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
 
     // Request a string descriptor, wait for the transfer to finish, show value
     get_string_descriptor(dev, index);
-    while ( epx->active) usb_task();
+    while ( ctrl->active) usb_task();
     show_string((void *) (uintptr_t) index);
 
     // Queue a ZLP, wait for it to start, wait for it to finish
-    queue_callback(transfer_zlp, (void *) epx);
-    while (!epx->active) usb_task();
-    while ( epx->active) usb_task();
+    queue_callback(transfer_zlp, (void *) ctrl);
+    while (!ctrl->active) usb_task();
+    while ( ctrl->active) usb_task();
     usb_task();
 }
 
@@ -1027,7 +1027,7 @@ SDK_INJECT void printf_interrupts(uint32_t ints) {
 void isr_usbctrl() {
     io_rw_32 ints = usb_hw->ints; // Interrupt bits after masking and forcing
 
-    // ==[ EPX related registers and variables ]==
+    // ==[ Registers and variables related to epx ]==
 
     io_rw_32 dar  = usb_hw->dev_addr_ctrl;              // dev_addr/ep_num
     io_rw_32 ecr  = usbh_dpram->epx_ctrl;               // Endpoint control
@@ -1035,7 +1035,7 @@ void isr_usbctrl() {
     io_rw_32 sie  = usb_hw->sie_ctrl;                   // SIE control
     io_rw_32 ssr  = usb_hw->sie_status;                 // SIE status
     io_ro_32 sof  = usb_hw->sof_rd;                     // Frame number
-    bool     dbl  = ecr & EP_CTRL_DOUBLE_BUFFERED_BITS; // EPX double buffered
+    bool     dbl  = ecr & EP_CTRL_DOUBLE_BUFFERED_BITS; // Double buffer on epx?
 
     // Fix RP2040-E4 by shifting buffer control registers for affected buffers
     if (!dbl && (usb_hw->buf_cpu_should_handle & 1u)) bcr >>= 16;
@@ -1110,7 +1110,7 @@ void isr_usbctrl() {
         uint32_t bits = usb_hw->buf_status;
         uint32_t mask = 0b11; // (2 bits at time, IN/OUT transfer together)
 
-        // Show single/double buffer status of EPX and which buffers are ready
+        // Show single/double buffer status of epx and which buffers are ready
         printf(DEBUG_ROW);
         bindump(dbl ? "│BUF/2" : "│BUF/1", bits);
 
@@ -1122,7 +1122,7 @@ void isr_usbctrl() {
                 usb_hw_clear->buf_status = mask;
 
                 // Get a handle to the correct endpoint
-                epz = (!epn && ep->ecr == epx->ecr) ? ep : &pipes[epn];
+                epz = (!epn && ep->ecr == ctrl->ecr) ? ep : &pipes[epn];
 
                 // Show epn details
                 char *str = (char[16]) { 0 };
@@ -1223,7 +1223,7 @@ void setup_usb_host() {
 
     clear_devices();
     clear_endpoints();
-    setup_epx();
+    setup_ctrl();
 
     printf(DEBUG_ROW);
     bindump("│INT", usb_hw->inte);
