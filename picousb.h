@@ -190,9 +190,9 @@ void on_device_configured();
 // ==[ Tasks ]==================================================================
 
 enum {
+    TASK_CALLBACK,
     TASK_CONNECT,
     TASK_TRANSFER,
-    TASK_CALLBACK,
 };
 
 typedef struct {
