@@ -65,7 +65,7 @@ SDK_INJECT bool ep_in(pipe_t *ep) {
     return ep->ep_addr & USB_DIR_IN;
 }
 
-SDK_INJECT void show_endpoint(pipe_t *ep) {
+SDK_INJECT void show_pipe(pipe_t *ep) {
     printf(" │ %-3uEP%-2d%3s │\n", ep->dev_addr, ep->ep_addr & 0xf, ep_dir(ep));
 }
 
@@ -283,7 +283,7 @@ void start_transaction(void *arg) {
     if (!ep->bytes_done) {
         printf(DEBUG_ROW);
         printf( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transaction started");
-        show_endpoint(ep);
+        show_pipe(ep);
         printf(DEBUG_ROW);
         bindump("│SIE", usb_hw->sie_ctrl);
         bindump("│SSR", usb_hw->sie_status);
@@ -596,7 +596,7 @@ void get_configuration_descriptor(device_t *dev, uint8_t len) {
     get_descriptor(dev, USB_DT_CONFIG, len);
 }
 
-void show_endpoint_descriptor(void *ptr) {
+void show_pipe_descriptor(void *ptr) {
     usb_endpoint_descriptor_t *d = (usb_endpoint_descriptor_t *) ptr;
     uint8_t ep_addr = d->bEndpointAddress;
 
@@ -780,7 +780,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
             // Endpoint descriptor
             case USB_DT_ENDPOINT:
                 epd = (usb_endpoint_descriptor_t *) cur;
-                show_endpoint_descriptor(epd);
+                show_pipe_descriptor(epd);
                 next_endpoint(dev->dev_addr, epd, NULL); // user_buf starts NULL
                 break;
 
@@ -1052,7 +1052,7 @@ void isr_usbctrl() {
     printf( "\n\n");
     printf(DEBUG_ROW);
     printf( "│Frame  │ %4u │ %-35s", sof, "Interrupt Handler");
-    show_endpoint(ep);
+    show_pipe(ep);
     printf(DEBUG_ROW);
     bindump("│INT", ints);
     bindump("│SIE", sie);
