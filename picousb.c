@@ -650,7 +650,6 @@ void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
 
 // ==[ Drivers ]================================================================
 
-// Enumerate and process the configuration descriptors for a device
 bool enumerate_descriptors(void *ptr, device_t *dev) {
     usb_configuration_descriptor_t   *cfd; // Configuration descriptor
     usb_interface_assoc_descriptor_t *iad; // Interface association descriptor
