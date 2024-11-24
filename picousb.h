@@ -202,17 +202,17 @@ typedef struct {
 
         // Transfer has completed
         struct {
-            uint8_t    status    ; // Transfer status
-            uint8_t    dev_addr  ; // Device address
-            uint8_t    ep_num    ; // Endpoint number (direction not included)
-            uint8_t   *user_buf  ; // User buffer in DPSRAM, RAM, or flash
-            uint16_t   len       ; // Bytes transferred
+            uint8_t    status  ; // Transfer status
+            uint8_t    dev_addr; // Device address
+            uint8_t    ep_num  ; // Endpoint number (direction not included)
+            uint8_t   *user_buf; // User buffer in DPSRAM, RAM, or flash
+            uint16_t   len     ; // Bytes transferred
         } transfer;
     };
 
     // Callback support
-    callback_t fn  ; // Callback function
-    void      *arg ; // Callback argument
+    callback_t fn ; // Callback function
+    void      *arg; // Callback argument
 } task_t;
 
 void usb_task();
