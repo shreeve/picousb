@@ -268,7 +268,7 @@ void start_transaction(void *arg) {
     // Log output
     if (!pp->bytes_done) {
         debug(LOG_ROW);
-        debug( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transaction started");
+        debug("│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transaction started");
         show_pipe(pp);
         debug(LOG_ROW);
         _bin_("│SIE", usb_hw->sie_ctrl);
@@ -284,7 +284,7 @@ void start_transaction(void *arg) {
             debug(LOG_ROW);
         } else if (!pp->bytes_left) {
             debug(LOG_ROW);
-            debug( "│ZLP\t│ %-4s │ Device %-28u │            │\n",
+            debug("│ZLP\t│ %-4s │ Device %-28u │            │\n",
                 ep_dir(pp->ep_in), pp->dev_addr);
             debug(LOG_ROW);
         } else {
@@ -450,13 +450,13 @@ static void finish_transfer(pipe_t *pp) {
     // Log output
     if (len) {
         debug(LOG_ROW);
-        debug( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n",
-                 len, pp->dev_addr, guid);
+        debug("│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n",
+                len, pp->dev_addr, guid);
         _hex_("│Data", pp->user_buf, len, 1);
     } else {
         debug(LOG_ROW);
-        debug( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n",
-                 ep_dir(pp->ep_in), pp->dev_addr, guid);
+        debug("│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n",
+                ep_dir(pp->ep_in), pp->dev_addr, guid);
     }
 
     // Create the transfer task
@@ -1041,8 +1041,8 @@ void isr_usbctrl() {
 
         // Handle connect and disconnect
         if (speed) {
-            debug( "│CONNECT│ %-4s │ %-35s │ Task #%-4u │\n", "",
-                    "New device connected", guid);
+            debug("│CONNECT│ %-4s │ %-35s │ Task #%-4u │\n", "",
+                   "New device connected", guid);
 
             queue_add_blocking(queue, &((task_t) { // ~20 μs
                 .type          = TASK_CONNECT,
@@ -1052,8 +1052,8 @@ void isr_usbctrl() {
                 .arg           = (void *) dev0,
             }));
         } else {
-            debug( "│DISCONN│ %-4s │ %-35s │            │\n", "",
-                    "Device disconnected");
+            debug("│DISCONN│ %-4s │ %-35s │            │\n", "",
+                   "Device disconnected");
 
             clear_device(0);
         }
