@@ -828,10 +828,8 @@ void enumerate(void *arg) {
         case ENUMERATION_GET_CONFIG_FULL: {
             uint16_t size =
                 ((usb_configuration_descriptor_t *) ctrl_buf)->wTotalLength;
-            if (size > MAX_CTRL_BUF) {
-                show_configuration_descriptor(ctrl_buf);
+            if (size > MAX_CTRL_BUF)
                 panic("Configuration descriptor too large (%u bytes)", size);
-            }
 
             uint8_t len = (uint8_t) size;
             printf("Starting GET_CONFIG_FULL (%u bytes)\n", len);
