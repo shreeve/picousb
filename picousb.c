@@ -1082,19 +1082,19 @@ void isr_usbctrl() {
 
         // Finish transactions on each pending pipe
         pipe_t *cur;
-        for (uint8_t pair = 0; pair < MAX_PIPES && bits; pair++, mask <<= 2) {
+        for (uint8_t pipe = 0; pipe < MAX_PIPES && bits; pipe++, mask <<= 2) {
             if (bits &   mask) {
                 bits &= ~mask;
                 usb_hw_clear->buf_status = mask;
 
                 // Get a handle to the correct pipe
-                cur = &pipes[pair];
+                cur = &pipes[pipe];
 
                 // Show registers for endpoint control and buffer control
                 char *str = (char[16]) { 0 };
-                sprintf(str, "│ECR%u", pair);
+                sprintf(str, "│ECR%u", pipe);
                 bindump(str, *cur->ecr);
-                sprintf(str, "│BCR%u", pair);
+                sprintf(str, "│BCR%u", pipe);
                 bindump(str, *cur->bcr);
 
                 finish_transaction(cur);
