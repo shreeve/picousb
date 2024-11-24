@@ -112,7 +112,7 @@ void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *usb,
              | ((uint32_t) pp->buf) & 0xfc0;   // DSPRAM offset: 64-byte aligned
 
     // NOTE: Endpoints should start with DATA0. However, there are some devices
-    // that are non-standard and start at DATA1. Linux just hard codes these
+    // that are non-standard and start with DATA1. Linux just hard codes these
     // values, so we do too.
 
     pp->data_pid = 0;
