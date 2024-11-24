@@ -786,6 +786,7 @@ void enumerate(void *arg) {
 
         case ENUMERATION_START:
             printf("Enumeration started\n");
+            step++;
 
             // Explicit fall through
 
