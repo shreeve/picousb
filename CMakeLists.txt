@@ -29,7 +29,7 @@ include(pico_sdk_import.cmake)
 
 project(piccolo C CXX ASM)
 
-# Initialise the Raspberry Pi Pico SDK
+# Initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
 
 # Executable name
