@@ -101,10 +101,10 @@ void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *usb,
     // Set bcr first to prevent any issues when ecr is set
     *pp->bcr = 0; nop(); nop(); nop(); nop(); nop(); nop();
 
-    // Setup shared epx endpoint and enable double buffering
-    *pp->ecr = EP_CTRL_ENABLE_BITS             // Enable the shared epx endpoint
+    // Setup the endpoint control register based on the type of endpoint
+    *pp->ecr = EP_CTRL_ENABLE_BITS             // Enable this endpoint
              |  (phe ? SINGLE_BUFFER           // Non-epx are single buffered
-                     : DOUBLE_BUFFER)          // And epx are double buffered
+                     : DOUBLE_BUFFER)          // And epx starts double buffered
              |   pp->type << 26                // Set transfer type
              | ((pp->interval || 1) - 1) << 16 // Polling interval minus 1 ms
              | ((uint32_t) pp->buf) & 0xfc0;   // DSPRAM offset: 64-byte aligned
