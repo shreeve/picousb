@@ -978,7 +978,7 @@ SDK_INJECT void printf_interrupts(uint32_t ints) {
     if (ints & USB_INTS_STALL_BITS           ) printf(", stall"   );
     if (ints & USB_INTS_BUFF_STATUS_BITS     ) printf(", buffer"  );
     if (ints & USB_INTS_BUFF_STATUS_BITS &&
-        usb_hw->buf_status & ~1u             ) printf(", bulk"    );
+               usb_hw->buf_status & ~1u      ) printf(", bulk"    );
     if (ints & USB_INTS_TRANS_COMPLETE_BITS  ) printf(", last"    );
     if (ints & USB_INTS_ERROR_RX_TIMEOUT_BITS) printf(", timeout" );
     if (ints & USB_INTS_ERROR_DATA_SEQ_BITS  ) printf(", dataseq" );
