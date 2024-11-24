@@ -949,9 +949,6 @@ void usb_task() {
 
                 if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(pp) : enumerate(dev);
-                } else if (!pp->fn) {
-                    // FIXME: Should we always or never show this for now?
-                    printf("Transfer completed\n");
                 }
            }    break;
 
