@@ -322,6 +322,11 @@ void finish_transaction(pipe_t *pp) {
 static uint32_t guid = 1;
 static queue_t *queue = &((queue_t) { 0 });
 
+void wait_for_transfer(pipe_t *pp) {
+    while (pp->active) usb_task();
+    while (!queue_is_empty(queue)) usb_task();
+}
+
 // Helper variable for common bits
 static const uint32_t USB_SIE_CTRL_BASE =
                       USB_SIE_CTRL_PULLDOWN_EN_BITS   // Enable
@@ -471,6 +476,12 @@ static void finish_transfer(pipe_t *pp) {
 
     // Reset the pipe
     reset_pipe(pp);
+
+    // If EP0 has a callback, clear it
+    if (!pp->ep_num && pp->fn) {
+        pp->fn  = NULL;
+        pp->arg = NULL;
+    }
 
     // Queue the transfer task
     queue_add_blocking(queue, &transfer_task);
@@ -634,18 +645,17 @@ void get_string_descriptor(device_t *dev, uint8_t index) {
 
 void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
 
-    // FIXME: This method is pretty crappy... fix with something better
+    // Set callback
+    ctrl->fn  = show_string;
+    ctrl->arg = (void *) (uintptr_t) index;
 
-    // Request a string descriptor, wait for the transfer to finish, show value
+    // Wait for get_string_descriptor() to finish
     get_string_descriptor(dev, index);
-    while ( ctrl->active) usb_task();
-    show_string((void *) (uintptr_t) index);
+    wait_for_transfer(ctrl);
 
-    // Queue a ZLP, wait for it to start, wait for it to finish
-    queue_callback(transfer_zlp, (void *) ctrl);
-    while (!ctrl->active) usb_task();
-    while ( ctrl->active) usb_task();
-    usb_task();
+    // Wait for transfer_zlp() to finish
+    transfer_zlp(ctrl);
+    wait_for_transfer(ctrl);
 }
 
 // ==[ Drivers ]================================================================
