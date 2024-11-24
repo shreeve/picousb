@@ -82,7 +82,7 @@ void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *usb,
         pp->ecr = &usbh_dpram->epx_ctrl;
         pp->bcr = &usbh_dpram->epx_buf_ctrl;
         pp->buf = &usbh_dpram->epx_data[0];
-    } else if (pp->ep_num) { // Using a polled hardware endpoint
+    } else { // Using a polled hardware endpoint
         uint8_t i = phe - 1; // these start at one, so adjust
         pp->ecr = &usbh_dpram->int_ep_ctrl       [i].ctrl;
         pp->bcr = &usbh_dpram->int_ep_buffer_ctrl[i].ctrl;
@@ -96,8 +96,6 @@ void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *usb,
             |  pp->ep_num         << 16    // Endpoint number
             |  pp->dev_addr;               // Device address
         usb_hw->int_ep_ctrl |= (1 << phe); // Activate the endpoint
-    } else {
-        panic("EP0 cannot be polled");
     }
 
     // Set bcr first to prevent any issues when ecr is set
