@@ -9,6 +9,7 @@ void usb_log(uint8_t level) {
 // Hex dump (mode: 0 = hex; 1 = hex + ascii; 2 = hex + ascii + no newline)
 void hexdump(const unsigned char *str, const void *data, size_t size, uint mode) {
     if (usb_log_level < 3) return;
+
     const unsigned char *byte = (const unsigned char *) data;
     size_t i, j;
 
@@ -43,6 +44,7 @@ void hexdump(const unsigned char *str, const void *data, size_t size, uint mode)
 // Binary dump
 void bindump(uint8_t *str, uint32_t val) {
     if (usb_log_level < 3) return;
+
     uint32_t bit = 1 << 31u;
     size_t i;
 
@@ -60,6 +62,7 @@ void bindump(uint8_t *str, uint32_t val) {
 // Print a BCD value
 void tobcd(const char *str, uint16_t val) {
     if (usb_log_level < 3) return;
+
     uint8_t x = (val & 0x0f00) >> 8;
     uint8_t y = (val & 0x00f0) >> 4;
     uint8_t z = (val & 0x000f);
