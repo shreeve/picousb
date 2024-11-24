@@ -54,7 +54,7 @@ SDK_INJECT const char *ep_dir(uint8_t in) {
 }
 
 SDK_INJECT void show_pipe(pipe_t *pp) {
-    debug(" │ %-3uEP%-2d%3s │\n", pp->dev_addr, pp->ep_num, ep_dir(pp->ep_in));
+    debug(" │ D%-2uEP%-2d%3s │\n", pp->dev_addr, pp->ep_num, ep_dir(pp->ep_in));
 }
 
 void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *usb,
