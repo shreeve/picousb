@@ -941,8 +941,6 @@ void usb_task() {
                 uint8_t    ep_num   = task.transfer.ep_num;   // Endpoint number
                 uint8_t   *user_buf = task.transfer.user_buf; // User buffer
                 uint16_t   len      = task.transfer.len;      // Buffer length
-                callback_t fn       = task.fn;                // Callback fn
-                void      *arg      = task.arg;               // Callback arg
 
                 pipe_t   *pp  = get_pipe(dev_addr, ep_num);
                 device_t *dev = get_device(pp->dev_addr);
