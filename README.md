@@ -21,12 +21,12 @@ seems the name PicoUSB is fitting.
 
 ## Helpful USB Information
 
-* [USB Overview](https://github.com/shreeve/picousb/blob/main/usb-overview.md)
+* [USB Overview](https://github.com/shreeve/picousb/blob/main/docs/usb-overview.md)
 
 ## Host Example
 
 The current status, as of the end of November 2024, showing the output from
-[enumeration of an FTDI board](https://github.com/shreeve/picousb/blob/main/enumeration.md).
+[enumeration of an FTDI board](https://github.com/shreeve/picousb/blob/main/docs/enumeration.md).
 
 ## Compiling
 
