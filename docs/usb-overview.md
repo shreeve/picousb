@@ -75,6 +75,8 @@ canceled out at the receiver. Differential signaling allows for more reliable
 data transmission over longer distances and at higher speeds compared to
 single-ended signaling methods.
 
+<div align="center"><img width="480" src="https://github.com/user-attachments/assets/a4e2b224-447a-4c5e-9239-948937707275"></div>
+
 ### Line States
 
 USB uses various line states to communicate efficiently, manage power states,
