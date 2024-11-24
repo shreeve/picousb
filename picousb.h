@@ -138,8 +138,8 @@ typedef struct {
     uint16_t   bytes_done; // Bytes done transferring
 
     // Callback support
-    void (*fn)(void *arg); // Callback function
-    void            *arg ; // Callback argument
+    callback_t fn        ; // Callback function
+    void      *arg       ; // Callback argument
 } pipe_t;
 
 extern pipe_t pipes[MAX_PIPES], *ctrl;
