@@ -320,11 +320,6 @@ void finish_transaction(pipe_t *pp) {
 static uint32_t guid = 1;
 static queue_t *queue = &((queue_t) { 0 });
 
-void wait_for_transfer(pipe_t *pp) {
-    while (pp->active) usb_task();
-    while (!queue_is_empty(queue)) usb_task();
-}
-
 // Helper variable for common bits
 static const uint32_t USB_SIE_CTRL_BASE =
                       USB_SIE_CTRL_PULLDOWN_EN_BITS   // Enable
@@ -483,6 +478,12 @@ static void finish_transfer(pipe_t *pp) {
 
     // Queue the transfer task
     queue_add_blocking(queue, &transfer_task);
+}
+
+// Helper to allow blocking until transfer is finished
+void wait_for_transfer(pipe_t *pp) {
+    while (pp->active) usb_task();
+    while (!queue_is_empty(queue)) usb_task();
 }
 
 // ==[ Descriptors ]============================================================
