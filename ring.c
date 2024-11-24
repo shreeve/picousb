@@ -164,7 +164,7 @@ inline uint16_t ring_write_blocking(ring_t *r, const void *ptr, uint16_t len) {
     return ring_write_internal(r, ptr, len, true);
 }
 
-// ==[ Debugging: We should probably remove this or improve it ]================
+// ==[ FIXME: We should remove or improve this ]================================
 
 #include <stdarg.h>
 

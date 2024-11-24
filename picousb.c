@@ -54,7 +54,7 @@ SDK_INJECT const char *ep_dir(uint8_t in) {
 }
 
 SDK_INJECT void show_pipe(pipe_t *pp) {
-    printf(" │ %-3uEP%-2d%3s │\n", pp->dev_addr, pp->ep_num, ep_dir(pp->ep_in));
+    debug(" │ %-3uEP%-2d%3s │\n", pp->dev_addr, pp->ep_num, ep_dir(pp->ep_in));
 }
 
 void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *usb,
@@ -265,30 +265,30 @@ void start_transaction(void *arg) {
     // Set bcr and allow time for it to settle (problems if CPU reads too soon!)
     *bcr = hold; nop(); nop(); nop(); nop(); nop(); nop();
 
-    // Debug output
+    // Log output
     if (!pp->bytes_done) {
-        printf(DEBUG_ROW);
-        printf( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transaction started");
+        debug(LOG_ROW);
+        debug( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transaction started");
         show_pipe(pp);
-        printf(DEBUG_ROW);
+        debug(LOG_ROW);
         bindump("│SIE", usb_hw->sie_ctrl);
         bindump("│SSR", usb_hw->sie_status);
-        printf(DEBUG_ROW);
+        debug(LOG_ROW);
         bindump("│DAR", usb_hw->dev_addr_ctrl);
         bindump("│ECR", *pp->ecr);
         bindump("│BCR", hold | fire);
         if (pp->setup) {
             uint32_t *packet = (uint32_t *) usbh_dpram->setup_packet;
-            printf(DEBUG_ROW);
+            debug(LOG_ROW);
             hexdump("│SETUP", packet, sizeof(usb_setup_packet_t), 1);
-            printf(DEBUG_ROW);
+            debug(LOG_ROW);
         } else if (!pp->bytes_left) {
-            printf(DEBUG_ROW);
-            printf( "│ZLP\t│ %-4s │ Device %-28u │            │\n",
+            debug(LOG_ROW);
+            debug( "│ZLP\t│ %-4s │ Device %-28u │            │\n",
                 ep_dir(pp->ep_in), pp->dev_addr);
-            printf(DEBUG_ROW);
+            debug(LOG_ROW);
         } else {
-            printf(DEBUG_ROW);
+            debug(LOG_ROW);
         }
     }
 
@@ -447,16 +447,16 @@ static void finish_transfer(pipe_t *pp) {
     // Get the transfer length (actual bytes transferred)
     uint16_t len = pp->bytes_done;
 
-    // Debug output
+    // Log output
     if (len) {
-        printf(DEBUG_ROW);
-        printf( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n",
-                    len, pp->dev_addr, guid);
+        debug(LOG_ROW);
+        debug( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n",
+                 len, pp->dev_addr, guid);
         hexdump("│Data", pp->user_buf, len, 1);
     } else {
-        printf(DEBUG_ROW);
-        printf( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n",
-                    ep_dir(pp->ep_in), pp->dev_addr, guid);
+        debug(LOG_ROW);
+        debug( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n",
+                 ep_dir(pp->ep_in), pp->dev_addr, guid);
     }
 
     // Create the transfer task
@@ -516,24 +516,24 @@ void load_device_descriptor(void *ptr, device_t *dev) {
 void show_device_descriptor(void *ptr) {
     usb_device_descriptor_t *d = (usb_device_descriptor_t *) ptr;
 
-    printf("Connected Device:\n");
-    printf("  Total Length: %u\n"    , d->bLength);
-    printb("  USB Version:  "        , d->bcdUSB);
-    printf("  Device Class: %u\n"    , d->bDeviceClass);
-    printf("    Subclass:   %u\n"    , d->bDeviceSubClass);
-    printf("    Protocol:   %u\n"    , d->bDeviceProtocol);
-    printf("  Packet Size:  %u\n"    , d->bMaxPacketSize0);
-    printf("  Vendor Id:    0x%04x\n", d->idVendor);
-    printf("  Product Id:   0x%04x\n", d->idProduct);
-    printb("  Version:      "        , d->bcdDevice);
-    printf("  Manufacturer: [#%u]\n" , d->iManufacturer);
-    printf("  Product:      [#%u]\n" , d->iProduct);
-    printf("  Serial:       [#%u]\n" , d->iSerialNumber);
-    printf("\n");
+    flash("Connected Device:\n");
+    flash("  Total Length:       %u\n"    , d->bLength);
+    tobcd("  USB Version:        "        , d->bcdUSB);
+    flash("  Device Class:       %u\n"    , d->bDeviceClass);
+    flash("    Subclass:         %u\n"    , d->bDeviceSubClass);
+    flash("    Protocol:         %u\n"    , d->bDeviceProtocol);
+    flash("  Packet Size:        %u\n"    , d->bMaxPacketSize0);
+    flash("  Vendor Id:          0x%04x\n", d->idVendor);
+    flash("  Product Id:         0x%04x\n", d->idProduct);
+    tobcd("  Version:            "        , d->bcdDevice);
+    flash("  Manufacturer:       [#%u]\n" , d->iManufacturer);
+    flash("  Product:            [#%u]\n" , d->iProduct);
+    flash("  Serial:             [#%u]\n" , d->iSerialNumber);
+    flash("\n");
 }
 
 void get_device_descriptor(device_t *dev) {
-    printf("Get device descriptor\n");
+    debug("Get device descriptor\n");
 
     uint8_t len = sizeof(usb_device_descriptor_t);
 
@@ -546,41 +546,41 @@ void get_device_descriptor(device_t *dev) {
 void show_configuration_descriptor(void *ptr) {
     usb_configuration_descriptor_t *d = (usb_configuration_descriptor_t *) ptr;
 
-    printf("Configuration Descriptor:\n");
-    printf("  Total Length: %u\n"   , d->wTotalLength);
-    printf("  Interfaces:   %u\n"   , d->bNumInterfaces);
-    printf("  Config Value: %u\n"   , d->bConfigurationValue);
-    printf("  Config Name:  [#%u]\n", d->iConfiguration);
-    printf("  Attributes:   ");
+    flash("Configuration Descriptor:\n");
+    flash("  Total Length:       %u\n"   , d->wTotalLength);
+    flash("  Interfaces:         %u\n"   , d->bNumInterfaces);
+    flash("  Config Value:       %u\n"   , d->bConfigurationValue);
+    flash("  Config Name:        [#%u]\n", d->iConfiguration);
+    flash("  Attributes:         ");
     {
         char *sp = d->bmAttributes & 0x40 ? "Self Powered"  : NULL;
         char *rw = d->bmAttributes & 0x20 ? "Remote Wakeup" : NULL;
 
-        if (sp && rw) printf("%s, %s\n", sp, rw);
-        else if  (sp) printf("%s\n", sp);
-        else if  (rw) printf("%s\n", rw);
-        else          printf("None\n");
+        if (sp && rw) flash("%s, %s\n", sp, rw);
+        else if  (sp) flash("%s\n", sp);
+        else if  (rw) flash("%s\n", rw);
+        else          flash("None\n");
     }
-    printf("  Max Power:    %u mA\n", d->bMaxPower * 2);
-    printf("\n");
+    flash("  Max Power:          %u mA\n", d->bMaxPower * 2);
+    flash("\n");
 }
 
 void show_interface_descriptor(void *ptr) {
     usb_interface_descriptor_t *d = (usb_interface_descriptor_t *) ptr;
 
-    printf("Interface Descriptor:\n");
-    printf("  Interface:    %u\n"    , d->bInterfaceNumber);
-    printf("  Alternate:    %u\n"    , d->bAlternateSetting);
-    printf("  Endpoints:    %u\n"    , d->bNumEndpoints);
-    printf("  Class:        0x%02x\n", d->bInterfaceClass);
-    printf("  Subclass:     0x%02x\n", d->bInterfaceClass);
-    printf("  Protocol:     0x%02x\n", d->bInterfaceProtocol);
-    printf("  Name:         [#%u]\n" , d->iInterface);
-    printf("\n");
+    flash("Interface Descriptor:\n");
+    flash("  Interface:          %u\n"    , d->bInterfaceNumber);
+    flash("  Alternate:          %u\n"    , d->bAlternateSetting);
+    flash("  Endpoints:          %u\n"    , d->bNumEndpoints);
+    flash("  Class:              0x%02x\n", d->bInterfaceClass);
+    flash("  Subclass:           0x%02x\n", d->bInterfaceClass);
+    flash("  Protocol:           0x%02x\n", d->bInterfaceProtocol);
+    flash("  Name:               [#%u]\n" , d->iInterface);
+    flash("\n");
 }
 
 void get_configuration_descriptor(device_t *dev, uint8_t len) {
-    printf("Get configuration descriptor\n");
+    debug("Get configuration descriptor\n");
 
     get_descriptor(dev, USB_DT_CONFIG, len);
 }
@@ -589,15 +589,15 @@ void show_endpoint_descriptor(void *ptr) {
     usb_endpoint_descriptor_t *d = (usb_endpoint_descriptor_t *) ptr;
     uint8_t in = d->bEndpointAddress & USB_DIR_IN ? 1 : 0;
 
-    printf("Endpoint Descriptor:\n");
-    printf("  Length:             %u\n"   , d->bLength);
-    printf("  Endpoint number:    EP%u\n" , d->bEndpointAddress & 0x0f);
-    printf("  Endpoint direction: %s\n"   , ep_dir(in));
-    printf("  Attributes:         0x%02x" , d->bmAttributes);
-    printf(" (%s Transfer Type)\n"        , transfer_type(d->bmAttributes));
-    printf("  Max Packet Size:    %u\n"   , d->wMaxPacketSize);
-    printf("  Interval:           %u\n"   , d->bInterval);
-    printf("\n");
+    flash("Endpoint Descriptor:\n");
+    flash("  Length:             %u\n"   , d->bLength);
+    flash("  Endpoint number:    EP%u\n" , d->bEndpointAddress & 0x0f);
+    flash("  Endpoint direction: %s\n"   , ep_dir(in));
+    flash("  Attributes:         0x%02x" , d->bmAttributes);
+    flash(" (%s Transfer Type)\n"        , transfer_type(d->bmAttributes));
+    flash("  Max Packet Size:    %u\n"   , d->wMaxPacketSize);
+    flash("  Interval:           %u\n"   , d->bInterval);
+    flash("\n");
 }
 
 void unicode_to_utf8(uint8_t *src, uint8_t *dst) {
@@ -626,7 +626,7 @@ void show_string(void *arg) {
     static uint8_t utf[MAX_CTRL_BUF] = { 0 };
     uint8_t index = (uint8_t) (uintptr_t) arg;
     unicode_to_utf8(ctrl_buf, utf);
-    printf("[String #%u]: \"%s\"\n", index, utf);
+    flash("[String #%u]: \"%s\"\n", index, utf);
 }
 
 void get_string_descriptor(device_t *dev, uint8_t index) {
@@ -673,9 +673,9 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
         if (!*cur) panic("Invalid descriptor");
         uint8_t type = cur[1];
 
-        // Debug output
+        // Log output
         hexdump("Detail", cur, *cur, 1);
-        printf("\n");
+        debug("\n");
 
         switch (type) {
 
@@ -704,7 +704,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
                     // const driver_t *driver = &drivers[i];
                     //
                     // if (driver->open(dev_addr, cur, len)) {
-                    //     printf("  %s driver opened\n", driver->name);
+                    //     debug("  %s driver opened\n", driver->name);
                     //
                     //     // Bind each interface association to the driver
                     //     for (uint8_t j = 0; j < ias; j++) {
@@ -748,7 +748,7 @@ enum {
 };
 
 void set_device_address(device_t *dev) {
-    printf("Set device address to %u\n", dev->dev_addr);
+    debug("Set device address to %u\n", dev->dev_addr);
 
     control_transfer(dev0, &((usb_setup_packet_t) {
         .bmRequestType = USB_DIR_OUT
@@ -762,7 +762,7 @@ void set_device_address(device_t *dev) {
 }
 
 void set_configuration(device_t *dev, uint16_t cfg) {
-    printf("Set configuration to %u\n", cfg);
+    debug("Set configuration to %u\n", cfg);
 
     control_transfer(dev, &((usb_setup_packet_t) {
         .bmRequestType = USB_DIR_OUT
@@ -785,14 +785,14 @@ void enumerate(void *arg) {
     switch (step++) {
 
         case ENUMERATION_START:
-            printf("Enumeration started\n");
+            debug("Enumeration started\n");
             step++;
 
             // Explicit fall through
 
         case ENUMERATION_GET_MAXSIZE:
 
-            printf("Starting GET_MAXSIZE\n");
+            debug("Starting GET_MAXSIZE\n");
             get_device_descriptor(dev);
             break;
 
@@ -803,7 +803,7 @@ void enumerate(void *arg) {
             dev->maxsize0 = ((usb_device_descriptor_t *) ctrl_buf)
                                 ->bMaxPacketSize0;
 
-            printf("Starting SET_ADDRESS\n");
+            debug("Starting SET_ADDRESS\n");
             new_addr = dev->dev_addr;
             set_device_address(dev);
         }   break;
@@ -813,7 +813,7 @@ void enumerate(void *arg) {
             dev->state    = DEVICE_ADDRESSED;
             clear_device(0);
 
-            printf("Starting GET_DEVICE\n");
+            debug("Starting GET_DEVICE\n");
             get_device_descriptor(dev);
         }   break;
 
@@ -822,7 +822,7 @@ void enumerate(void *arg) {
             show_device_descriptor(ctrl_buf);
 
             uint8_t len = sizeof(usb_configuration_descriptor_t);
-            printf("Starting GET_CONFIG_SHORT (%u bytes)\n", len);
+            debug("Starting GET_CONFIG_SHORT (%u bytes)\n", len);
             get_configuration_descriptor(dev, len);
         }   break;
 
@@ -833,7 +833,7 @@ void enumerate(void *arg) {
                 panic("Configuration descriptor too large (%u bytes)", size);
 
             uint8_t len = (uint8_t) size;
-            printf("Starting GET_CONFIG_FULL (%u bytes)\n", len);
+            debug("Starting GET_CONFIG_FULL (%u bytes)\n", len);
             get_configuration_descriptor(dev, len);
         }   break;
 
@@ -842,7 +842,7 @@ void enumerate(void *arg) {
             dev->state = DEVICE_ENUMERATED;
             on_device_enumerated(dev); // Notify that device is enumerated
 
-            printf("Starting SET_CONFIG\n");
+            debug("Starting SET_CONFIG\n");
             set_configuration(dev, 1);
         }   break;
 
@@ -860,11 +860,11 @@ void enumerate(void *arg) {
 // ==[ Callbacks ]==============================================================
 
 SDK_WEAK void on_device_enumerated(device_t *dev) {
-    printf("Device %u is now enumerated\n", dev->dev_addr);
+    debug("Device %u is now enumerated\n", dev->dev_addr);
 }
 
 SDK_WEAK void on_device_configured(device_t *dev) {
-    printf("Device %u is now configured\n", dev->dev_addr);
+    debug("Device %u is now configured\n", dev->dev_addr);
 
     show_string_descriptor_blocking(dev, dev->manufacturer);
     show_string_descriptor_blocking(dev, dev->product     );
@@ -906,20 +906,20 @@ void usb_task() {
 
     while (queue_try_remove(queue, &task)) {
         uint8_t type = task.type;
-        printf("\n=> %u) New task, %s\n\n", task.guid, task_name(type));
+        debug("\n=> %u) New task, %s\n\n", task.guid, task_name(type));
 
         // NOTE: If a task has a callback, it will run after processing the task
         switch (type) {
 
             case TASK_CALLBACK: {
-                printf("Calling %s\n", callback_name(task.fn));
+                debug("Calling %s\n", callback_name(task.fn));
             }   break;
 
             case TASK_CONNECT: {
                 static uint64_t last_attempt;
 
                 if (last_attempt && (time_us_64() - last_attempt < 1000000)) {
-                    printf("Connections allowed only once every second\n");
+                    alert("Connections allowed only once every second\n");
                     break;
                 }
                 last_attempt = time_us_64();
@@ -929,7 +929,7 @@ void usb_task() {
                 dev0->speed = task.connect.speed;
 
                 char *str = dev0->speed == LOW_SPEED ? "low" : "full";
-                printf("Device connected (%s speed)\n", str);
+                debug("Device connected (%s speed)\n", str);
             }   break;
 
             case TASK_TRANSFER: {
@@ -975,15 +975,15 @@ void usb_task() {
 // #define USB_INTR_BUS_RESET_ACCESS "RO"
 
 SDK_INJECT void printf_interrupts(uint32_t ints) {
-    if (ints & USB_INTS_HOST_CONN_DIS_BITS   ) printf(", device"  );
-    if (ints & USB_INTS_STALL_BITS           ) printf(", stall"   );
-    if (ints & USB_INTS_BUFF_STATUS_BITS     ) printf(", buffer"  );
+    if (ints & USB_INTS_HOST_CONN_DIS_BITS   ) debug(", device"  );
+    if (ints & USB_INTS_STALL_BITS           ) debug(", stall"   );
+    if (ints & USB_INTS_BUFF_STATUS_BITS     ) debug(", buffer"  );
     if (ints & USB_INTS_BUFF_STATUS_BITS &&
-               usb_hw->buf_status & ~1u      ) printf(", bulk"    );
-    if (ints & USB_INTS_TRANS_COMPLETE_BITS  ) printf(", last"    );
-    if (ints & USB_INTS_ERROR_RX_TIMEOUT_BITS) printf(", timeout" );
-    if (ints & USB_INTS_ERROR_DATA_SEQ_BITS  ) printf(", dataseq" );
-    if (ints & USB_INTS_HOST_RESUME_BITS     ) printf(", power"   );
+               usb_hw->buf_status & ~1u      ) debug(", bulk"    );
+    if (ints & USB_INTS_TRANS_COMPLETE_BITS  ) debug(", last"    );
+    if (ints & USB_INTS_ERROR_RX_TIMEOUT_BITS) debug(", timeout" );
+    if (ints & USB_INTS_ERROR_DATA_SEQ_BITS  ) debug(", dataseq" );
+    if (ints & USB_INTS_HOST_RESUME_BITS     ) debug(", power"   );
 }
 
 // Interrupt handler
@@ -1012,21 +1012,21 @@ void isr_usbctrl() {
     pipe_t *pp = get_pipe(dev_addr, ep_num);
 
     // Show system state
-    printf( "\n=> %u) New ISR", guid++);
+    debug( "\n=> %u) New ISR", guid++);
     printf_interrupts(ints);
-    printf( "\n\n");
-    printf(DEBUG_ROW);
-    printf( "│Frame  │ %4u │ %-35s", sof, "Interrupt Handler");
+    debug( "\n\n");
+    debug(LOG_ROW);
+    debug( "│Frame  │ %4u │ %-35s", sof, "Interrupt Handler");
     show_pipe(pp);
-    printf(DEBUG_ROW);
+    debug(LOG_ROW);
     bindump("│INT", ints);
     bindump("│SIE", sie);
     bindump("│SSR", ssr);
-    printf(DEBUG_ROW);
+    debug(LOG_ROW);
     bindump("│DAR", dar);
     bindump("│ECR", ecr);
     bindump("│BCR", bcr);
-    printf(DEBUG_ROW);
+    debug(LOG_ROW);
 
     // Connection (attach or detach)
     if (ints &  USB_INTS_HOST_CONN_DIS_BITS) {
@@ -1041,8 +1041,8 @@ void isr_usbctrl() {
 
         // Handle connect and disconnect
         if (speed) {
-            printf( "│CONNECT│ %-4s │ %-35s │ Task #%-4u │\n", "",
-                     "New device connected", guid);
+            debug( "│CONNECT│ %-4s │ %-35s │ Task #%-4u │\n", "",
+                    "New device connected", guid);
 
             queue_add_blocking(queue, &((task_t) { // ~20 μs
                 .type          = TASK_CONNECT,
@@ -1052,12 +1052,12 @@ void isr_usbctrl() {
                 .arg           = (void *) dev0,
             }));
         } else {
-            printf( "│DISCONN│ %-4s │ %-35s │            │\n", "",
-                     "Device disconnected");
+            debug( "│DISCONN│ %-4s │ %-35s │            │\n", "",
+                    "Device disconnected");
 
             clear_device(0);
         }
-        printf(DEBUG_ROW);
+        debug(LOG_ROW);
     }
 
     // Stall detected (higher priority than BUFF_STATUS and TRANS_COMPLETE)
@@ -1102,7 +1102,7 @@ void isr_usbctrl() {
                 cur->bytes_left ? start_transaction(cur) : finish_transfer(cur);
             }
         }
-        printf(DEBUG_ROW);
+        debug(LOG_ROW);
 
         // Panic if we missed any buffers
         if (bits) panic("Unhandled buffer mask: %032b", bits);
@@ -1141,7 +1141,7 @@ void isr_usbctrl() {
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_RESUME_BITS;
 
-        printf("Device initiated resume\n");
+        alert("Device initiated resume\n");
     }
 
     // Were any interrupts missed?
@@ -1151,7 +1151,7 @@ void isr_usbctrl() {
 // ==[ Setup USB Host ]=========================================================
 
 void setup_usb_host() {
-    printf("USB host reset\n\n");
+    debug("USB host reset\n\n");
 
     // Reset controller
     reset_block       (RESETS_RESET_USBCTRL_BITS);
@@ -1176,7 +1176,7 @@ void setup_usb_host() {
                       | USB_INTE_HOST_RESUME_BITS        // Device wakes host
                       | USB_INTE_ERROR_DATA_SEQ_BITS     // DATA0/DATA1 wrong
                       | USB_INTE_ERROR_RX_TIMEOUT_BITS   // Receive timeout
-                      | (0xffffffff ^ 0x00000004);       // NOTE: Debug all on
+                      | (0xffffffff ^ 0x00000004);       // FIXME: Catches all!
 
     irq_set_enabled(USBCTRL_IRQ, true);
 
@@ -1184,14 +1184,14 @@ void setup_usb_host() {
     clear_pipes();
     setup_ctrl();
 
-    printf(DEBUG_ROW);
+    debug(LOG_ROW);
     bindump("│INT", usb_hw->inte);
-    printf(DEBUG_ROW);
+    debug(LOG_ROW);
 }
 
 void usb_init() {
     stdout_uart_init();
-    printf("\033[2J\033[H\n==[ PicoUSB Host ]==\n\n");
+    flash("\033[2J\033[H\n==[ PicoUSB Host ]==\n\n");
     queue_init(queue, sizeof(task_t), 64);
     setup_usb_host();
 }

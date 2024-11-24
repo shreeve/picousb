@@ -50,14 +50,14 @@
 #define usb_hw_clear ((usb_hw_t *) hw_clear_alias_untyped(usb_hw))
 #define usb_hw_set   ((usb_hw_t *) hw_set_alias_untyped  (usb_hw))
 
-// ==[ Debug ]==================================================================
+// ==[ Logging ]================================================================
 
-#define DEBUG_ROW \
+#define LOG_ROW \
     "•───────•──────•─────────────────────────────────────•────────────•\n"
 
-extern uint8_t usb_debug_level; // Dynamic debug level
+extern uint8_t usb_log_level; // Dynamic log level
 
-void usb_debug(uint8_t level);
+void usb_log(uint8_t level);
 
 // ==[ Devices ]================================================================
 
