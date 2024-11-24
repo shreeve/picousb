@@ -4,9 +4,8 @@
 #include "picousb.h"
 
 extern uint8_t usb_log_level;
-#define __printf(...) printf(__VA_ARGS__)
-#define log(l, ...) (usb_log_level < (l) ? (void) 0 : __printf(__VA_ARGS__))
 
+#define log(l,...) (usb_log_level < (l) ? (void) 0 : printf(__VA_ARGS__))
 #define alert(...) log(1, __VA_ARGS__)
 #define flash(...) log(2, __VA_ARGS__)
 #define debug(...) log(3, __VA_ARGS__)
