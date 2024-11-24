@@ -975,7 +975,7 @@ void usb_task() {
 // #define USB_INTR_BUS_RESET_LSB    _u(12)
 // #define USB_INTR_BUS_RESET_ACCESS "RO"
 
-SDK_INJECT void printf_interrupts(uint32_t ints) {
+SDK_INJECT void show_interrupts(uint32_t ints) {
     if (ints & USB_INTS_HOST_CONN_DIS_BITS   ) debug(", device"  );
     if (ints & USB_INTS_STALL_BITS           ) debug(", stall"   );
     if (ints & USB_INTS_BUFF_STATUS_BITS     ) debug(", buffer"  );
@@ -1014,7 +1014,7 @@ void isr_usbctrl() {
 
     // Show system state
     debug("\n=> %u) New ISR", guid++);
-    printf_interrupts(ints);
+    show_interrupts(ints);
     debug("\n\n");
     debug(LOG_ROW);
     debug("│Frame  │ %4u │ %-35s", sof, "Interrupt Handler");
