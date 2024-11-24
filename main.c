@@ -29,7 +29,7 @@ void reset_ftdi(device_t *dev) {
         default:
             states[dev->dev_addr] = 0;
             dev->state = DEVICE_READY;
-            usb_debug(1);
+            usb_log(1);
             printf("FTDI reset complete\n");
             break;
     }
@@ -56,7 +56,7 @@ void enquire_ep2_out(void *arg) {
 }
 
 int main() {
-    usb_debug(1);
+    usb_log(3);
     usb_init();
 
     // Create a repeating timer

@@ -202,7 +202,7 @@ uint16_t start_buffer(pipe_t *pp, uint8_t buf_id) {
         uint8_t *src = (uint8_t *) (&pp->user_buf[pp->bytes_done]);
         uint8_t *dst = (uint8_t *) (pp->buf + buf_id * 64);
         memcpy(dst, src, len);
-        hexdump(buf_id ? "│OUT/2" : "│OUT/1", src, len, 1);
+        _hex_(buf_id ? "│OUT/2" : "│OUT/1", src, len, 1);
         pp->bytes_done += len;
     }
 
@@ -225,7 +225,7 @@ uint16_t finish_buffer(pipe_t *pp, uint8_t buf_id, io_rw_32 bcr) {
         uint8_t *src = (uint8_t *) (pp->buf + buf_id * 64);
         uint8_t *dst = (uint8_t *) &pp->user_buf[pp->bytes_done];
         memcpy(dst, src, len);
-        hexdump(buf_id ? "│IN/2" : "│IN/1", dst, len, 1);
+        _hex_(buf_id ? "│IN/2" : "│IN/1", dst, len, 1);
         pp->bytes_done += len;
     }
 
@@ -271,16 +271,16 @@ void start_transaction(void *arg) {
         debug( "│Frame  │ %4u │ %-35s", usb_hw->sof_rd, "Transaction started");
         show_pipe(pp);
         debug(LOG_ROW);
-        bindump("│SIE", usb_hw->sie_ctrl);
-        bindump("│SSR", usb_hw->sie_status);
+        _bin_("│SIE", usb_hw->sie_ctrl);
+        _bin_("│SSR", usb_hw->sie_status);
         debug(LOG_ROW);
-        bindump("│DAR", usb_hw->dev_addr_ctrl);
-        bindump("│ECR", *pp->ecr);
-        bindump("│BCR", hold | fire);
+        _bin_("│DAR", usb_hw->dev_addr_ctrl);
+        _bin_("│ECR", *pp->ecr);
+        _bin_("│BCR", hold | fire);
         if (pp->setup) {
             uint32_t *packet = (uint32_t *) usbh_dpram->setup_packet;
             debug(LOG_ROW);
-            hexdump("│SETUP", packet, sizeof(usb_setup_packet_t), 1);
+            _hex_("│SETUP", packet, sizeof(usb_setup_packet_t), 1);
             debug(LOG_ROW);
         } else if (!pp->bytes_left) {
             debug(LOG_ROW);
@@ -452,7 +452,7 @@ static void finish_transfer(pipe_t *pp) {
         debug(LOG_ROW);
         debug( "│XFER\t│ %4u │ Device %-28u   Task #%-4u │\n",
                  len, pp->dev_addr, guid);
-        hexdump("│Data", pp->user_buf, len, 1);
+        _hex_("│Data", pp->user_buf, len, 1);
     } else {
         debug(LOG_ROW);
         debug( "│ZLP\t│ %-4s │ Device %-28u │ Task #%-4u │\n",
@@ -518,14 +518,14 @@ void show_device_descriptor(void *ptr) {
 
     flash("Connected Device:\n");
     flash("  Total Length:       %u\n"    , d->bLength);
-    tobcd("  USB Version:        "        , d->bcdUSB);
+    _bcd_("  USB Version:        "        , d->bcdUSB);
     flash("  Device Class:       %u\n"    , d->bDeviceClass);
     flash("    Subclass:         %u\n"    , d->bDeviceSubClass);
     flash("    Protocol:         %u\n"    , d->bDeviceProtocol);
     flash("  Packet Size:        %u\n"    , d->bMaxPacketSize0);
     flash("  Vendor Id:          0x%04x\n", d->idVendor);
     flash("  Product Id:         0x%04x\n", d->idProduct);
-    tobcd("  Version:            "        , d->bcdDevice);
+    _bcd_("  Version:            "        , d->bcdDevice);
     flash("  Manufacturer:       [#%u]\n" , d->iManufacturer);
     flash("  Product:            [#%u]\n" , d->iProduct);
     flash("  Serial:             [#%u]\n" , d->iSerialNumber);
@@ -674,7 +674,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
         uint8_t type = cur[1];
 
         // Log output
-        hexdump("Detail", cur, *cur, 1);
+        _hex_("Detail", cur, *cur, 1);
         debug("\n");
 
         switch (type) {
@@ -1012,20 +1012,20 @@ void isr_usbctrl() {
     pipe_t *pp = get_pipe(dev_addr, ep_num);
 
     // Show system state
-    debug( "\n=> %u) New ISR", guid++);
+    debug("\n=> %u) New ISR", guid++);
     printf_interrupts(ints);
-    debug( "\n\n");
+    debug("\n\n");
     debug(LOG_ROW);
-    debug( "│Frame  │ %4u │ %-35s", sof, "Interrupt Handler");
+    debug("│Frame  │ %4u │ %-35s", sof, "Interrupt Handler");
     show_pipe(pp);
     debug(LOG_ROW);
-    bindump("│INT", ints);
-    bindump("│SIE", sie);
-    bindump("│SSR", ssr);
+    _bin_("│INT", ints);
+    _bin_("│SIE", sie);
+    _bin_("│SSR", ssr);
     debug(LOG_ROW);
-    bindump("│DAR", dar);
-    bindump("│ECR", ecr);
-    bindump("│BCR", bcr);
+    _bin_("│DAR", dar);
+    _bin_("│ECR", ecr);
+    _bin_("│BCR", bcr);
     debug(LOG_ROW);
 
     // Connection (attach or detach)
@@ -1078,7 +1078,7 @@ void isr_usbctrl() {
         uint32_t mask = 0b11; // (2 bits at time, IN/OUT transfer together)
 
         // Show single/double buffer status of epx and which buffers are ready
-        bindump(dbl ? "│BUF/2" : "│BUF/1", bits);
+        _bin_(dbl ? "│BUF/2" : "│BUF/1", bits);
 
         // Finish transactions on each pending pipe
         pipe_t *cur;
@@ -1093,9 +1093,9 @@ void isr_usbctrl() {
                 // Show registers for endpoint control and buffer control
                 char *str = (char[16]) { 0 };
                 sprintf(str, "│ECR%u", pipe);
-                bindump(str, *cur->ecr);
+                _bin_(str, *cur->ecr);
                 sprintf(str, "│BCR%u", pipe);
-                bindump(str, *cur->bcr);
+                _bin_(str, *cur->bcr);
 
                 finish_transaction(cur);
 
@@ -1185,7 +1185,7 @@ void setup_usb_host() {
     setup_ctrl();
 
     debug(LOG_ROW);
-    bindump("│INT", usb_hw->inte);
+    _bin_("│INT", usb_hw->inte);
     debug(LOG_ROW);
 }
 

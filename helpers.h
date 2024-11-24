@@ -10,8 +10,8 @@ extern uint8_t usb_log_level;
 #define flash(...) log(2, __VA_ARGS__)
 #define debug(...) log(3, __VA_ARGS__)
 
-void hexdump(const unsigned char *str, const void *data, size_t size, uint mode);
-void bindump(uint8_t *str, uint32_t val);
-void tobcd(const char *str, uint16_t val);
+void _hex_(const unsigned char *str, const void *data, size_t size, uint mode);
+void _bin_(uint8_t *str, uint32_t val);
+void _bcd_(const char *str, uint16_t val);
 
 #endif // PICOUSB_HELPERS_H
