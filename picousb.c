@@ -796,11 +796,11 @@ void enumerate(void *arg) {
             break;
 
         case ENUMERATION_SET_ADDRESS: {
-            device_t *dev  = next_device();
-            dev->state     = dev0->state;
-            dev->speed     = dev0->speed;
-            dev->maxsize0  = ((usb_device_descriptor_t *) ctrl_buf)
-                                 ->bMaxPacketSize0;
+            device_t *dev = next_device();
+            dev->state    = dev0->state;
+            dev->speed    = dev0->speed;
+            dev->maxsize0 = ((usb_device_descriptor_t *) ctrl_buf)
+                                ->bMaxPacketSize0;
 
             printf("Starting SET_ADDRESS\n");
             new_addr = dev->dev_addr;
