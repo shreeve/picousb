@@ -1025,6 +1025,7 @@ void isr_usbctrl() {
     bindump("│DAR", dar);
     bindump("│ECR", ecr);
     bindump("│BCR", bcr);
+    printf(DEBUG_ROW);
 
     // Connection (attach or detach)
     if (ints &  USB_INTS_HOST_CONN_DIS_BITS) {
@@ -1039,7 +1040,6 @@ void isr_usbctrl() {
 
         // Handle connect and disconnect
         if (speed) {
-            printf(DEBUG_ROW);
             printf( "│CONNECT│ %-4s │ %-35s │ Task #%-4u │\n", "",
                      "New device connected", guid);
 
@@ -1051,12 +1051,12 @@ void isr_usbctrl() {
                 .arg           = (void *) dev0,
             }));
         } else {
-            printf(DEBUG_ROW);
             printf( "│DISCONN│ %-4s │ %-35s │            │\n", "",
                      "Device disconnected");
 
             clear_device(0);
         }
+        printf(DEBUG_ROW);
     }
 
     // Stall detected (higher priority than BUFF_STATUS and TRANS_COMPLETE)
@@ -1077,7 +1077,6 @@ void isr_usbctrl() {
         uint32_t mask = 0b11; // (2 bits at time, IN/OUT transfer together)
 
         // Show single/double buffer status of epx and which buffers are ready
-        printf(DEBUG_ROW);
         bindump(dbl ? "│BUF/2" : "│BUF/1", bits);
 
         // Finish transactions on each pending pipe
@@ -1102,6 +1101,7 @@ void isr_usbctrl() {
                 cur->bytes_left ? start_transaction(cur) : finish_transfer(cur);
             }
         }
+        printf(DEBUG_ROW);
 
         // Panic if we missed any buffers
         if (bits) panic("Unhandled buffer mask: %032b", bits);
@@ -1145,8 +1145,6 @@ void isr_usbctrl() {
 
     // Were any interrupts missed?
     if (ints) panic("Unhandled IRQ bitmask 0x%08x", ints);
-
-    printf(DEBUG_ROW);
 }
 
 // ==[ Setup USB Host ]=========================================================
