@@ -947,6 +947,7 @@ void usb_task() {
                 pipe_t   *pp  = get_pipe(dev_addr, ep_num);
                 device_t *dev = get_device(pp->dev_addr);
 
+                // FIXME: Remove this by setting callbacks during enumeration
                 if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(pp) : enumerate(dev);
                 }
