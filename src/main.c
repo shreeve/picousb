@@ -13,6 +13,24 @@ bool timer_callback(struct repeating_timer *t) {
 
 char *buf = (char[1024]) { 0 };
 
+typedef struct {
+    pipe_t *in;
+    pipe_t *out;
+} stream_t;
+
+// return status and chr in buffer
+int getchr(uint8_t *c) {
+    // TODO: If we are polling and appending to a ring buffer, we can just look
+    //       for c immediately.
+}
+
+// return status and chr sent
+int putchr(uint8_t c) {
+    // TODO: To know if c was sent, we need to know if the transfer completed,
+    //       which will require some sort of callback when that transfer is
+    //       done. How should we do that?
+}
+
 // Resets an FTDI device and configures its baud rate and line settings
 void reset_ftdi(device_t *dev) {
     static uint8_t (states[MAX_DEVICES]) = { 0 };
@@ -35,9 +53,13 @@ void reset_ftdi(device_t *dev) {
     }
 }
 
-void on_device_active(device_t *dev) {
-    printf("STRONG: Device %u is active\n", dev->dev_addr);
-    // reset_ftdi(dev);
+void zzz_on_device_enumerated(device_t *dev) {
+    printf("STRONG: Device %u is enumerated\n", dev->dev_addr);
+
+// } else if (dev->state < DEVICE_READY) {
+//     printf("Calling reset_ftdi\n");
+//     reset_ftdi(dev);
+
 }
 
 void poll_ep1_in(void *arg) {

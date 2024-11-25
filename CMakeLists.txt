@@ -33,16 +33,16 @@ project(piccolo C CXX ASM)
 pico_sdk_init()
 
 # Executable name
-add_executable(piccolo main.c)
+add_executable(piccolo src/main.c)
 
 pico_set_program_name(piccolo "piccolo")
 pico_set_program_version(piccolo "0.3")
 
 target_sources(piccolo PUBLIC
-    ${CMAKE_CURRENT_LIST_DIR}/main.c
-    ${CMAKE_CURRENT_LIST_DIR}/helpers.c
-    ${CMAKE_CURRENT_LIST_DIR}/picousb.c
-    ${CMAKE_CURRENT_LIST_DIR}/ring.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/main.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/helpers.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/picousb.c
+    ${CMAKE_CURRENT_LIST_DIR}/src/ring.c
 )
 
 # Modify the below lines to enable/disable output over UART/USB
@@ -58,6 +58,7 @@ target_link_libraries(piccolo
 target_include_directories(piccolo PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/..
+    ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
 # Add any user requested libraries

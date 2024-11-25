@@ -197,7 +197,7 @@ void state_machine() {
                 put_chr(EOT);
                 state = IDLE;
             } else {
-                put_str(???); // TODO: Send frame
+                put_chr('Z'); // TODO: Send frame
                 set_timeout(15, WAITING3);
                 state = WAITING3;
             }
