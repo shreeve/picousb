@@ -574,7 +574,7 @@ void show_interface_descriptor(void *ptr) {
     flash("  Alternate:          %u\n"    , d->bAlternateSetting);
     flash("  Endpoints:          %u\n"    , d->bNumEndpoints);
     flash("  Class:              0x%02x\n", d->bInterfaceClass);
-    flash("  Subclass:           0x%02x\n", d->bInterfaceClass);
+    flash("  Subclass:           0x%02x\n", d->bInterfaceSubClass);
     flash("  Protocol:           0x%02x\n", d->bInterfaceProtocol);
     flash("  Name:               [#%u]\n" , d->iInterface);
     flash("\n");
