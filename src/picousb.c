@@ -997,7 +997,7 @@ SDK_INJECT void show_interrupts(uint32_t ints) {
     if (ints & USB_INTS_STALL_BITS           ) debug(", stall"   );
     if (ints & USB_INTS_BUFF_STATUS_BITS     ) debug(", buffer"  );
     if (ints & USB_INTS_BUFF_STATUS_BITS &&
-               usb_hw->buf_status & ~1u      ) debug(", bulk"    );
+               usb_hw->buf_status & ~1u      ) debug(", EPn"     );
     if (ints & USB_INTS_TRANS_COMPLETE_BITS  ) debug(", last"    );
     if (ints & USB_INTS_ERROR_RX_TIMEOUT_BITS) debug(", timeout" );
     if (ints & USB_INTS_ERROR_DATA_SEQ_BITS  ) debug(", dataseq" );
