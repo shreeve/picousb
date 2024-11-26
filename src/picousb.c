@@ -659,6 +659,18 @@ void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
 
 // ==[ Drivers ]================================================================
 
+driver_t drivers[MAX_DRIVERS];
+
+static uint8_t driver_count = 0;
+
+void register_driver(driver_t *driver) {
+    if (driver_count < MAX_DRIVERS) {
+        drivers[driver_count++] = *driver;
+    } else {
+        panic("No free driver slots remaining");
+    }
+}
+
 bool enumerate_descriptors(void *ptr, device_t *dev) {
     usb_configuration_descriptor_t   *cfd; // Configuration descriptor
     usb_interface_assoc_descriptor_t *iad; // Interface association descriptor
@@ -701,24 +713,26 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
                     ias = 2;                           // require 2 interfaces
 
                 // Try to find a driver for this interface
-                for (uint8_t i = 0; i < DRIVER_COUNT; i++) {
-                    // const driver_t *driver = &drivers[i];
-                    //
-                    // if (driver->open(dev_addr, cur, len)) {
-                    //     debug("  %s driver opened\n", driver->name);
-                    //
-                    //     // Bind each interface association to the driver
-                    //     for (uint8_t j = 0; j < ias; j++) {
-                    //         uint8_t k = cur->bInterfaceNumber + j;
-                    //         dev->itf2drv[k] = i; // TODO: This needs to start with an invalid value
-                    //     }
-                    //
-                    //     // Bind all endpoints to the driver
-                    //     endpoint_bind_driver(dev->ep2drv, cur, len, i);
-                    //
-                    //     break;
-                    // }
+                uint8_t i;
+                for (i = 0; i < driver_count; i++) {
+                    const driver_t *driver = &drivers[i];
+
+                    if (driver->open(dev, ifd)) {
+                        debug("%s driver opened\n", driver->name);
+
+                        // // Bind each interface association to the driver
+                        // for (uint8_t j = 0; j < ias; j++) {
+                        //     uint8_t k = ifd->bInterfaceNumber + j;
+                        //     dev->itf2drv[k] = i; // TODO: This needs to start with an invalid value
+                        // }
+                        //
+                        // // Bind all endpoints to the driver
+                        // endpoint_bind_driver(dev->ep2drv, ifd, len, i);
+
+                        break;
+                    }
                 }
+                if (i == driver_count) debug("No matching driver found");
             }   break;
 
             case USB_DT_ENDPOINT:

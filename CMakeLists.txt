@@ -43,6 +43,9 @@ target_sources(piccolo PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/src/helpers.c
     ${CMAKE_CURRENT_LIST_DIR}/src/picousb.c
     ${CMAKE_CURRENT_LIST_DIR}/src/ring.c
+
+    # NOTE: Drivers automatically register, comment out if unused
+    ${CMAKE_CURRENT_LIST_DIR}/src/drivers/astm/astm.c
 )
 
 # Modify the below lines to enable/disable output over UART/USB

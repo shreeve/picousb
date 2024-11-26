@@ -78,7 +78,7 @@ void enquire_ep2_out(void *arg) {
 }
 
 int main() {
-    usb_log(LOG_FLASH);
+    usb_log(LOG_DEBUG);
     usb_init();
 
     // Create a repeating timer

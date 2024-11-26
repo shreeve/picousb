@@ -31,6 +31,7 @@
 
 #define MAX_DEVICES     2 // dev0 +  1
 #define MAX_PIPES      16 // ctrl + 15
+#define MAX_DRIVERS     6 // Number of class drivers
 #define MAX_CTRL_BUF  320 // Size of shared control transfer buffer
 
 #define MAKE_U16(x, y) (((x) << 8) | ((y)     ))
@@ -172,7 +173,19 @@ void reset_ftdi(device_t *dev);
 
 // ==[ Drivers ]================================================================
 
-#define DRIVER_COUNT 0 // FIXME: Replace with new driver code soon
+typedef struct {
+    char *name;
+    bool (*init)();
+    bool (*open)(device_t *dev, usb_interface_descriptor_t *ifd);
+    bool (*config)(device_t *dev, uint8_t interface_number);
+    bool (*transfer)(void *transfer);
+    bool (*close)(device_t *dev);
+    bool (*quit)();
+} driver_t;
+
+extern driver_t drivers[MAX_DRIVERS];
+
+void register_driver(driver_t *driver);
 
 // ==[ Enumeration ]============================================================
 
