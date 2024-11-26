@@ -103,7 +103,7 @@ void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *epd,
         usb_hw->int_ep_ctrl |= (1 << phe); // Activate the endpoint
     }
 
-    // Set bcr first to prevent any issues when ecr is set
+    // Set bcr first to prevent any issues when ecr gets in the next line
     *pp->bcr = 0; nop(); nop(); nop(); nop(); nop(); nop();
 
     // Setup the endpoint control register based on the type of endpoint
