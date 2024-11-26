@@ -286,15 +286,12 @@ void start_transaction(void *arg) {
             uint32_t *packet = (uint32_t *) usbh_dpram->setup_packet;
             debug(LOG_ROW);
             _hex_("│SETUP", packet, sizeof(usb_setup_packet_t), 1);
-            debug(LOG_ROW);
         } else if (!pp->bytes_left) {
             debug(LOG_ROW);
             debug("│ZLP\t│ %-4s │ Device %-28u │            │\n",
                 ep_dir(pp->ep_in), pp->dev_addr);
-            debug(LOG_ROW);
-        } else {
-            debug(LOG_ROW);
         }
+        debug(LOG_ROW);
     }
 
     // Fire off the transaction, which yields to the USB controller
