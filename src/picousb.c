@@ -714,27 +714,27 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
                     ifd->bInterfaceSubClass == 0x02)   // and ACM subclass, then
                     ias = 2;                           // require 2 interfaces
 
-                // Try to find a driver for this interface
-                uint8_t i;
-                for (i = 0; i < driver_count; i++) {
-                    const driver_t *driver = &drivers[i];
-
-                    if (driver->open(dev, ifd)) {
-                        debug("%s driver opened\n", driver->name);
-
-                        // // Bind each interface association to the driver
-                        // for (uint8_t j = 0; j < ias; j++) {
-                        //     uint8_t k = ifd->bInterfaceNumber + j;
-                        //     dev->itf2drv[k] = i; // TODO: This needs to start with an invalid value
-                        // }
-                        //
-                        // // Bind all endpoints to the driver
-                        // endpoint_bind_driver(dev->ep2drv, ifd, len, i);
-
-                        break;
-                    }
-                }
-                if (i == driver_count) debug("No matching driver found");
+                // // Try to find a driver for this interface
+                // uint8_t i;
+                // for (i = 0; i < driver_count; i++) {
+                //     const driver_t *driver = &drivers[i];
+                //
+                //     if (driver->open(dev, ifd)) {
+                //         debug("%s driver opened\n", driver->name);
+                //
+                //         // // Bind each interface association to the driver
+                //         // for (uint8_t j = 0; j < ias; j++) {
+                //         //     uint8_t k = ifd->bInterfaceNumber + j;
+                //         //     dev->itf2drv[k] = i; // TODO: This needs to start with an invalid value
+                //         // }
+                //         //
+                //         // // Bind all endpoints to the driver
+                //         // endpoint_bind_driver(dev->ep2drv, ifd, len, i);
+                //
+                //         break;
+                //     }
+                // }
+                // if (i == driver_count) debug("No matching driver found");
             }   break;
 
             case USB_DT_ENDPOINT:
