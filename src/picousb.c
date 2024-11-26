@@ -373,12 +373,12 @@ static void start_transfer(pipe_t *pp) {
     usb_hw->sie_ctrl      = sie | USB_SIE_CTRL_START_TRANS_BITS;
 }
 
-// Send a ZLP transfer out
+// Send a ZLP transfer
 void transfer_zlp(void *arg) {
     pipe_t *pp = (pipe_t *) arg;
 
-    // Force direction to OUT
-    pp->ep_in = 0; // FIXME: This CLOBBERS the direction, only use for EP0 as is
+    // Flip direction // FIXME: This CLOBBERS the direction!!!
+    pp->ep_in ^= 1;
     pp->bytes_left = 0;
 
     start_transfer(pp);
