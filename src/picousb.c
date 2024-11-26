@@ -690,7 +690,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
                 ias = iad->bInterfaceCount;
                 break;
 
-            case USB_DT_INTERFACE:
+            case USB_DT_INTERFACE: {
                 ifd = (usb_interface_descriptor_t *) cur;
                 show_interface_descriptor(ifd);
 
@@ -719,7 +719,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
                     //     break;
                     // }
                 }
-                break;
+            }   break;
 
             case USB_DT_ENDPOINT:
                 epd = (usb_endpoint_descriptor_t *) cur;
