@@ -158,7 +158,7 @@ pipe_t *get_pipe(uint8_t dev_addr, uint8_t ep_num) {
                 return pp;
         }
     }
-    panic("No configured pp%u on device %u", ep_num, dev_addr);
+    panic("No configured EP%u on device %u", ep_num, dev_addr);
     return NULL;
 }
 
