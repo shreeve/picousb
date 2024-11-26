@@ -694,11 +694,11 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
                 ifd = (usb_interface_descriptor_t *) cur;
                 show_interface_descriptor(ifd);
 
-                // Special case CDC needs two interfaces: CDC Control + CDC Data
-                if (ias                     == 1             &&
-                    ifd->bInterfaceClass    == USB_CLASS_CDC &&
-                    ifd->bInterfaceSubClass == 0x02)  // CDC_ACM
-                    ias = 2;
+                // Special case: CDC/ACM uses two interfaces (control and data)
+                if (ias                     == 1    && // If only 1 interface,
+                    ifd->bInterfaceClass    == 0x02 && // but, we're a CDC class
+                    ifd->bInterfaceSubClass == 0x02)   // and ACM subclass, then
+                    ias = 2;                           // require 2 interfaces
 
                 // Try to find a driver for this interface
                 for (uint8_t i = 0; i < DRIVER_COUNT; i++) {
