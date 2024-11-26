@@ -74,8 +74,7 @@ int main() {
 
     // Create a repeating timer
     struct repeating_timer timer;
-    add_repeating_timer_ms(2000, timer_callback, NULL, &timer);
-
+    add_repeating_timer_ms(1000, timer_callback, NULL, &timer);
     uint32_t last_ticks = 0;
 
     while (1) {
