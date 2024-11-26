@@ -961,7 +961,7 @@ void usb_task() {
                 if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(pp) : enumerate(dev);
                 }
-           }    break;
+            }   break;
 
             default:
                 panic("An unknown task type was queued\n");
