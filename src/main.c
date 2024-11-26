@@ -36,7 +36,11 @@ void poll_ep1_in(void *arg) {
     pipe_t *pp = &pipes[1];
     uint16_t len = pp->maxsize;
 
-    bulk_transfer(pp, buf, len);
+    if (!pp->active) {
+        bulk_transfer(pp, buf, len);
+    } else {
+        debug("Why is EP1/IN still active???\n");
+    }
 }
 
 void enquire_ep2_out(void *arg) {
@@ -44,7 +48,11 @@ void enquire_ep2_out(void *arg) {
     buf[0] = 0x06; // ASTM enquire
     uint16_t len = 1;
 
-    bulk_transfer(pp, buf, len);
+    if (!pp->active) {
+        bulk_transfer(pp, buf, len);
+    } else {
+        debug("Why is EP2/OUT still active???\n");
+    }
 }
 
 void on_device_configured(device_t *dev) {
@@ -60,6 +68,7 @@ void on_device_configured(device_t *dev) {
     }
 
     debug("We're ready!\n");
+    dev->state = DEVICE_READY;
 }
 
 void piccolo_task() {
