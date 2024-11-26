@@ -384,6 +384,12 @@ void transfer_zlp(void *arg) {
     start_transfer(pp);
 }
 
+// Helper to allow blocking until transfer is finished
+void await_transfer(pipe_t *pp) {
+    while (pp->active) usb_task();
+    while (!queue_is_empty(queue)) usb_task();
+}
+
 // Send a control transfer
 void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
     if (!ctrl->configured) panic("Endpoint not configured");
@@ -478,12 +484,6 @@ static void finish_transfer(pipe_t *pp) {
 
     // Queue the transfer task
     queue_add_blocking(queue, &transfer_task);
-}
-
-// Helper to allow blocking until transfer is finished
-void wait_for_transfer(pipe_t *pp) {
-    while (pp->active) usb_task();
-    while (!queue_is_empty(queue)) usb_task();
 }
 
 // ==[ Descriptors ]============================================================
@@ -650,11 +650,11 @@ void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
 
     // Wait for get_string_descriptor() to finish
     get_string_descriptor(dev, index);
-    wait_for_transfer(ctrl);
+    await_transfer(ctrl);
 
     // Wait for transfer_zlp() to finish
     transfer_zlp(ctrl);
-    wait_for_transfer(ctrl);
+    await_transfer(ctrl);
 }
 
 // ==[ Drivers ]================================================================
