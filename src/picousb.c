@@ -940,8 +940,8 @@ void usb_task() {
                 uint8_t   *user_buf = task.transfer.user_buf; // User buffer
                 uint16_t   len      = task.transfer.len;      // Buffer length
 
+                device_t *dev = get_device(dev_addr);
                 pipe_t   *pp  = get_pipe(dev_addr, ep_num);
-                device_t *dev = get_device(pp->dev_addr);
 
                 // FIXME: Remove this by setting callbacks during enumeration
                 if (dev->state < DEVICE_CONFIGURED) {
