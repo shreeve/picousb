@@ -167,8 +167,6 @@ void command(device_t *dev, uint8_t bmRequestType, uint8_t bRequest,
 
 void transfer_zlp(void *arg);
 
-void reset_ftdi(device_t *dev);
-
 // ==[ Descriptors ]============================================================
 
 // ==[ Drivers ]================================================================
