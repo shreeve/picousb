@@ -95,11 +95,11 @@ void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *epd,
 
         // Setup as a polled hardware endpoint
         bool ls = false;
-        usb_hw->int_ep_addr_ctrl[i] = \
-              (ls ? 1 : 0)        << 26    // Preamble: LS on FS hub
-            |  pp->ep_in ? 0 : (1 << 25)   // Direction (In=0, Out=1)
-            |  pp->ep_num         << 16    // Endpoint number
-            |  pp->dev_addr;               // Device address
+        usb_hw->int_ep_addr_ctrl[i] =
+              (ls        ? 1 : 0) << 26 // Preamble: LS on FS hub
+            | (pp->ep_in ? 0 : 1) << 25 // Direction (In=0, Out=1)
+            |  pp->ep_num         << 16 // Endpoint number
+            |  pp->dev_addr;            // Device address
         usb_hw->int_ep_ctrl |= (1 << phe); // Activate the endpoint
     }
 
@@ -110,9 +110,9 @@ void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *epd,
     *pp->ecr = EP_CTRL_ENABLE_BITS             // Enable this endpoint
              |  (phe ? SINGLE_BUFFER           // Non-epx are single buffered
                      : DOUBLE_BUFFER)          // And epx starts double buffered
-             |   pp->type << 26                // Set transfer type
-             | ((pp->interval || 1) - 1) << 16 // Polling interval minus 1 ms
-             | ((uint32_t) pp->buf) & 0xfc0;   // DSPRAM offset: 64-byte aligned
+             |  (pp->type << 26)               // Set transfer type
+             |(((pp->interval || 1) - 1) << 16) // Polling interval minus 1 ms
+             |(((uint32_t) pp->buf) & 0xfc0);   // DSPRAM offset: 64-byte aligned
 
     // NOTE: Endpoints should start with DATA0. However, there are some devices
     // that are non-standard and start with DATA1. Linux just hard codes these
