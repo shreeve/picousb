@@ -58,10 +58,17 @@ void enquire_ep2_out(void *arg) {
 void on_device_configured(device_t *dev) {
     printf("STRONG: Device %u is configured\n", dev->dev_addr);
 
+    usb_log(LOG_DEBUG);
+
     // Reset FTDI
     if (dev->vid == 0x0403) {
         command(dev, 0x40,  0,  0    , 1, 0); await_transfer(ctrl);
+        command(dev, 0x40,  0,  2    , 1, 0); await_transfer(ctrl);
+        command(dev, 0x40,  0,  1    , 1, 0); await_transfer(ctrl);
+        command(dev, 0x40,  2,  0    , 1, 0); await_transfer(ctrl);
+        command(dev, 0xc0, 10,  0    , 1, 1); await_transfer(ctrl);
         command(dev, 0x40,  9, 16    , 1, 0); await_transfer(ctrl);
+        command(dev, 0xc0,  5,  0    , 1, 2); await_transfer(ctrl);
         command(dev, 0x40,  3, 0x4138, 1, 0); await_transfer(ctrl);
         command(dev, 0x40,  1, 0x0303, 1, 0); await_transfer(ctrl);
         command(dev, 0x40,  2, 0x1311, 1, 0); await_transfer(ctrl);
@@ -87,7 +94,7 @@ void piccolo_task() {
 }
 
 int main() {
-    usb_log(LOG_DEBUG);
+    usb_log(LOG_NEVER);
     usb_init();
 
     // Create a repeating timer
