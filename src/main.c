@@ -53,15 +53,6 @@ void reset_ftdi(device_t *dev) {
     }
 }
 
-void zzz_on_device_enumerated(device_t *dev) {
-    printf("STRONG: Device %u is enumerated\n", dev->dev_addr);
-
-// } else if (dev->state < DEVICE_READY) {
-//     printf("Calling reset_ftdi\n");
-//     reset_ftdi(dev);
-
-}
-
 void poll_ep1_in(void *arg) {
     pipe_t *pp = &pipes[1];
     uint16_t len = pp->maxsize;
