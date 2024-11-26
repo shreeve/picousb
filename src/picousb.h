@@ -161,6 +161,7 @@ typedef enum {
 
 void control_transfer(device_t *dev, usb_setup_packet_t *setup);
 void bulk_transfer(pipe_t *pp, uint8_t *ptr, uint16_t len);
+void await_transfer(pipe_t *pp);
 
 void command(device_t *dev, uint8_t bmRequestType, uint8_t bRequest,
              uint16_t wValue, uint16_t wIndex, uint16_t wLength);
