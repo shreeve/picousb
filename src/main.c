@@ -1,17 +1,12 @@
 #include "picousb.h"
 
-// ==[ Manage timer ticks ]==
-
+char *buf = (char[1024]) { 0 };
 volatile uint32_t timer_ticks = 0;
 
 bool timer_callback(struct repeating_timer *t) {
     timer_ticks++;
     return true; // Keep the timer running
 }
-
-// ==[ Application specific ]==
-
-char *buf = (char[1024]) { 0 };
 
 typedef struct {
     pipe_t *in;
@@ -30,7 +25,6 @@ int putchr(uint8_t c) {
     //       which will require some sort of callback when that transfer is
     //       done. How should we do that?
 }
-
 
 void poll_ep1_in(void *arg) {
     pipe_t *pp = &pipes[1];
@@ -92,7 +86,6 @@ int main() {
     usb_log(LOG_NEVER);
     usb_init();
 
-    // Create a repeating timer
     struct repeating_timer timer;
     add_repeating_timer_ms(1000, timer_callback, NULL, &timer);
 
