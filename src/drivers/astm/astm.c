@@ -35,5 +35,5 @@ static driver_t driver = {
 };
 
 // Register the driver
-void astm_register() __attribute__((constructor)); // Will run before main()
-void astm_register() { register_driver(&driver); }
+static void autoregister() __attribute__((constructor)); // Runs before main()
+static void autoregister() { register_driver(&driver); }
