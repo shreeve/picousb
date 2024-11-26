@@ -8,7 +8,7 @@ bool open(device_t *dev, usb_interface_descriptor_t *ifd) {
     return true;
 }
 
-bool config(device_t *dev, uint8_t itf_num) {
+bool config(device_t *dev, uint8_t interface_number) {
     return true;
 }
 
