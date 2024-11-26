@@ -865,6 +865,11 @@ void enumerate(void *arg) {
 
         case ENUMERATION_FINISH:
             dev->state = DEVICE_CONFIGURED;
+
+            // show_string_descriptor_blocking(dev, dev->manufacturer);
+            // show_string_descriptor_blocking(dev, dev->product     );
+            // show_string_descriptor_blocking(dev, dev->serial      );
+
             on_device_configured(dev); // Notify that device is configured
             break;
 
@@ -882,10 +887,6 @@ SDK_WEAK void on_device_enumerated(device_t *dev) {
 
 SDK_WEAK void on_device_configured(device_t *dev) {
     debug("Device %u is now configured\n", dev->dev_addr);
-
-    show_string_descriptor_blocking(dev, dev->manufacturer);
-    show_string_descriptor_blocking(dev, dev->product     );
-    show_string_descriptor_blocking(dev, dev->serial      );
 
  // activate_drivers(dev);
 }
