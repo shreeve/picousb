@@ -62,17 +62,17 @@ SDK_INJECT void show_pipe(pipe_t *pp) {
     debug(" │ D%-2uEP%-2d%-4s│\n", pp->dev_addr, pp->ep_num, ep_dir(in));
 }
 
-void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *usb,
+void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *epd,
                     uint8_t *user_buf) {
 
     // Populate the pipe (clears all fields not present)
     *pp = (pipe_t) {
         .dev_addr = pp->dev_addr,
-        .ep_num   = usb->bEndpointAddress & 0x0f,
-        .ep_in    = usb->bEndpointAddress & USB_DIR_IN ? 1 : 0,
-        .type     = usb->bmAttributes,
-        .interval = usb->bInterval,
-        .maxsize  = usb->wMaxPacketSize,
+        .ep_num   = epd->bEndpointAddress & 0x0f,
+        .ep_in    = epd->bEndpointAddress & USB_DIR_IN ? 1 : 0,
+        .type     = epd->bmAttributes,
+        .interval = epd->bInterval,
+        .maxsize  = epd->wMaxPacketSize,
         .user_buf = user_buf,
     };
 
@@ -162,14 +162,14 @@ pipe_t *get_pipe(uint8_t dev_addr, uint8_t ep_num) {
     return NULL;
 }
 
-pipe_t *next_pipe(uint8_t dev_addr, usb_endpoint_descriptor_t *usb,
+pipe_t *next_pipe(uint8_t dev_addr, usb_endpoint_descriptor_t *epd,
                           uint8_t *user_buf) {
-    if (!(usb->bEndpointAddress & 0xf)) panic("EP0 cannot be requested");
+    if (!(epd->bEndpointAddress & 0xf)) panic("EP0 cannot be requested");
     for (uint8_t i = 1; i < MAX_PIPES; i++) {
         pipe_t *pp = &pipes[i];
         if (!pp->configured) {
             pp->dev_addr = dev_addr;
-            setup_pipe(pp, i, usb, user_buf);
+            setup_pipe(pp, i, epd, user_buf);
             return pp;
         }
     }
