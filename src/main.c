@@ -31,27 +31,6 @@ int putchr(uint8_t c) {
     //       done. How should we do that?
 }
 
-// Resets an FTDI device and configures its baud rate and line settings
-void reset_ftdi(device_t *dev) {
-    static uint8_t (states[MAX_DEVICES]) = { 0 };
-    uint8_t state = ++states[dev->dev_addr];
-
-    printf("FTDI reset step %u\n", state);
-
-    switch (state) {
-        case 1: command(dev, 0x40,  0,  0    , 1, 0); break; // reset interface
-        case 2: command(dev, 0x40,  9, 16    , 1, 0); break; // set latency=16ms
-        case 3: command(dev, 0x40,  3, 0x4138, 1, 0); break; // set baud=9600
-        case 4: command(dev, 0x40,  1, 0x0303, 1, 0); break; // enable DTR/RTS
-        case 5: command(dev, 0x40,  2, 0x1311, 1, 0); break; // flow control on
-        default:
-            states[dev->dev_addr] = 0;
-            dev->state = DEVICE_READY;
-            usb_log(LOG_ALERT);
-            printf("FTDI reset complete\n");
-            break;
-    }
-}
 
 void poll_ep1_in(void *arg) {
     pipe_t *pp = &pipes[1];
@@ -68,6 +47,36 @@ void enquire_ep2_out(void *arg) {
     bulk_transfer(pp, buf, len);
 }
 
+void on_device_configured(device_t *dev) {
+    printf("STRONG: Device %u is configured\n", dev->dev_addr);
+
+    // Reset FTDI
+    if (dev->vid == 0x0403) {
+        command(dev, 0x40,  0,  0    , 1, 0); await_transfer(ctrl);
+        command(dev, 0x40,  9, 16    , 1, 0); await_transfer(ctrl);
+        command(dev, 0x40,  3, 0x4138, 1, 0); await_transfer(ctrl);
+        command(dev, 0x40,  1, 0x0303, 1, 0); await_transfer(ctrl);
+        command(dev, 0x40,  2, 0x1311, 1, 0); await_transfer(ctrl);
+    }
+
+    debug("We're ready!\n");
+}
+
+void piccolo_task() {
+    static uint32_t last_ticks = 0;
+
+    if (devices[1].state == DEVICE_READY) {
+        if (last_ticks != timer_ticks) {
+            last_ticks  = timer_ticks;
+            if (last_ticks % 10) {
+                queue_callback(poll_ep1_in, NULL);
+            } else {
+                queue_callback(enquire_ep2_out, NULL);
+            }
+        }
+    }
+}
+
 int main() {
     usb_log(LOG_DEBUG);
     usb_init();
@@ -75,20 +84,9 @@ int main() {
     // Create a repeating timer
     struct repeating_timer timer;
     add_repeating_timer_ms(1000, timer_callback, NULL, &timer);
-    uint32_t last_ticks = 0;
 
     while (1) {
         usb_task();
-
-        if (devices[1].state == DEVICE_READY) {
-            if (last_ticks != timer_ticks) {
-                last_ticks  = timer_ticks;
-                if (last_ticks % 10) {
-                    queue_callback(poll_ep1_in, NULL);
-                } else {
-                    queue_callback(enquire_ep2_out, NULL);
-                }
-            }
-        }
+        piccolo_task();
     }
 }
