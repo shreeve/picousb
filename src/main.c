@@ -83,7 +83,7 @@ void piccolo_task() {
 }
 
 int main() {
-    usb_log(LOG_NEVER);
+    usb_log(LOG_DEBUG);
     usb_init();
 
     struct repeating_timer timer;
