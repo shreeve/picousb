@@ -1047,8 +1047,8 @@ void isr_usbctrl() {
     debug(LOG_ROW);
 
     // Connection (attach or detach)
-    if (ints &  USB_INTS_HOST_CONN_DIS_BITS) {
-        ints ^= USB_INTS_HOST_CONN_DIS_BITS;
+    if (ints &   USB_INTS_HOST_CONN_DIS_BITS) {
+        ints &= ~USB_INTS_HOST_CONN_DIS_BITS;
 
         // Get the device speed
         uint8_t speed = (sie &  USB_SIE_STATUS_SPEED_BITS)
@@ -1079,8 +1079,8 @@ void isr_usbctrl() {
     }
 
     // Stall detected (higher priority than BUFF_STATUS and TRANS_COMPLETE)
-    if (ints &  USB_INTS_STALL_BITS) {
-        ints ^= USB_INTS_STALL_BITS;
+    if (ints &   USB_INTS_STALL_BITS) {
+        ints &= ~USB_INTS_STALL_BITS;
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_STALL_REC_BITS;
 
@@ -1088,8 +1088,8 @@ void isr_usbctrl() {
     }
 
     // Buffer processing is needed
-    if (ints &  USB_INTS_BUFF_STATUS_BITS) {
-        ints ^= USB_INTS_BUFF_STATUS_BITS;
+    if (ints &   USB_INTS_BUFF_STATUS_BITS) {
+        ints &= ~USB_INTS_BUFF_STATUS_BITS;
 
         // Find the buffer(s) that are ready
         uint32_t bits = usb_hw->buf_status;
@@ -1127,8 +1127,8 @@ void isr_usbctrl() {
     }
 
     // Transfer complete (last packet)
-    if (ints &  USB_INTS_TRANS_COMPLETE_BITS) {
-        ints ^= USB_INTS_TRANS_COMPLETE_BITS;
+    if (ints &   USB_INTS_TRANS_COMPLETE_BITS) {
+        ints &= ~USB_INTS_TRANS_COMPLETE_BITS;
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_TRANS_COMPLETE_BITS;
 
@@ -1136,8 +1136,8 @@ void isr_usbctrl() {
     }
 
     // Receive timeout (waited too long without seeing an ACK)
-    if (ints &  USB_INTS_ERROR_RX_TIMEOUT_BITS) {
-        ints ^= USB_INTS_ERROR_RX_TIMEOUT_BITS;
+    if (ints &   USB_INTS_ERROR_RX_TIMEOUT_BITS) {
+        ints &= ~USB_INTS_ERROR_RX_TIMEOUT_BITS;
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_RX_TIMEOUT_BITS;
 
@@ -1145,8 +1145,8 @@ void isr_usbctrl() {
     }
 
     // Data error (IN packet from device has wrong data PID)
-    if (ints &  USB_INTS_ERROR_DATA_SEQ_BITS) {
-        ints ^= USB_INTS_ERROR_DATA_SEQ_BITS;
+    if (ints &   USB_INTS_ERROR_DATA_SEQ_BITS) {
+        ints &= ~USB_INTS_ERROR_DATA_SEQ_BITS;
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_DATA_SEQ_ERROR_BITS;
 
@@ -1154,8 +1154,8 @@ void isr_usbctrl() {
     }
 
     // Device resumed (device initiated)
-    if (ints &  USB_INTS_HOST_RESUME_BITS) {
-        ints ^= USB_INTS_HOST_RESUME_BITS;
+    if (ints &   USB_INTS_HOST_RESUME_BITS) {
+        ints &= ~USB_INTS_HOST_RESUME_BITS;
 
         usb_hw_clear->sie_status = USB_SIE_STATUS_RESUME_BITS;
 
