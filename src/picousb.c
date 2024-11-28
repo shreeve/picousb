@@ -1100,7 +1100,7 @@ void isr_usbctrl() {
         uint32_t mask = 0b11; // (2 bits at time, IN/OUT transfer together)
 
         // Show single/double buffer status of epx and which buffers are ready
-        _bin_(dbl ? "│BUF/2" : "│BUF/1", bits);
+        _bin_(dbl ? "│2BUF" : "│1BUF", bits);
 
         // Finish transactions on each pending pipe
         pipe_t *cur;
