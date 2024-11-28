@@ -748,8 +748,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
                 break;
 
             default:
-                // FIXME: Panic for now, but handle more gracefully later
-                panic("Unknown descriptor type: 0x%02x\n", type);
+                debug("Unknown descriptor type: 0x%02x\n\n", type);
                 break;
         }
     }
