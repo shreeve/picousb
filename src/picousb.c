@@ -77,7 +77,7 @@ void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *epd,
     };
 
     // Panic if endpoint is not a control or bulk transfer type
-    if (pp->type & 1u) panic("Interrupt and isochronous endpoints not allowed");
+    if (pp->type == 1u) panic("Isochronous endpoints not allowed");
 
     // USB 2.0 max packet size is 64 bytes, but isochronous can be up to 1,023!
     if (pp->maxsize > 64) panic("Packet size is currently limited to 64 bytes");
