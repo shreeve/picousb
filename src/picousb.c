@@ -869,9 +869,9 @@ void enumerate(void *arg) {
         case ENUMERATION_FINISH:
             dev->state = DEVICE_CONFIGURED;
 
-            // show_string_descriptor_blocking(dev, dev->manufacturer);
-            // show_string_descriptor_blocking(dev, dev->product     );
-            // show_string_descriptor_blocking(dev, dev->serial      );
+            show_string_descriptor_blocking(dev, dev->manufacturer);
+            show_string_descriptor_blocking(dev, dev->product     );
+            show_string_descriptor_blocking(dev, dev->serial      );
 
             on_device_configured(dev); // Notify that device is configured
             break;
