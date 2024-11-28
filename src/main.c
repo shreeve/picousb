@@ -1,17 +1,19 @@
 #include "picousb.h"
+#include "ring.h"
+
+// ==[ Handle data ]============================================================
 
 char *buf = (char[1024]) { 0 };
-volatile uint32_t timer_ticks = 0;
-
-bool timer_callback(struct repeating_timer *t) {
-    timer_ticks++;
-    return true; // Keep the timer running
-}
 
 typedef struct {
-    pipe_t *in;
-    pipe_t *out;
+    pipe_t *pipe_in;
+    ring_t *ring_in;
+    uint8_t size_in;
+
+    pipe_t *pipe_out;
 } stream_t;
+
+stream_t s;
 
 // return status and chr in buffer
 int getchr(uint8_t *c) {
@@ -26,9 +28,38 @@ int putchr(uint8_t c) {
     //       done. How should we do that?
 }
 
+void poll_ep1_in(void *);
+void enquire_ep2_out(void *);
+
+void chaser(void *arg) {
+    transfer_t *transfer = (transfer_t *) arg;
+
+    if (transfer->len > 2) {
+        uint8_t *tmp = transfer->user_buf + 2, *ptr = tmp;
+        uint16_t len = transfer->len      - 2,  pos = 0  ;
+
+        // _hex_("Ring", tmp, len, 1);
+        ring_write_blocking(s.ring_in, tmp, len);
+
+        s.size_in += len;
+
+        if (tmp[len - 1] == '\n') {
+            ring_read_blocking(s.ring_in, buf, s.size_in);
+            // printf("\n");
+            // _hex_("Line", buf + 1, s.size_in - 7, 1);
+            printf("%-*.*s\n", s.size_in - 7, s.size_in - 7, buf + 1);
+            s.size_in = 0;
+            queue_callback(poll_ep1_in, NULL);
+        }
+    }
+}
+
 void poll_ep1_in(void *arg) {
     pipe_t *pp = &pipes[1];
     uint16_t len = pp->maxsize;
+
+    pp->fn  = chaser;
+    pp->arg = NULL; // FIXME: Will get clobbered by &task anyway...
 
     bulk_transfer(pp, buf, len);
 }
@@ -40,6 +71,32 @@ void enquire_ep2_out(void *arg) {
 
     bulk_transfer(pp, buf, len);
 }
+
+// ==[ Polling ]================================================================
+
+volatile uint32_t timer_ticks = 0;
+
+bool timer_callback(struct repeating_timer *t) {
+    timer_ticks++;
+    return true; // Keep the timer running
+}
+
+void piccolo_task() {
+    static uint32_t last_ticks = 0;
+
+    if (devices[1].state == DEVICE_READY) {
+        if (last_ticks != timer_ticks) {
+            last_ticks  = timer_ticks;
+            if (last_ticks % 3) {
+                queue_callback(poll_ep1_in, NULL);
+            } else {
+                queue_callback(enquire_ep2_out, NULL);
+            }
+        }
+    }
+}
+
+// ==[ On configure ]===========================================================
 
 void on_device_configured(device_t *dev) {
     debug("Device %u is configured\n", dev->dev_addr);
@@ -53,31 +110,25 @@ void on_device_configured(device_t *dev) {
         command(dev, 0x40,  2, 0x1311, 1, 0); await_transfer(ctrl); // xon/xoff
     }
 
-    printf("We're ready!\n");
     dev->state = DEVICE_READY;
+
+    usb_log(LOG_FLASH);
+
+    s.pipe_in  = &pipes[1];
+    s.ring_in  = ring_new(1024);
+    s.size_in  = 0;
+
+    s.pipe_out = &pipes[2];
 }
 
-void piccolo_task() {
-    static uint32_t last_ticks = 0;
-
-    if (devices[1].state == DEVICE_READY) {
-        if (last_ticks != timer_ticks) {
-            last_ticks  = timer_ticks;
-            if (last_ticks % 10) {
-                queue_callback(poll_ep1_in, NULL);
-            } else {
-                queue_callback(enquire_ep2_out, NULL);
-            }
-        }
-    }
-}
+// ==[ Let 'er rip! ]===========================================================
 
 int main() {
     usb_log(LOG_FLASH);
     usb_init();
 
     struct repeating_timer timer;
-    add_repeating_timer_ms(1000, timer_callback, NULL, &timer);
+    add_repeating_timer_ms(325, timer_callback, NULL, &timer);
 
     while (1) {
         usb_task();

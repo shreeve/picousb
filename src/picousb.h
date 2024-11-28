@@ -66,7 +66,7 @@ typedef enum {
     DISCONNECTED,
     LOW_SPEED,
     FULL_SPEED,
-} connection_t;
+} status_t;
 
 typedef enum {
     DEVICE_DISCONNECTED,
@@ -202,24 +202,25 @@ enum {
 };
 
 typedef struct {
+    uint8_t hub_addr; // Hub address, zero for root
+    uint8_t speed   ; // LS is 1.5 Mbps, FS is 12Mbps
+} connect_t;
+
+typedef struct {
+    uint8_t    status  ; // Transfer status
+    uint8_t    dev_addr; // Device address
+    uint8_t    ep_num  ; // Endpoint number (direction not included)
+    uint8_t   *user_buf; // User buffer in DPSRAM, RAM, or flash
+    uint16_t   len     ; // Bytes transferred
+} transfer_t;
+
+typedef struct {
     uint8_t  type;
     uint32_t guid;
 
     union {
-
-        // Device connect or disconnect
-        struct {
-            uint8_t speed; // LS is 1.5 Mbps, FS is 12Mbps
-        } connect;
-
-        // Transfer has completed
-        struct {
-            uint8_t    status  ; // Transfer status
-            uint8_t    dev_addr; // Device address
-            uint8_t    ep_num  ; // Endpoint number (direction not included)
-            uint8_t   *user_buf; // User buffer in DPSRAM, RAM, or flash
-            uint16_t   len     ; // Bytes transferred
-        } transfer;
+        connect_t  connect;  // Connection events
+        transfer_t transfer; // Completed transfers
     };
 
     // Callback support

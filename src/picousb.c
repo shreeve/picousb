@@ -966,6 +966,10 @@ void usb_task() {
                 // FIXME: Remove this by setting callbacks during enumeration
                 if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(pp) : enumerate(dev);
+
+                // FIXME: This is a hack!
+                } else if (task.fn) {
+                    task.arg = (void *) &task.transfer;
                 }
             }   break;
 
