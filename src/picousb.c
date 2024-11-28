@@ -260,7 +260,7 @@ void start_transaction(void *arg) {
             *ecr &= ~DOUBLE_BUFFER;            //   Disable double-buffering
             *ecr |=  SINGLE_BUFFER;            //   Enable  single-buffering
         } else {                               // For double buffering:
-            hold |= start_buffer(pp, 1) << 16; //   Merge bcr for buf1
+            hold |= start_buffer(pp, 1) << 16; //   Overlay bcr for buf1
             *ecr &= ~SINGLE_BUFFER;            //   Disable single-buffering
             *ecr |=  DOUBLE_BUFFER;            //   Enable  double-buffering
             fire |=  fire << 16;               //   Fire buffers together
