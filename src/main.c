@@ -42,9 +42,7 @@ void enquire_ep2_out(void *arg) {
 }
 
 void on_device_configured(device_t *dev) {
-    printf("Device %u is configured\n", dev->dev_addr);
-
-    usb_log(LOG_DEBUG);
+    debug("Device %u is configured\n", dev->dev_addr);
 
     // Reset FTDI
     if (dev->vid == 0x0403) {
@@ -55,7 +53,7 @@ void on_device_configured(device_t *dev) {
         command(dev, 0x40,  2, 0x1311, 1, 0); await_transfer(ctrl); // xon/xoff
     }
 
-    debug("We're ready!\n");
+    printf("We're ready!\n");
     dev->state = DEVICE_READY;
 }
 
