@@ -42,7 +42,7 @@ void enquire_ep2_out(void *arg) {
 }
 
 void on_device_configured(device_t *dev) {
-    printf("STRONG: Device %u is configured\n", dev->dev_addr);
+    printf("Device %u is configured\n", dev->dev_addr);
 
     usb_log(LOG_DEBUG);
 
