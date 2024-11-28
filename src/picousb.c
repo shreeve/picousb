@@ -379,9 +379,13 @@ static void start_transfer(pipe_t *pp) {
 void transfer_zlp(void *arg) {
     pipe_t *pp = (pipe_t *) arg;
 
-    // Flip direction // FIXME: This CLOBBERS the direction!!!
-    pp->ep_in ^= 1;
     pp->bytes_left = 0;
+
+    // Control transfers flip the direction and toggle DATA0/DATA1
+    if (!pp->type) {
+        pp->ep_in    ^= 1;
+        pp->data_pid ^= 1;
+    }
 
     start_transfer(pp);
 }
