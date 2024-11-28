@@ -330,7 +330,7 @@ static const uint32_t USB_SIE_CTRL_BASE =
                     | USB_SIE_CTRL_SOF_EN_BITS;       // Full speed
 
 SDK_INJECT const char *transfer_type(uint8_t bits) {
-    switch (bits & USB_TRANSFER_TYPE_BITS) {
+    switch (bits & USB_TRANSFER_TYPE_MASK) {
         case USB_TRANSFER_TYPE_CONTROL:     return "Control"    ; break;
         case USB_TRANSFER_TYPE_ISOCHRONOUS: return "Isochronous"; break;
         case USB_TRANSFER_TYPE_BULK:        return "Bulk"       ; break;
@@ -497,8 +497,8 @@ static void finish_transfer(pipe_t *pp) {
 SDK_INJECT void get_descriptor(device_t *dev, uint8_t type, uint8_t len) {
     control_transfer(dev, &((usb_setup_packet_t) {
         .bmRequestType = USB_DIR_IN
-                       | USB_REQ_TYPE_STANDARD
-                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
+                       | USB_REQUEST_TYPE_STANDARD
+                       | USB_REQUEST_RECIPIENT_DEVICE,
         .bRequest      = USB_REQUEST_GET_DESCRIPTOR,
         .wValue        = MAKE_U16(type, 0),
         .wIndex        = 0,
@@ -589,7 +589,7 @@ void show_interface_descriptor(void *ptr) {
 void get_configuration_descriptor(device_t *dev, uint8_t len) {
     debug("Get configuration descriptor\n");
 
-    get_descriptor(dev, USB_DT_CONFIG, len);
+    get_descriptor(dev, USB_DT_CONFIGURATION, len);
 }
 
 void show_endpoint_descriptor(void *ptr) {
@@ -639,8 +639,8 @@ void show_string(void *arg) {
 void get_string_descriptor(device_t *dev, uint8_t index) {
     control_transfer(dev, &((usb_setup_packet_t) {
         .bmRequestType = USB_DIR_IN
-                       | USB_REQ_TYPE_STANDARD
-                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
+                       | USB_REQUEST_TYPE_STANDARD
+                       | USB_REQUEST_RECIPIENT_DEVICE,
         .bRequest      = USB_REQUEST_GET_DESCRIPTOR,
         .wValue        = MAKE_U16(USB_DT_STRING, index),
         .wIndex        = 0,
@@ -698,7 +698,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
 
         switch (type) {
 
-            case USB_DT_CONFIG:
+            case USB_DT_CONFIGURATION:
                 cfd = (usb_configuration_descriptor_t *) cur;
                 show_configuration_descriptor(cfd);
                 break;
@@ -772,8 +772,8 @@ void set_device_address(device_t *dev) {
 
     control_transfer(dev0, &((usb_setup_packet_t) {
         .bmRequestType = USB_DIR_OUT
-                       | USB_REQ_TYPE_STANDARD
-                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
+                       | USB_REQUEST_TYPE_STANDARD
+                       | USB_REQUEST_RECIPIENT_DEVICE,
         .bRequest      = USB_REQUEST_SET_ADDRESS,
         .wValue        = dev->dev_addr,
         .wIndex        = 0,
@@ -786,8 +786,8 @@ void set_configuration(device_t *dev, uint16_t cfg) {
 
     control_transfer(dev, &((usb_setup_packet_t) {
         .bmRequestType = USB_DIR_OUT
-                       | USB_REQ_TYPE_STANDARD
-                       | USB_REQ_TYPE_RECIPIENT_DEVICE,
+                       | USB_REQUEST_TYPE_STANDARD
+                       | USB_REQUEST_RECIPIENT_DEVICE,
         .bRequest      = USB_REQUEST_SET_CONFIGURATION,
         .wValue        = cfg,
         .wIndex        = 0,

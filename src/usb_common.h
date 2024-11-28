@@ -4,42 +4,26 @@
 #include "pico/types.h"
 #include "hardware/structs/usb.h"
 
+// See https://libopencm3.org/docs/latest/lm4f/html/usbstd_8h.html
+
 #define USB_DIR_OUT                      0x00
 #define USB_DIR_IN                       0x80
-
-#define USB_REQ_TYPE_STANDARD            0x00
-#define USB_REQ_TYPE_TYPE_CLASS          0x20
-#define USB_REQ_TYPE_TYPE_VENDOR         0x40
-#define USB_REQ_TYPE_TYPE_MASK           0x60
-
-#define USB_REQ_TYPE_RECIPIENT_DEVICE    0x00
-#define USB_REQ_TYPE_RECIPIENT_INTERFACE 0x01
-#define USB_REQ_TYPE_RECIPIENT_ENDPOINT  0x02
-#define USB_REQ_TYPE_RECIPIENT_MASK      0x1f
 
 #define USB_TRANSFER_TYPE_CONTROL        0x00
 #define USB_TRANSFER_TYPE_ISOCHRONOUS    0x01
 #define USB_TRANSFER_TYPE_BULK           0x02
 #define USB_TRANSFER_TYPE_INTERRUPT      0x03
-#define USB_TRANSFER_TYPE_BITS           0x03
+#define USB_TRANSFER_TYPE_MASK           0x03
 
-#define USB_DT_DEVICE                    0x01
-#define USB_DT_CONFIG                    0x02
-#define USB_DT_STRING                    0x03
-#define USB_DT_INTERFACE                 0x04
-#define USB_DT_ENDPOINT                  0x05
-#define USB_DT_DEVICE_QUALIFIER          0x06
-#define USB_DT_OTHER_SPEED_CONFIG        0x07
-#define USB_DT_INTERFACE_POWER           0x08
-#define USB_DT_OTG                       0x09
-#define USB_DT_DEBUG                     0x0a
-#define USB_DT_INTERFACE_ASSOCIATION     0x0b
+#define USB_REQUEST_TYPE_STANDARD        0x00
+#define USB_REQUEST_TYPE_CLASS           0x20
+#define USB_REQUEST_TYPE_VENDOR          0x40
+#define USB_REQUEST_TYPE_MASK            0x60
 
-#define USB_DT_CS_DEVICE                 0x21
-#define USB_DT_CS_CONFIGURATION          0x22
-#define USB_DT_CS_STRING                 0x23
-#define USB_DT_CS_INTERFACE              0x24
-#define USB_DT_CS_ENDPOINT               0x25
+#define USB_REQUEST_RECIPIENT_DEVICE     0x00
+#define USB_REQUEST_RECIPIENT_INTERFACE  0x01
+#define USB_REQUEST_RECIPIENT_ENDPOINT   0x02
+#define USB_REQUEST_RECIPIENT_MASK       0x1f
 
 #define USB_REQUEST_GET_STATUS           0x00
 #define USB_REQUEST_CLEAR_FEATURE        0x01
@@ -53,12 +37,21 @@
 #define USB_REQUEST_SET_INTERFACE        0x0b
 #define USB_REQUEST_SYNC_FRAME           0x0c
 
-#define USB_REQUEST_MSC_GET_MAX_LUN      0xfe
-#define USB_REQUEST_MSC_RESET            0xff
+#define USB_FEATURE_ENDPOINT_HALT        0x00
+#define USB_FEATURE_DEVICE_REMOTE_WAKEUP 0x01
+#define USB_FEATURE_TEST_MODE            0x02
 
-#define USB_FEAT_ENDPOINT_HALT           0x00
-#define USB_FEAT_DEVICE_REMOTE_WAKEUP    0x01
-#define USB_FEAT_TEST_MODE               0x02
+#define USB_DT_DEVICE                    0x01
+#define USB_DT_CONFIGURATION             0x02
+#define USB_DT_STRING                    0x03
+#define USB_DT_INTERFACE                 0x04
+#define USB_DT_ENDPOINT                  0x05
+#define USB_DT_DEVICE_QUALIFIER          0x06
+#define USB_DT_OTHER_SPEED_CONFIGURATION 0x07
+#define USB_DT_INTERFACE_POWER           0x08
+#define USB_DT_OTG                       0x09
+#define USB_DT_DEBUG                     0x0a
+#define USB_DT_INTERFACE_ASSOCIATION     0x0b
 
 struct usb_descriptor {
     uint8_t  bLength;
