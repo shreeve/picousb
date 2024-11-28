@@ -381,10 +381,10 @@ void transfer_zlp(void *arg) {
 
     pp->bytes_left = 0;
 
-    // Control transfers flip the direction and toggle DATA0/DATA1
+    // ZLP's for control transfers flip the direction and use DATA1
     if (!pp->type) {
         pp->ep_in    ^= 1;
-        pp->data_pid ^= 1;
+        pp->data_pid  = 1;
     }
 
     start_transfer(pp);
