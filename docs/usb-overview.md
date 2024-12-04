@@ -78,7 +78,7 @@ single-ended signaling methods.
 <div align="center">
     <figure>
         <img width="480" src="https://github.com/user-attachments/assets/a4e2b224-447a-4c5e-9239-948937707275"><br>
-        <figcaption>USB full speed `NAK` transaction</figcaption>
+        <figcaption>Voltage trace for a full speed USB transaction</figcaption>
     </figure>
 </div>
 
