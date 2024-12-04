@@ -82,21 +82,37 @@ single-ended signaling methods.
 USB uses various line states to communicate efficiently, manage power states,
 and synchronize data transfers across the USB bus. These states include:
 
-| Line State | Meaning |
-| --- | --- |
-| Differential '1' | D+ high, D- low. |
-| Differential '0' | D+ low, D- high. |
-| Single Ended Zero (SE0) | D+ and D- low. Signals a reset condition or the End of Packet (EOP). |
-| Single Ended One (SE1) | D+ and D- high. This state is invalid. |
-| *Low Speed*<br>Idle State<br>Data J State<br>Data K State | <br>Differential '0' (D+ low, D- high).<br>Differential '0', same as the idle state.<br>Differential '1', opposite of the J state. |
-| *Full Speed*<br>Idle State<br>Data J State<br>Data K State | <br>Differential '1' (D+ high, D- low).<br>Differential '1', same as the idle state.<br>Differential '0', opposite of the J state. |
-| Connect | When a device connects and drives the line idle for at 2.5 μs or more. |
-| Reset | SE0 for at least 10 ms. One of the few times both lines are driven to the same level (low). |
-| Start of Packet (SOP) | When the line state goes from idle to SE0 for two bit times, then J state (idle) for 1 bit time, followed by the 8 bit sequence "KJKJKJKK". |
-| End of Packet (EOP) | SE0 for 2 bit times followed by J state for 1 bit time. |
-| Suspend State | Idle state that is entered after 3 ms or more of inactivity, designed to save power. |
-| Resume State | Wakes a device from the suspend state to normal operation. Begins with a K state for at least 20 ms, an SE0 state, then a J state. |
-| Disconnect | SE0 for at least 2 μs. |
+### USB Line States and Their Meanings
+
+| Line State                 | Meaning                                                                                              |
+|----------------------------|------------------------------------------------------------------------------------------------------|
+| **Differential '1'**       | D+ high, D- low.                                                                                     |
+| **Differential '0'**       | D+ low, D- high.                                                                                     |
+| **Single Ended Zero** (SE0)| D+ and D- low. Used to signal a reset condition or the End of Packet (EOP).                          |
+| **Single Ended One** (SE1) | D+ and D- high. This state is invalid in standard USB communication.                                 |
+
+---
+
+### USB States by Speed
+
+| USB Speed      | Idle State                         | Data J State                        | Data K State                           |
+|----------------|------------------------------------|-------------------------------------|----------------------------------------|
+| **Low Speed**  | Differential '0' (D+ low, D- high) | Same as idle (Differential '0').    | Differential '1' (opposite of J).      |
+| **Full Speed** | Differential '1' (D+ high, D- low) | Same as idle (Differential '1').    | Differential '0' (opposite of J).      |
+
+---
+
+### USB Protocol States
+
+| State                     | Description                                                                                                                   |
+|---------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+| **Connect**               | When a device connects and drives the line idle for at least 2.5 μs. One of the few times both lines have the same level.     |
+| **Reset**                 | SE0 state held for at least 10 ms, signaling a reset condition.                                                               |
+| **Start of Packet (SOP)** | Transition from idle to SE0 for two bit times, then idle (J state) for 1 bit time, followed by the 8-bit sequence "KJKJKJKK". |
+| **End of Packet (EOP)**   | SE0 state for 2 bit times, followed by a J state for 1 bit time.                                                              |
+| **Suspend State**         | Idle state entered after 3 ms or more of inactivity, designed to save power.                                                  |
+| **Resume State**          | Wakes a device from suspend. Begins with a K state for at least 20 ms, followed by SE0 and then J state.                      |
+| **Disconnect**            | SE0 state held for at least 2 μs.                                                                                             |
 
 ### Bits and Bytes
 
