@@ -75,12 +75,12 @@ canceled out at the receiver. Differential signaling allows for more reliable
 data transmission over longer distances and at higher speeds compared to
 single-ended signaling methods.
 
-<figure>
-    <div align="center"><img width="480" src="https://github.com/user-attachments/assets/a4e2b224-447a-4c5e-9239-948937707275"></div>
-    <figcaption>A USB full speed `NAK` transaction</figcaption>
-</figure>
-
-<div align="center"><img width="480" src="https://github.com/user-attachments/assets/a4e2b224-447a-4c5e-9239-948937707275"></div>
+<div align="center">
+    <figure>
+        <img width="480" src="https://github.com/user-attachments/assets/a4e2b224-447a-4c5e-9239-948937707275"><br>
+        <figcaption>USB full speed `NAK` transaction</figcaption>
+    </figure>
+</div>
 
 ### USB Line States
 
