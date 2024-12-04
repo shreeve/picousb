@@ -85,7 +85,7 @@ and synchronize data transfers across the USB bus. These states include:
 ### USB Line States and Their Meanings
 
 | Line State                 | Meaning                                                                                              |
-|----------------------------|------------------------------------------------------------------------------------------------------|
+|:---------------------------|:-----------------------------------------------------------------------------------------------------|
 | **Differential '1'**       | D+ high, D- low.                                                                                     |
 | **Differential '0'**       | D+ low, D- high.                                                                                     |
 | **Single Ended Zero** (SE0)| D+ and D- low. Used to signal a reset condition or the End of Packet (EOP).                          |
@@ -96,7 +96,7 @@ and synchronize data transfers across the USB bus. These states include:
 ### USB States by Speed
 
 | USB Speed      | Idle State                         | Data J State                        | Data K State                           |
-|----------------|------------------------------------|-------------------------------------|----------------------------------------|
+|:---------------|:-----------------------------------|:------------------------------------|:---------------------------------------|
 | **Low Speed**  | Differential '0' (D+ low, D- high) | Same as idle (Differential '0').    | Differential '1' (opposite of J).      |
 | **Full Speed** | Differential '1' (D+ high, D- low) | Same as idle (Differential '1').    | Differential '0' (opposite of J).      |
 
@@ -105,7 +105,7 @@ and synchronize data transfers across the USB bus. These states include:
 ### USB Protocol States
 
 | State                     | Description                                                                                                                   |
-|---------------------------|-------------------------------------------------------------------------------------------------------------------------------|
+|:--------------------------|:------------------------------------------------------------------------------------------------------------------------------|
 | **Connect**               | When a device connects and drives the line idle for at least 2.5 μs.                                                          |
 | **Reset**                 | SE0 state held for at least 10 ms, signaling a reset condition.                                                               |
 | **Start of Packet (SOP)** | Transition from idle to SE0 for two bit times, then idle (J state) for 1 bit time, followed by the 8-bit sequence "KJKJKJKK". |
