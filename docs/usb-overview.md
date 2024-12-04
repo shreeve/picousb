@@ -77,12 +77,10 @@ single-ended signaling methods.
 
 <div align="center"><img width="480" src="https://github.com/user-attachments/assets/a4e2b224-447a-4c5e-9239-948937707275"></div>
 
-### Line States
+### USB Line States
 
 USB uses various line states to communicate efficiently, manage power states,
 and synchronize data transfers across the USB bus. These states include:
-
-### USB Line States and Their Meanings
 
 | Line State                 | Meaning                                                                                              |
 |:---------------------------|:-----------------------------------------------------------------------------------------------------|
@@ -91,16 +89,12 @@ and synchronize data transfers across the USB bus. These states include:
 | **Single Ended Zero** (SE0)| D+ and D- low. Used to signal a reset condition or the End of Packet (EOP).                          |
 | **Single Ended One** (SE1) | D+ and D- high. This state is invalid in standard USB communication.                                 |
 
----
-
 ### USB States by Speed
 
 | USB Speed      | Idle State                         | Data J State                        | Data K State                           |
 |:---------------|:-----------------------------------|:------------------------------------|:---------------------------------------|
 | **Low Speed**  | Differential '0' (D+ low, D- high) | Same as idle (Differential '0').    | Differential '1' (opposite of J).      |
 | **Full Speed** | Differential '1' (D+ high, D- low) | Same as idle (Differential '1').    | Differential '0' (opposite of J).      |
-
----
 
 ### USB Protocol States
 
