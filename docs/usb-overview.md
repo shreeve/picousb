@@ -98,15 +98,15 @@ and synchronize data transfers across the USB bus. These states include:
 
 ### USB Protocol States
 
-| State                     | Description                                                                                                                   |
-|:--------------------------|:------------------------------------------------------------------------------------------------------------------------------|
-| **Connect**               | When a device connects and drives the line idle for at least 2.5 μs.                                                          |
-| **Reset**                 | SE0 state held for at least 10 ms, signaling a reset condition.                                                               |
-| **Start of Packet (SOP)** | Transition from idle to SE0 for two bit times, then idle (J state) for 1 bit time, followed by the 8-bit sequence "KJKJKJKK". |
-| **End of Packet (EOP)**   | SE0 state for 2 bit times, followed by a J state for 1 bit time.                                                              |
-| **Suspend State**         | Idle state entered after 3 ms or more of inactivity, designed to save power.                                                  |
-| **Resume State**          | Wakes a device from suspend. Begins with a K state for at least 20 ms, followed by SE0 and then J state.                      |
-| **Disconnect**            | SE0 state held for at least 2 μs.                                                                                             |
+| Event                     | Condition                                                  | Description                                                 |
+|:--------------------------|:-----------------------------------------------------------|:------------------------------------------------------------|
+| **Connect**               | Lines driven to idle for ≥2.5 μs                           | Indicates that a device has been connected.                 |
+| **Reset**                 | SE0 for ≥10 ms                                             | Initiates a USB reset sequence; both lines are driven low.  |
+| **Start of Packet (SOP)** | Idle → SE0 for 2 bit times → J for 1 bit time → "KJKJKJKK" | Marks the beginning of a USB data packet.                   |
+| **End of Packet (EOP)**   | SE0 for 2 bit times → J for 1 bit time                     | Marks the end of a USB data packet.                         |
+| **Suspend State**         | Idle state after ≥3 ms inactivity                          | Puts the USB device into a low-power state.                 |
+| **Resume State**          | K state for ≥20 ms → SE0 → J                               | Wakes the device from the suspend state to normal operation.|
+| **Disconnect**            | SE0 for ≥2 μs                                              | Indicates that a device has been disconnected.              |
 
 ### Bits and Bytes
 
