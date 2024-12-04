@@ -91,10 +91,10 @@ and synchronize data transfers across the USB bus. These states include:
 
 ### USB States by Speed
 
-| USB Speed      | Idle State                         | Data J State                        | Data K State                           |
-|:---------------|:-----------------------------------|:------------------------------------|:---------------------------------------|
-| **Low Speed**  | Differential '0' (D+ low, D- high) | Same as idle (Differential '0').    | Differential '1' (opposite of J).      |
-| **Full Speed** | Differential '1' (D+ high, D- low) | Same as idle (Differential '1').    | Differential '0' (opposite of J).      |
+| USB Speed      | Idle State                         | Data J State                        | Data K State                           | Data Rate | Bit Time            |
+|:---------------|:-----------------------------------|:------------------------------------|:---------------------------------------|:----------|:--------------------|
+| **Low Speed**  | Differential '0' (D+ low, D- high) | Same as idle (Differential '0').    | Differential '1' (opposite of J).      | 1.5 Mbps  | ≈ 666.67 ns per bit |
+| **Full Speed** | Differential '1' (D+ high, D- low) | Same as idle (Differential '1').    | Differential '0' (opposite of J).      |  12 Mbps  | ≈  83.33 ns per bit |
 
 ### USB Protocol States
 
