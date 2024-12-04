@@ -106,7 +106,7 @@ and synchronize data transfers across the USB bus. These states include:
 
 | State                     | Description                                                                                                                   |
 |---------------------------|-------------------------------------------------------------------------------------------------------------------------------|
-| **Connect**               | When a device connects and drives the line idle for at least 2.5 μs. One of the few times both lines have the same level.     |
+| **Connect**               | When a device connects and drives the line idle for at least 2.5 μs.                                                          |
 | **Reset**                 | SE0 state held for at least 10 ms, signaling a reset condition.                                                               |
 | **Start of Packet (SOP)** | Transition from idle to SE0 for two bit times, then idle (J state) for 1 bit time, followed by the 8-bit sequence "KJKJKJKK". |
 | **End of Packet (EOP)**   | SE0 state for 2 bit times, followed by a J state for 1 bit time.                                                              |
