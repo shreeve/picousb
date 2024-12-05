@@ -282,6 +282,9 @@ that an error has occured and the sender should not retry the transaction.
     </figure>
 </div>
 
+While there are two or three separate packets that comprise each transaction,
+they are generally viewed together as shown below.
+
 <div align="center">
     <figure>
         <img width="960" src="https://github.com/user-attachments/assets/d88a0328-2c25-48b4-b845-5b2d1406490d"><br>
