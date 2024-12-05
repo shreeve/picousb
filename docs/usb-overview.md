@@ -277,7 +277,7 @@ that an error has occured and the sender should not retry the transaction.
 
 <div align="center">
     <figure>
-        <img width="960" src="https://github.com/user-attachments/assets/9c62cff6-ab2e-4972-9202-f8ae5429d34a"><br>
+        <img width="960" src="https://github.com/user-attachments/assets/d88a0328-2c25-48b4-b845-5b2d1406490d"><br>
         <figcaption>Waveform for one IN transaction</figcaption>
     </figure>
 </div>
