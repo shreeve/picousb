@@ -482,7 +482,7 @@ static void finish_transfer(pipe_t *pp) {
     // Reset the pipe
     reset_pipe(pp);
 
-    // If EP0 has a callback, clear it
+    // Control transfer callbacks are cleared each time
     if (!pp->ep_num && pp->fn) {
         pp->fn  = NULL;
         pp->arg = NULL;
