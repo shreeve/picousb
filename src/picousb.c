@@ -572,6 +572,20 @@ void show_configuration_descriptor(void *ptr) {
     flash("\n");
 }
 
+void show_interface_assoc_descriptor(void *ptr) {
+    usb_interface_assoc_descriptor_t *d = (usb_interface_assoc_descriptor_t *)
+                                                                            ptr;
+    flash("Interface Association Descriptor:\n");
+    flash("  Length:          %u\n"    , d->bLength);
+    flash("  First Interface: %u\n"    , d->bFirstInterface);
+    flash("  Interface Count: %u\n"    , d->bInterfaceCount);
+    flash("  Class:           0x%02x\n", d->bFunctionClass);
+    flash("  SubClass:        0x%02x\n", d->bFunctionSubClass);
+    flash("  Protocol:        0x%02x\n", d->bFunctionProtocol);
+    flash("  Function:        [#%u]\n" , d->iFunction);
+    flash("\n");
+}
+
 void show_interface_descriptor(void *ptr) {
     usb_interface_descriptor_t *d = (usb_interface_descriptor_t *) ptr;
 
@@ -706,6 +720,7 @@ bool enumerate_descriptors(void *ptr, device_t *dev) {
             case USB_DT_INTERFACE_ASSOCIATION:
                 iad = (usb_interface_assoc_descriptor_t *) cur;
                 ias = iad->bInterfaceCount;
+                show_interface_assoc_descriptor(iad);
                 break;
 
             case USB_DT_INTERFACE: {
