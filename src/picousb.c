@@ -979,13 +979,9 @@ void usb_task() {
                 pipe_t   *pp  = get_pipe(dev_addr, ep_num);
 
                 // FIXME: Remove this by setting callbacks during enumeration
-                if (dev->state < DEVICE_CONFIGURED) {
+                if (dev->state < DEVICE_CONFIGURED)
                     len ? transfer_zlp(pp) : enumerate(dev);
 
-                // FIXME: This is a hack!
-                } else if (task.fn) {
-                    task.arg = (void *) &task.transfer;
-                }
             }   break;
 
             default:
@@ -993,7 +989,7 @@ void usb_task() {
                 break;
         }
 
-        // Finally, invoke the task callback
+        // Finally, invoke an optional task callback
         if (task.fn) task.fn(task.arg);
     }
 }
