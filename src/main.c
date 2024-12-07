@@ -30,6 +30,16 @@ int putchr(uint8_t c) {
 
 // ==[ Polling ]================================================================
 
+enum {
+    TIMER_TICK = 10               , // Tick each 10ms
+    TIMER_FAST = 10   / TIMER_TICK, // Fast mode checks every 10ms
+    TIMER_SLOW = 1000 / TIMER_TICK, // Slow mode checks every 1 second
+    TIMER_WAIT = 5000 / TIMER_TICK, // Slow mode begins after 5 seconds inactive
+};
+
+volatile uint32_t timer_ticks = 0;
+volatile uint32_t timer_check = 0;
+
 void ep1_in_poll(void *);
 void ep2_out_ack(void *);
 
@@ -47,6 +57,7 @@ void chaser(void *arg) {
             ring_read_blocking(s.ring_in, buf, s.size_in);
             printf("%.*s\n", s.size_in - 7, buf + 1);
             s.size_in = 0;
+            timer_ticks = 0;
             queue_callback(ep2_out_ack, NULL);
             queue_callback(ep1_in_poll, NULL);
         } else {
@@ -65,45 +76,31 @@ void chaser(void *arg) {
     }
 }
 
-void poll_ep1_in(void *arg) {
-    pipe_t *pp = &pipes[1];
+void ep1_in_poll(void *arg) {
+    printf("•");
+
+    pipe_t *pp = s.pipe_in; // &pipes[1];
+
+    if (pp->status == ENDPOINT_STARTED) return;
+
     uint16_t len = pp->maxsize;
 
-    pp->fn  = chaser;
-
+    pp->fn = chaser;
     bulk_transfer(pp, buf, len);
 }
 
-void enquire_ep2_out(void *arg) {
-    pipe_t *pp = &pipes[2];
-    buf[0] = 0x06; // ASTM enquire
+void ep2_out_ack(void *arg) {
+    printf("≈");
+
+    pipe_t *pp = s.pipe_out; // &pipes[2];
+
+    if (pp->status == ENDPOINT_STARTED) return;
+
+    buf[0] = 0x06; // ASTM ack
     uint16_t len = 1;
 
+    pp->fn = ep1_in_poll;
     bulk_transfer(pp, buf, len);
-}
-
-// ==[ Polling ]================================================================
-
-volatile uint32_t timer_ticks = 0;
-
-bool timer_callback(struct repeating_timer *t) {
-    timer_ticks++;
-    return true; // Keep the timer running
-}
-
-void piccolo_task() {
-    static uint32_t last_ticks = 0;
-
-    if (devices[1].state == DEVICE_READY) {
-        if (last_ticks != timer_ticks) {
-            last_ticks  = timer_ticks;
-            if (last_ticks % 3) {
-                queue_callback(poll_ep1_in, NULL);
-            } else {
-                queue_callback(enquire_ep2_out, NULL);
-            }
-        }
-    }
 }
 
 void on_device_configured(device_t *dev) {
@@ -131,13 +128,43 @@ void on_device_configured(device_t *dev) {
     s.pipe_out = &pipes[2];
 }
 
+bool timer_callback(struct repeating_timer *t) {
+    timer_ticks++;
+    return true; // Keep the timer running
+}
+
+void piccolo_task() {
+    static uint32_t last_ticks = 0;
+
+    if (last_ticks != timer_ticks) {
+        last_ticks  = timer_ticks;
+        if (!timer_ticks) {
+            timer_check = TIMER_FAST;
+        }
+    } else {
+        return;
+    }
+
+    if (devices[1].state < DEVICE_READY)
+        return;
+
+    if ((timer_check == TIMER_FAST) && (timer_ticks > TIMER_WAIT)) {
+        timer_ticks = 1;
+        timer_check = TIMER_SLOW;
+    }
+
+    if ((timer_ticks % timer_check) == 0) {
+        queue_callback(ep1_in_poll, NULL);
+        // printf("%u\t%u\n", timer_ticks, timer_check);
+    }
+}
 
 int main() {
     usb_log(LOG_FLASH);
     usb_init();
 
     struct repeating_timer timer;
-    add_repeating_timer_ms(325, timer_callback, NULL, &timer);
+    add_repeating_timer_ms(TIMER_TICK, timer_callback, NULL, &timer);
 
     while (1) {
         usb_task();
