@@ -66,7 +66,7 @@ typedef enum {
     DISCONNECTED,
     LOW_SPEED,
     FULL_SPEED,
-} status_t;
+} device_speed_t;
 
 typedef enum {
     DEVICE_DISCONNECTED,
