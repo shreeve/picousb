@@ -102,6 +102,14 @@ extern device_t devices[MAX_DEVICES], *dev0;
 // ==[ Pipes ]==================================================================
 
 typedef enum {
+    ENDPOINT_UNCONFIGURED,
+    ENDPOINT_CONFIGURED,
+    ENDPOINT_STARTED,
+    ENDPOINT_FINISHED,
+    ENDPOINT_TRANSFERRED,
+} endpoint_status_t;
+
+typedef enum {
     SINGLE_BUFFER = EP_CTRL_INTERRUPT_PER_BUFFER,
     DOUBLE_BUFFER = EP_CTRL_DOUBLE_BUFFERED_BITS
                   | EP_CTRL_INTERRUPT_PER_DOUBLE_BUFFER,
@@ -128,11 +136,8 @@ typedef struct {
     io_rw_32  *ecr       ; // Endpoint control register
     io_rw_32  *bcr       ; // Buffer control register
 
-    // Setup status
-    bool       configured; // Pipe is configured
-
     // Transfer details
-    bool       active    ; // Transfer is active
+    uint8_t    status    ; // Endpoint status
     bool       setup     ; // SETUP packet flag
     uint8_t    data_pid  ; // Toggle between DATA0/DATA1 packets
     uint16_t   bytes_left; // Bytes left to transfer

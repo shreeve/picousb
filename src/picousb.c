@@ -129,7 +129,7 @@ void setup_pipe(pipe_t *pp, uint8_t phe, usb_endpoint_descriptor_t *epd,
     }
 
     // Set as configured
-    pp->configured = true;
+    pp->status = ENDPOINT_CONFIGURED;
 }
 
 void setup_ctrl() {
@@ -144,7 +144,7 @@ void setup_ctrl() {
 }
 
 SDK_INJECT void reset_pipe(pipe_t *pp) {
-    pp->active     = false;
+    pp->status     = ENDPOINT_FINISHED;
     pp->setup      = false;
     pp->bytes_left = 0;
     pp->bytes_done = 0;
@@ -153,7 +153,7 @@ SDK_INJECT void reset_pipe(pipe_t *pp) {
 pipe_t *get_pipe(uint8_t dev_addr, uint8_t ep_num) {
     for (uint8_t i = 0; i < MAX_PIPES; i++) {
         pipe_t *pp = &pipes[i];
-        if (pp->configured) {
+        if (pp->status) {
             if ((pp->dev_addr == dev_addr) && (pp->ep_num == ep_num))
                 return pp;
         }
@@ -167,7 +167,7 @@ pipe_t *next_pipe(uint8_t dev_addr, usb_endpoint_descriptor_t *epd,
     if (!(epd->bEndpointAddress & 0xf)) panic("EP0 cannot be requested");
     for (uint8_t i = 1; i < MAX_PIPES; i++) {
         pipe_t *pp = &pipes[i];
-        if (!pp->configured) {
+        if (!pp->status) {
             pp->dev_addr = dev_addr;
             setup_pipe(pp, i, epd, user_buf);
             return pp;
@@ -249,7 +249,7 @@ void start_transaction(void *arg) {
     io_rw_32 *bcr = pp->bcr, hold;
     uint32_t fire = USB_BUF_CTRL_AVAIL;
 
-    assert(pp->active);
+    assert(pp->status == ENDPOINT_STARTED);
 
     // Hold the value for bcr
     hold = start_buffer(pp, 0);
@@ -302,7 +302,7 @@ void finish_transaction(pipe_t *pp) {
     io_rw_32 *ecr = pp->ecr;
     io_rw_32 *bcr = pp->bcr;
 
-    assert(pp->active);
+    assert(pp->status == ENDPOINT_STARTED);
 
     // Finish based on if we're single or double buffered
     if (*ecr & EP_CTRL_DOUBLE_BUFFERED_BITS) {         // For double buffering:
@@ -345,8 +345,10 @@ SDK_INJECT const char *transfer_type(uint8_t bits) {
 // Start a new transfer
 static void start_transfer(pipe_t *pp) {
     if (!pp->user_buf) panic("Transfer has an invalid memory pointer");
-    if ( pp->active  ) panic("Transfer already active on pipe");
-    pp->active = true;
+    if ( pp->status == ENDPOINT_STARTED) panic("Transfer already started");
+
+    // Make the transfer active
+    pp->status = ENDPOINT_STARTED;
 
     // Calculate registers
     uint32_t dar = pp->ep_num << 16 | pp->dev_addr;
@@ -392,14 +394,13 @@ void transfer_zlp(void *arg) {
 
 // Helper to allow blocking until transfer is finished
 void await_transfer(pipe_t *pp) {
-    while (pp->active) usb_task();
-    while (!queue_is_empty(queue)) usb_task();
+    while (pp->status != ENDPOINT_FINISHED) usb_task();
 }
 
 // Send a control transfer
 void control_transfer(device_t *dev, usb_setup_packet_t *setup) {
-    if (!ctrl->configured) panic("Endpoint not configured");
-    if ( ctrl->type)       panic("Not a control endpoint");
+    if (!ctrl->status) panic("Control endpoint is not configured");
+    if ( ctrl->type  ) panic("Not a control endpoint");
 
     // Copy the SETUP packet
     memcpy((void*) usbh_dpram->setup_packet, setup, sizeof(usb_setup_packet_t));
@@ -431,11 +432,12 @@ void command(device_t *dev, uint8_t bmRequestType, uint8_t bRequest,
         .wIndex        = wIndex,
         .wLength       = wLength,
     }));
+    await_transfer(ctrl);
 }
 
 // Send a bulk transfer and pass a data buffer
 void bulk_transfer(pipe_t *pp, uint8_t *ptr, uint16_t len) {
-    if (!pp->configured)                     panic("Endpoint not configured");
+    if (!pp->status) panic("Endpoint is not configured");
     if ( pp->type != USB_TRANSFER_TYPE_BULK) panic("Not a bulk endpoint");
 
     pp->user_buf   = ptr;
@@ -449,7 +451,7 @@ void bulk_transfer(pipe_t *pp, uint8_t *ptr, uint16_t len) {
 static void finish_transfer(pipe_t *pp) {
 
     // Panic if the pipe is not active
-    if (!pp->active) panic("Pipes must be active to finish");
+    if (pp->status != ENDPOINT_STARTED) panic("Pipes must be active to finish");
 
     // Get the transfer length (actual bytes transferred)
     uint16_t len = pp->bytes_done;
@@ -668,13 +670,16 @@ void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
     get_string_descriptor(dev, index);
     await_transfer(ctrl);
 
-    // Set callback
-    ctrl->fn  = show_string;
-    ctrl->arg = (void *) (uintptr_t) index;
+    // // Set callback
+    // ctrl->fn  = show_string;
+    // ctrl->arg = (void *) (uintptr_t) index;
 
     // Wait for transfer_zlp() to finish
     transfer_zlp(ctrl);
     await_transfer(ctrl);
+
+    // When done, show string
+    show_string((void *) (uintptr_t) index);
 }
 
 // ==[ Drivers ]================================================================
@@ -978,9 +983,11 @@ void usb_task() {
                 device_t *dev = get_device(dev_addr);
                 pipe_t   *pp  = get_pipe(dev_addr, ep_num);
 
-                // Enumeration callbacks
-                if (dev->state < DEVICE_CONFIGURED)
+                if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(pp) : enumerate(dev);
+                } else if (ep_num) {
+                    task.arg = &task.transfer;
+                }
 
             }   break;
 
