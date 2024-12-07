@@ -277,15 +277,15 @@ that an error has occured and the sender should not retry the transaction.
 
 <div align="center">
     <figure>
-        <img width="960" src="https://github.com/user-attachments/assets/c3ad1d40-8595-46b2-9bea-132314ab7ea3"><br>
         <div><sub>Three separate packets that comprise one IN transaction</sub></div>
+        <img width="960" src="https://github.com/user-attachments/assets/c3ad1d40-8595-46b2-9bea-132314ab7ea3"><br>
     </figure>
 </div>
 
 <div align="center">
     <figure>
-        <img width="960" src="https://github.com/user-attachments/assets/805ff85c-7bd5-4542-b992-a76f76922bab"><br>
         <div><sub>Complete waveform for one IN transaction, consisting of three packets</sub></div>
+        <img width="960" src="https://github.com/user-attachments/assets/805ff85c-7bd5-4542-b992-a76f76922bab"><br>
     </figure>
 </div>
 
