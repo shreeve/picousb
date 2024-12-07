@@ -106,10 +106,8 @@ void piccolo_task() {
     }
 }
 
-// ==[ On configure ]===========================================================
-
 void on_device_configured(device_t *dev) {
-    debug("Device %u is configured\n", dev->dev_addr);
+    flash("Device %u is configured\n", dev->dev_addr);
 
     // Reset FTDI
     if (dev->vid == 0x0403) {
@@ -119,6 +117,8 @@ void on_device_configured(device_t *dev) {
         command(dev, 0x40,  1, 0x0303, 1, 0); // dtr/rts
         command(dev, 0x40,  2, 0x1311, 1, 0); // xon/xoff
     }
+
+    flash("FTDI device is setup\n");
 
     dev->state = DEVICE_READY;
 
@@ -131,7 +131,6 @@ void on_device_configured(device_t *dev) {
     s.pipe_out = &pipes[2];
 }
 
-// ==[ Let 'er rip! ]===========================================================
 
 int main() {
     usb_log(LOG_FLASH);
