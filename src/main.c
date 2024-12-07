@@ -77,7 +77,7 @@ void chaser(void *arg) {
 }
 
 void ep1_in_poll(void *arg) {
-    printf("•");
+    // printf("•");
 
     pipe_t *pp = s.pipe_in; // &pipes[1];
 
@@ -90,7 +90,7 @@ void ep1_in_poll(void *arg) {
 }
 
 void ep2_out_ack(void *arg) {
-    printf("≈");
+    // printf("≈");
 
     pipe_t *pp = s.pipe_out; // &pipes[2];
 
