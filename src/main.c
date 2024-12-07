@@ -3,7 +3,7 @@
 
 // ==[ Handle data ]============================================================
 
-char *buf = (char[1024]) { 0 };
+char buf[1024] = { 0 };
 
 typedef struct {
     pipe_t *pipe_in;
@@ -47,7 +47,7 @@ void chaser(void *arg) {
             ring_read_blocking(s.ring_in, buf, s.size_in);
             // printf("\n");
             // _hex_("Line", buf + 1, s.size_in - 7, 1);
-            printf("%-*.*s\n", s.size_in - 7, s.size_in - 7, buf + 1);
+            printf("%.*s\n", s.size_in - 7, buf + 1);
             s.size_in = 0;
             queue_callback(poll_ep1_in, NULL);
         }
