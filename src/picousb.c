@@ -670,10 +670,6 @@ void show_string_descriptor_blocking(device_t *dev, uint8_t index) {
     get_string_descriptor(dev, index);
     await_transfer(ctrl);
 
-    // // Set callback
-    // ctrl->fn  = show_string;
-    // ctrl->arg = (void *) (uintptr_t) index;
-
     // Wait for transfer_zlp() to finish
     transfer_zlp(ctrl);
     await_transfer(ctrl);
