@@ -59,7 +59,6 @@ void poll_ep1_in(void *arg) {
     uint16_t len = pp->maxsize;
 
     pp->fn  = chaser;
-    pp->arg = NULL; // FIXME: Will get clobbered by &task anyway...
 
     bulk_transfer(pp, buf, len);
 }
