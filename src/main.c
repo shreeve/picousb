@@ -57,8 +57,8 @@ void chaser(void *arg) {
             printf("%.*s\n", s.size_in - 7, buf + 1);
             s.size_in = 0;
             timer_ticks = 0;
-            queue_callback(ep2_out_ack, NULL);
-            queue_callback(ep1_in_poll, NULL);
+            ep2_out_ack(NULL);
+            ep1_in_poll(NULL);
         } else {
             void *chr4 = memchr(transfer->user_buf, 4, transfer->len);
             void *chr5 = memchr(transfer->user_buf, 5, transfer->len);
@@ -68,8 +68,8 @@ void chaser(void *arg) {
             }
             if (chr5) {
                 printf("\n[Piccolo wants to speak!]\n");
-                queue_callback(ep2_out_ack, NULL);
-                queue_callback(ep1_in_poll, NULL);
+                ep2_out_ack(NULL);
+                ep1_in_poll(NULL);
             }
         }
     }
@@ -153,7 +153,7 @@ void piccolo_task() {
 
     // If it's time to check, then poll for data
     if (!(timer_ticks % timer_check)) {
-        queue_callback(ep1_in_poll, NULL);
+        ep1_in_poll(NULL);
     }
 }
 
