@@ -1235,4 +1235,13 @@ void usb_init() {
     setup_usb_host();
 }
 
+SDK_WEAK int main() {
+    usb_log(LOG_DEBUG);
+    usb_init();
+
+    while (1) {
+        usb_task();
+    }
+}
+
 // ==[ End ]====================================================================
