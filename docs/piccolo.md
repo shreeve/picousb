@@ -3,7 +3,7 @@
 #### Performing a dump of all results
 
 <kbd>
-<img width="675" alt="picousb" src="https://github.com/user-attachments/assets/4497092d-e661-4c98-b3d1-2d399c40ba4a">
+<img width="675" alt="picousb" src="https://github.com/user-attachments/assets/db8f9e49-305f-4923-a211-f480b5d98cd9">
 </kbd>
 
 #### Example console output (December 7, 2024)
