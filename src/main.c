@@ -113,11 +113,11 @@ void on_device_configured(device_t *dev) {
 
     // Reset FTDI
     if (dev->vid == 0x0403) {
-        command(dev, 0x40,  0,      0, 1, 0); await_transfer(ctrl); // reset all
-        command(dev, 0x40,  9,    200, 1, 0); await_transfer(ctrl); // latency
-        command(dev, 0x40,  3, 0x4138, 1, 0); await_transfer(ctrl); // 9600 baud
-        command(dev, 0x40,  1, 0x0303, 1, 0); await_transfer(ctrl); // dtr/rts
-        command(dev, 0x40,  2, 0x1311, 1, 0); await_transfer(ctrl); // xon/xoff
+        command(dev, 0x40,  0,      0, 1, 0); // reset all
+        command(dev, 0x40,  9,     16, 1, 0); // latency
+        command(dev, 0x40,  3, 0x4138, 1, 0); // 9600 baud
+        command(dev, 0x40,  1, 0x0303, 1, 0); // dtr/rts
+        command(dev, 0x40,  2, 0x1311, 1, 0); // xon/xoff
     }
 
     dev->state = DEVICE_READY;
