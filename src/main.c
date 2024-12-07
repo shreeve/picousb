@@ -38,7 +38,6 @@ enum {
 };
 
 volatile uint32_t timer_ticks = 0;
-volatile uint32_t timer_check = 0;
 
 void ep1_in_poll(void *);
 void ep2_out_ack(void *);
@@ -77,7 +76,7 @@ void chaser(void *arg) {
 }
 
 void ep1_in_poll(void *arg) {
-    // printf("•");
+    printf("•");
 
     pipe_t *pp = s.pipe_in; // &pipes[1];
 
@@ -90,7 +89,7 @@ void ep1_in_poll(void *arg) {
 }
 
 void ep2_out_ack(void *arg) {
-    // printf("≈");
+    printf("≈");
 
     pipe_t *pp = s.pipe_out; // &pipes[2];
 
@@ -135,27 +134,24 @@ bool timer_callback(struct repeating_timer *t) {
 
 void piccolo_task() {
     static uint32_t last_ticks = 0;
+    static uint32_t timer_check = TIMER_FAST;
 
-    if (last_ticks != timer_ticks) {
-        last_ticks  = timer_ticks;
-        if (!timer_ticks) {
-            timer_check = TIMER_FAST;
-        }
-    } else {
-        return;
-    }
+    // Process each tick only once
+    if (last_ticks == timer_ticks) return;
+    last_ticks = timer_ticks;
 
-    if (devices[1].state < DEVICE_READY)
-        return;
+    // Skip if device isn't ready
+    if (devices[1].state < DEVICE_READY) return;
 
-    if ((timer_check == TIMER_FAST) && (timer_ticks > TIMER_WAIT)) {
+    // If we've been waiting in fast mode for too long, switch to slow mode
+    if (timer_check == TIMER_FAST && timer_ticks > TIMER_WAIT) {
         timer_ticks = 1;
         timer_check = TIMER_SLOW;
     }
 
+    // If it's time to check, then fire off a POLL/IN
     if ((timer_ticks % timer_check) == 0) {
         queue_callback(ep1_in_poll, NULL);
-        // printf("%u\t%u\n", timer_ticks, timer_check);
     }
 }
 
