@@ -76,7 +76,7 @@ void chaser(void *arg) {
 }
 
 void ep1_in_poll(void *arg) {
-    printf("•");
+    // printf("•");
 
     pipe_t *pp = s.pipe_in; // &pipes[1];
 
@@ -89,7 +89,7 @@ void ep1_in_poll(void *arg) {
 }
 
 void ep2_out_ack(void *arg) {
-    printf("≈");
+    // printf("≈");
 
     pipe_t *pp = s.pipe_out; // &pipes[2];
 
@@ -143,14 +143,16 @@ void piccolo_task() {
     // Skip if device isn't ready
     if (devices[1].state < DEVICE_READY) return;
 
-    // If we've been waiting in fast mode for too long, switch to slow mode
-    if (timer_check == TIMER_FAST && timer_ticks > TIMER_WAIT) {
+    // Set fast mode if we've been reset or slow mode if we've waited too long
+    if (!timer_ticks) {
+        timer_check = TIMER_FAST;
+    } else if (timer_check == TIMER_FAST && timer_ticks > TIMER_WAIT) {
         timer_ticks = 1;
         timer_check = TIMER_SLOW;
     }
 
-    // If it's time to check, then fire off a POLL/IN
-    if ((timer_ticks % timer_check) == 0) {
+    // If it's time to check, then poll for data
+    if (!(timer_ticks % timer_check)) {
         queue_callback(ep1_in_poll, NULL);
     }
 }
