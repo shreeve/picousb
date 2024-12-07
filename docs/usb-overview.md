@@ -344,6 +344,31 @@ applications.
 
 ### Hosts
 
+### USB Hierarchy
+
+Each USB device can have one or more configurations. Each configuration can have
+one or more interfaces. Each interface can have one or more endpoints. Usually,
+a driver manages each interface, although it is possible for a driver to manage
+multiple interfaces, and in some cases, even the entire device. An example
+hierarchy of levels is shown below.
+
+```
+Device
+ ├── Configuration 1
+ │     ├── Interface 0
+ │     │     ├── Endpoint 1 (IN)
+ │     │     └── Endpoint 2 (OUT)
+ │     └── Interface 1
+ │           ├── Endpoint 3 (IN)
+ │           └── Endpoint 4 (OUT)
+ └── Configuration 2
+       ├── Interface 0
+       │     ├── Endpoint 5 (IN)
+       │     └── Endpoint 6 (OUT)
+       └── Interface 1
+             └── Endpoint 7 (IN)
+```
+
 ### Enumeration
 
 When a USB device is attached to a USB bus, the host should perform a reset and
