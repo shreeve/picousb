@@ -24,21 +24,21 @@ term "device".
 
 In order to understand USB, we begin at the most basic level and work up from
 there:
-
-1) [Connectors](#connectors)
-2) [Wires](#wires)
-3) [Voltages](#voltages)
-4) [Line states](#line-states)
-5) [Bits and bytes](#bits-and-bytes)
-6) [Packets](#packets)
-7) [Packet Types](#packet-types)
-8) [Transactions](#transactions)
-9) [Transfers](#transfers)
-10) [Endpoints](#endpoints)
-11) [Devices](#devices)
-12) [Hubs](#hubs)
-13) [Hosts](#hosts)
-14) [Enumeration](#enumeration)
+1. [Connectors](#connectors)
+1. [Wires](#wires)
+1. [Voltages](#voltages)
+1. [Line states](#line-states)
+1. [Bits and bytes](#bits-and-bytes)
+1. [Packets](#packets)
+1. [Packet Types](#packet-types)
+1. [Transactions](#transactions)
+1. [Transfers](#transfers)
+1. [Endpoints](#endpoints)
+1. [Devices](#devices)
+1. [Hubs](#hubs)
+1. [Hosts](#hosts)
+1. [Hierarchy](#hierarchy)
+1. [Enumeration](#enumeration)
 
 ### Connectors
 
@@ -344,7 +344,7 @@ applications.
 
 ### Hosts
 
-### USB Hierarchy
+### Hierarchy
 
 Each USB device can have one or more configurations. Each configuration can have
 one or more interfaces. Each interface can have one or more endpoints. Usually,
@@ -353,20 +353,25 @@ multiple interfaces, and in some cases, even the entire device. An example
 hierarchy of levels is shown below.
 
 ```
-Device
- ├── Configuration 1
- │     ├── Interface 0
- │     │     ├── Endpoint 1 (IN)
- │     │     └── Endpoint 2 (OUT)
- │     └── Interface 1
- │           ├── Endpoint 3 (IN)
- │           └── Endpoint 4 (OUT)
- └── Configuration 2
-       ├── Interface 0
-       │     ├── Endpoint 5 (IN)
-       │     └── Endpoint 6 (OUT)
-       └── Interface 1
-             └── Endpoint 7 (IN)
+Host
+ ├──Device 1
+ │    ├── Configuration 1
+ │    │     ├── Interface 0
+ │    │     │     ├── Endpoint 1 (IN)
+ │    │     │     └── Endpoint 2 (OUT)
+ │    │     └── Interface 1
+ │    │           ├── Endpoint 3 (IN)
+ │    │           └── Endpoint 4 (OUT)
+ │    └── Configuration 2
+ │          ├── Interface 0
+ │          │     ├── Endpoint 5 (IN)
+ │          │     └── Endpoint 6 (OUT)
+ │          └── Interface 1
+ │                └── Endpoint 7 (IN)
+ └──Device 2
+      └── Configuration 1
+            └── Interface 0
+                  └── Endpoint 1 (IN)
 ```
 
 ### Enumeration
