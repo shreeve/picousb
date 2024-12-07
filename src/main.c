@@ -38,18 +38,27 @@ void chaser(void *arg) {
         uint8_t *tmp = transfer->user_buf + 2, *ptr = tmp;
         uint16_t len = transfer->len      - 2,  pos = 0  ;
 
-        // _hex_("Ring", tmp, len, 1);
         ring_write_blocking(s.ring_in, tmp, len);
-
         s.size_in += len;
 
         if (tmp[len - 1] == '\n') {
             ring_read_blocking(s.ring_in, buf, s.size_in);
-            // printf("\n");
-            // _hex_("Line", buf + 1, s.size_in - 7, 1);
             printf("%.*s\n", s.size_in - 7, buf + 1);
             s.size_in = 0;
-            queue_callback(poll_ep1_in, NULL);
+            queue_callback(ep2_out_ack, NULL);
+            queue_callback(ep1_in_poll, NULL);
+        } else {
+            void *chr4 = memchr(transfer->user_buf, 4, transfer->len);
+            void *chr5 = memchr(transfer->user_buf, 5, transfer->len);
+
+            if (chr4) {
+                printf("[Piccolo is done with that transfer]\n");
+            }
+            if (chr5) {
+                printf("\n[Piccolo wants to speak!]\n");
+                queue_callback(ep2_out_ack, NULL);
+                queue_callback(ep1_in_poll, NULL);
+            }
         }
     }
 }
