@@ -28,8 +28,10 @@ int putchr(uint8_t c) {
     //       done. How should we do that?
 }
 
-void poll_ep1_in(void *);
-void enquire_ep2_out(void *);
+// ==[ Polling ]================================================================
+
+void ep1_in_poll(void *);
+void ep2_out_ack(void *);
 
 void chaser(void *arg) {
     transfer_t *transfer = (transfer_t *) arg;
