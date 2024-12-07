@@ -979,6 +979,14 @@ void usb_task() {
                 device_t *dev = get_device(dev_addr);
                 pipe_t   *pp  = get_pipe(dev_addr, ep_num);
 
+                // NOTE: The assumption is that here we will lookup the right
+                //       driver or handler for this transfer and invoke the
+                //       correct callback. If, however, we already know that
+                //       information, then we can simply queue a TASK_CALLBACK
+                //       and handle it directly. In that event, we may also be
+                //       able to move the transfer_zlp() and enumerate() calls
+                //       elsewhere, in a similar fashion.
+
                 if (dev->state < DEVICE_CONFIGURED) {
                     len ? transfer_zlp(pp) : enumerate(dev);
                 } else if (ep_num) {
