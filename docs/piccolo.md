@@ -6,7 +6,7 @@
 <img width="400" alt="picousb" src="https://github.com/user-attachments/assets/db8f9e49-305f-4923-a211-f480b5d98cd9">
 </kbd>
 
-#### Example console output (December 7, 2024)
+#### Example console output (December 10, 2024)
 
 ```
 ==[ PicoUSB Host ]==
@@ -61,9 +61,16 @@ Endpoint Descriptor:
 [String #3]: "AVP09880"
 Device 1 is configured
 FTDI device is setup
+[Piccolo is done with that transfer]
 
 [Piccolo wants to speak!]
-1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241207130711
+1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241210231152
+2C|1|I|^^Power Up Initialization Sign On|G
+3L|1|N
+[Piccolo is done with that transfer]
+
+[Piccolo wants to speak!]
+1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241210231214
 2P|1|18090092||||||U||||||^^|Control||||||||||
 3O|1|||^^^Comprehensive Metabolic: 9172BB5||20190724112415|||||||||||||||||||F
 4C|1|I|^^INST QC: OK    CHEM QC: OK|G
@@ -109,7 +116,7 @@ FTDI device is setup
 [Piccolo is done with that transfer]
 
 [Piccolo wants to speak!]
-1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241207130718
+1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241210231221
 2P|1|18090092||||||U||||||^^|Control||||||||||
 3O|1|||^^^Comprehensive Metabolic: 9172BB5||20190724121446|||||||||||||||||||F
 4C|1|I|^567F FFFF^Run Count\^ADFF FFFF^Abort Count|I
@@ -123,7 +130,7 @@ FTDI device is setup
 [Piccolo is done with that transfer]
 
 [Piccolo wants to speak!]
-1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241207130720
+1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241210231223
 2P|1|18090092||||||U||||||^^|Control||||||||||
 3O|1|||^^^Comprehensive Metabolic: 9172BB5||20190724123918|||||||||||||||||||F
 4C|1|I|^^INST QC: OK    CHEM QC: OK|G
@@ -169,7 +176,7 @@ FTDI device is setup
 [Piccolo is done with that transfer]
 
 [Piccolo wants to speak!]
-1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241207130723
+1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241210231226
 2P|1|ERROR 4056||||||U||||||^^|||||||||||
 3O|1|||^^^Unknown:||20220601110245|||||||||||||||||||F
 4C|1|I|^567F FFFF^Run Count\^ADFF FFFF^Abort Count|I
@@ -183,7 +190,7 @@ FTDI device is setup
 [Piccolo is done with that transfer]
 
 [Piccolo wants to speak!]
-1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241207130724
+1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241210231228
 2P|1|ERROR 4056||||||U||||||^^|||||||||||
 3O|1|||^^^Unknown:||20220601110313|||||||||||||||||||F
 4C|1|I|^567F FFFF^Run Count\^ADFF FFFF^Abort Count|I
@@ -197,7 +204,7 @@ FTDI device is setup
 [Piccolo is done with that transfer]
 
 [Piccolo wants to speak!]
-1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241207130725
+1H|\^&|||ABAXIS, INC.^piccolo xpress^2.1.57^0000P09880|||||||P|E 1394-97|20241210231229
 2P|1|ERROR 4056||||||U||||||^^|Patient||||||||||
 3O|1|||^^^Unknown:||20220601111258|||||||||||||||||||F
 4C|1|I|^567F FFFF^Run Count\^ADFF FFFF^Abort Count|I
