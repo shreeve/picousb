@@ -19,13 +19,32 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Set the path to our custom SDK config header before anything else
+set(PICO_SDK_CONFIG_HEADER_PATH ${CMAKE_CURRENT_LIST_DIR}/pico_sdk_config.h)
+
 set(PICO_BOARD pico CACHE STRING "Board type") # NOTE: Use "pico" or "pico_w"
 
-# Disable TinyUSB support
+# Disable TinyUSB support more thoroughly
 set(PICO_DISABLE_TINYUSB ON)
+set(PICO_SDK_TINYUSB_PATH "" CACHE INTERNAL "")
+set(ENABLE_USB 0)
+set(PICO_STDIO_USB 0)
+add_compile_definitions(CFG_TUSB_OS=OPT_OS_NONE)
+add_compile_definitions(USB_MAX_ENDPOINTS=0)
+
+# Create empty functions to override TinyUSB inclusion
+function(pico_add_tinyusb_no_op)
+endfunction()
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
+
+# Override SDK functions that might try to include TinyUSB
+if(COMMAND pico_add_subdirectory_tinyusb)
+    function(pico_add_subdirectory_tinyusb)
+        # Do nothing to prevent TinyUSB from being included
+    endfunction()
+endif()
 
 project(piccolo C CXX ASM)
 
@@ -50,7 +69,7 @@ target_sources(piccolo PUBLIC
 
 # Modify the below lines to enable/disable output over UART/USB
 pico_enable_stdio_uart(piccolo 1)
-pico_enable_stdio_usb(piccolo 0)
+pico_enable_stdio_usb(piccolo 0)  # Ensure USB stdio is disabled
 
 # Add the standard library to the build
 target_link_libraries(piccolo
@@ -67,9 +86,9 @@ target_include_directories(piccolo PRIVATE
 # Add any user requested libraries
 target_link_libraries(piccolo
   # pico_cyw43_arch_none # NOTE: Enable this for "pico_w"
-	pico_stdlib
-	hardware_resets
-	hardware_irq
+    pico_stdlib
+    hardware_resets
+    hardware_irq
 )
 
 pico_add_extra_outputs(piccolo)
