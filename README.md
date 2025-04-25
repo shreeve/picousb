@@ -37,14 +37,7 @@ directory contains some configuration for this setup.
 
 ## Disable TinyUSB
 
-Since this repo doesn't use TinyUSB at all, we need to disable it from the
-pico-sdk code. The only way I found to do this is by commenting out the
-following lines in `${PICO_SDK_PATH}/src/rp2_common/CMakeLists.txt`.
-
-```
-# pico_add_subdirectory(tinyusb)
-# pico_add_subdirectory(pico_stdio_usb)
-```
+Since this repo doesn't use TinyUSB at all, it's been disabled through the CMake configs
 
 ## RP2040 Notes
 
