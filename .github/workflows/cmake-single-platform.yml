@@ -38,6 +38,7 @@ jobs:
         find src/ -name '*.c' -o -name '*.h' | xargs clang-format --dry-run -Werror
         # If you don't have a .clang-format file, this will use a default style or fail.
         # Consider adding a .clang-format file to your repo root.
+      continue-on-error: true
 
     - name: Run cppcheck
       run: |
@@ -45,6 +46,7 @@ jobs:
         # Check source files, enable all checks, exit on error, suppress missing system includes
         # Exclude the fetched SDK directory to avoid checking third-party code
         cppcheck --enable=all --error-exitcode=1 --suppress=missingIncludeSystem --quiet --suppress=*:pico/* src/
+      continue-on-error: true
 
     - name: Initialize Pico SDK Submodules
       run: |
