@@ -7,6 +7,21 @@
 //  Legal: Same license as the Pico SDK
 // Thanks: btstack_ring_buffer from the Raspberry Pi Pico SDK
 // Thanks: rppicomidi has a nice ring buffer implementation
+//
+// ==[ Usage Notes ]============================================================
+//
+// THREAD SAFETY:
+//   - Safe for multi-core and multi-producer/multi-consumer use
+//   - Lock is held during memcpy (acceptable for small transfers)
+//
+// IRQ SAFETY:
+//   - From ISR: Use ring_try_read() / ring_try_write() ONLY
+//   - From main/tasks: Blocking versions are safe
+//
+// PERFORMANCE:
+//   - For large transfers, consider chunking to reduce lock hold time
+//   - Typical use: messages < 64 bytes, latency impact minimal
+//
 // =============================================================================
 
 #include <stdio.h>
