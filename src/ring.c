@@ -182,16 +182,15 @@ inline uint16_t ring_write_blocking(ring_t *r, const void *ptr, uint16_t len) {
     return ring_write_internal(r, ptr, len, true);
 }
 
-// ==[ FIXME: We should remove or improve this ]================================
+// ==[ Debug convenience ]======================================================
 
 #include <stdarg.h>
 
-char ring_buffer[RING_BUFFER_SIZE];
-
 uint16_t ring_printf(ring_t *r, const char *fmt, ...) {
+    char buf[128];  // Stack-allocated, thread-safe
     va_list args;
     va_start(args, fmt);
-    uint16_t len = vsnprintf(ring_buffer, RING_BUFFER_SIZE, fmt, args);
+    uint16_t len = vsnprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
-    return ring_write_blocking(r, ring_buffer, len);
+    return ring_write_blocking(r, buf, MIN(len, sizeof(buf)));
 }

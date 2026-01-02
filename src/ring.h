@@ -39,11 +39,7 @@ uint16_t ring_try_write(ring_t *r, const void *ptr, uint16_t len);
 uint16_t ring_read_blocking(ring_t *r, void *ptr, uint16_t len);
 uint16_t ring_write_blocking(ring_t *r, const void *ptr, uint16_t len);
 
-// ==[ FIXME: We should remove or improve this ]================================
-
-#define RING_BUFFER_SIZE ((1 << 8) - 1)
-
-extern char ring_buffer[RING_BUFFER_SIZE];
+// ==[ Debug convenience ]======================================================
 
 uint16_t ring_printf(ring_t *r, const char *fmt, ...);
 
