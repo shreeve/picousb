@@ -15,9 +15,12 @@
 //
 //   - ring_new(N) allocates N bytes and capacity IS N (no wasted byte)
 //   - wptr/rptr indices range from 0 to size (inclusive, not size-1)
-//   - Empty: wptr == rptr (used == 0)
+//   - Empty: used == 0 (when wptr == rptr after reads catch up)
 //   - Full:  used == size (free == 0)
 //   - Wrap:  when wptr or rptr reaches size, next write/read wraps to 0
+//
+//   NOTE: This is a "counted" ring buffer. You MUST use ring_used() or
+//   ring_free() to detect full/empty — pointer equality alone is ambiguous.
 //
 // =============================================================================
 
