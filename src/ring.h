@@ -30,6 +30,7 @@
 //
 // IRQ SAFETY:
 //   - From ISR: Use ring_try_read() / ring_try_write() ONLY
+//   - These are non-sleeping but may spin briefly if another core holds the lock
 //   - From main/tasks: Blocking versions are safe
 //
 // PERFORMANCE:
@@ -39,6 +40,8 @@
 // LIMITATIONS (standard for spin-lock designs):
 //   - Blocking callers may wake spuriously and re-check
 //   - No fairness: under heavy load, writers may starve readers or vice versa
+//   - ring_destroy() is undefined if other cores are blocked in ring_*_blocking()
+//     (caller must ensure all blocking operations complete before destroying)
 //
 // =============================================================================
 

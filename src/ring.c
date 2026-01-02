@@ -20,7 +20,7 @@
 void ring_init_with_spin_lock(ring_t *r, uint size, uint spin_lock_num) {
     assert(r);
     assert(!r->data);
-    assert(size <= UINT16_MAX);  // Prevent truncation
+    assert(size > 0 && size <= UINT16_MAX);  // Prevent zero or truncation
     lock_init(&r->core, spin_lock_num);
     r->data = (uint8_t *) calloc(size, 1);
     assert(r->data);  // Fail fast on allocation failure
@@ -42,9 +42,12 @@ void ring_reset(ring_t *r) {
     r->used = 0;
     r->wptr = 0;
     r->rptr = 0;
-    spin_unlock(r->core.spin_lock, save);
+    lock_internal_spin_unlock_with_notify(&r->core, save);  // Wake any blocked waiters
 }
 
+// NOTE: Undefined behavior if called while another core is blocked in a
+// ring_*_blocking() call. Ensure all blocking operations have completed
+// before destroying the ring (e.g., via application-level shutdown protocol).
 void ring_destroy(ring_t *r) {
     // Cache lock pointer before freeing r (Pico spinlocks are static, so this is safe)
     spin_lock_t *lock = r->core.spin_lock;
