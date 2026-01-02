@@ -76,6 +76,7 @@ ring_write_internal(ring_t *r, const void *ptr, uint16_t len, bool block) {
                 } else {
                     memcpy(r->data + r->wptr, src, len);
                     r->wptr += len;
+                    if (r->wptr == r->size) r->wptr = 0;  // Wrap to stay in [0..size-1]
                 }
                 r->used += len;
             }
@@ -108,6 +109,7 @@ ring_read_internal(ring_t *r, void *ptr, uint16_t len, bool block) {
                 } else {
                     memcpy(dst, r->data + r->rptr, len);
                     r->rptr += len;
+                    if (r->rptr == r->size) r->rptr = 0;  // Wrap to stay in [0..size-1]
                 }
                 r->used -= len;
             }

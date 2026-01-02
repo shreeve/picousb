@@ -17,7 +17,7 @@
 //   - Uses explicit 'used' counter to track bytes (true counted ring)
 //   - Empty: used == 0
 //   - Full:  used == size
-//   - wptr/rptr wrap when they reach size
+//   - wptr/rptr always in [0..size-1], wrap immediately when reaching size
 //
 //   NOTE: This is a "counted" ring buffer with an explicit count field.
 //   Pointer equality (wptr == rptr) is ambiguous; the 'used' field resolves it.
@@ -54,8 +54,8 @@ typedef struct {
     uint8_t    *data;     // Buffer of 'size' bytes
     uint16_t    size;     // Capacity in bytes (usable space = size)
     uint16_t    used;     // Bytes currently in buffer (disambiguates full/empty)
-    uint16_t    wptr;     // Write index [0..size], wraps after reaching size
-    uint16_t    rptr;     // Read index  [0..size], wraps after reaching size
+    uint16_t    wptr;     // Write index [0..size-1]
+    uint16_t    rptr;     // Read index  [0..size-1]
 } ring_t;
 
 // ==[ Lifecycle ]==============================================================
