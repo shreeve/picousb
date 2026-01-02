@@ -92,3 +92,7 @@ sudo ifconfig XHC2 up
 
 # Launch Wireshark and inspect USB traffic on the XHC2 interface
 ```
+
+### Other links
+
+* https://qsantos.fr/2025/11/21/fixing-the-rp2350-usb-a-not-working-as-usb-host/
