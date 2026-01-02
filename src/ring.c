@@ -1,41 +1,17 @@
 // =============================================================================
-// ring.c: Multi-core and IRQ safe ring buffer implementation. Data is an array
-//         of uint8_t, so it can be used for any data type.
+// ring.c: Implementation for ring.h (see ring.h for documentation)
 //
 // Author: Steve Shreeve <steve.shreeve@gmail.com>
-//   Date: February 29, 2024
+//   Date: January 2, 2026
 //  Legal: Same license as the Pico SDK
-// Thanks: btstack_ring_buffer from the Raspberry Pi Pico SDK
-// Thanks: rppicomidi has a nice ring buffer implementation
-//
-// ==[ Usage Notes ]============================================================
-//
-// THREAD SAFETY:
-//   - Safe for multi-core and multi-producer/multi-consumer use
-//   - Lock is held during memcpy (acceptable for small transfers)
-//
-// IRQ SAFETY:
-//   - From ISR: Use ring_try_read() / ring_try_write() ONLY
-//   - From main/tasks: Blocking versions are safe
-//
-// PERFORMANCE:
-//   - For large transfers, consider chunking to reduce lock hold time
-//   - Typical use: messages < 64 bytes, latency impact minimal
-//
-// LIMITATIONS (standard for spin-lock designs):
-//   - Blocking callers may wake spuriously and re-check
-//   - No fairness: under heavy load, writers may starve readers or vice versa
-//
 // =============================================================================
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <malloc.h>
 
 #include "pico.h"
 #include "pico/assert.h"
-#include "pico/lock_core.h"
 
 #include "ring.h"
 
@@ -74,45 +50,9 @@ void ring_destroy(ring_t *r) {
     spin_unlock(lock, save);
 }
 
-// ==[ Used, Free, Empty, Full ]================================================
-
-// Returns bytes used. When wptr < rptr (wrapped), add size to get correct count.
-// Example: size=10, wptr=2, rptr=8 → used = 2-8+10 = 4 bytes (indices 8,9,0,1)
-inline uint16_t ring_used_unsafe(ring_t *r) {
-    int32_t used = (int32_t) r->wptr - (int32_t) r->rptr;
-    if (used < 0) used += r->size;
-    return (uint16_t) used;
-}
-
-inline uint16_t ring_free_unsafe(ring_t *r) {
-    return r->size - ring_used_unsafe(r);
-}
-
-inline uint16_t ring_used(ring_t *r) {
-    uint32_t save = spin_lock_blocking(r->core.spin_lock);
-    uint16_t used = ring_used_unsafe(r);
-    spin_unlock(r->core.spin_lock, save);
-    return used;
-}
-
-inline uint16_t ring_free(ring_t *r) {
-    uint32_t save = spin_lock_blocking(r->core.spin_lock);
-    uint16_t free = ring_free_unsafe(r);
-    spin_unlock(r->core.spin_lock, save);
-    return free;
-}
-
-inline bool ring_is_empty(ring_t *r) {
-    return ring_used(r) == 0;
-}
-
-inline bool ring_is_full(ring_t *r) {
-    return ring_free(r) == 0;
-}
-
 // ==[ Internal ]===============================================================
 
-static uint16_t
+uint16_t
 ring_write_internal(ring_t *r, const void *ptr, uint16_t len, bool block) {
     const uint8_t *src = (const uint8_t *) ptr;
     do {
@@ -143,7 +83,7 @@ ring_write_internal(ring_t *r, const void *ptr, uint16_t len, bool block) {
     } while (true);
 }
 
-static uint16_t
+uint16_t
 ring_read_internal(ring_t *r, void *ptr, uint16_t len, bool block) {
     uint8_t *dst = (uint8_t *) ptr;
     do {
@@ -174,24 +114,6 @@ ring_read_internal(ring_t *r, void *ptr, uint16_t len, bool block) {
     } while (true);
 }
 
-// ==[ Read and write ]=========================================================
-
-inline uint16_t ring_try_read(ring_t *r, void *ptr, uint16_t len) {
-    return ring_read_internal(r, ptr, len, false);
-}
-
-inline uint16_t ring_try_write(ring_t *r, const void *ptr, uint16_t len) {
-    return ring_write_internal(r, ptr, len, false);
-}
-
-inline uint16_t ring_read_blocking(ring_t *r, void *ptr, uint16_t len) {
-    return ring_read_internal(r, ptr, len, true);
-}
-
-inline uint16_t ring_write_blocking(ring_t *r, const void *ptr, uint16_t len) {
-    return ring_write_internal(r, ptr, len, true);
-}
-
 // ==[ Debug convenience ]======================================================
 
 #include <stdarg.h>
@@ -202,5 +124,5 @@ uint16_t ring_printf(ring_t *r, const char *fmt, ...) {
     va_start(args, fmt);
     uint16_t len = vsnprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
-    return ring_write_blocking(r, buf, MIN(len, sizeof(buf)));
+    return ring_write_blocking(r, buf, MIN(len, sizeof(buf) - 1));
 }
