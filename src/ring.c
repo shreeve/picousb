@@ -42,6 +42,7 @@ void ring_init_with_spin_lock(ring_t *r, uint size, uint spin_lock_num) {
     assert(!r->data);
     lock_init(&r->core, spin_lock_num);
     r->data = (uint8_t *) calloc(size, 1);
+    assert(r->data);  // Fail fast on allocation failure
     r->size = (uint16_t) size;
     r->wptr = 0;
     r->rptr = 0;
@@ -49,6 +50,7 @@ void ring_init_with_spin_lock(ring_t *r, uint size, uint spin_lock_num) {
 
 ring_t *ring_new(uint size) {
     ring_t *r = (ring_t *) calloc(sizeof(ring_t), 1);
+    assert(r);  // Fail fast on allocation failure
     ring_init_with_spin_lock(r, size, next_striped_spin_lock_num());
     return r;
 }
