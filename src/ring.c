@@ -46,17 +46,18 @@ void ring_reset(ring_t *r) {
 }
 
 void ring_destroy(ring_t *r) {
-    uint32_t save = spin_lock_blocking(r->core.spin_lock);
+    spin_lock_t *lock = r->core.spin_lock;
+    uint32_t save = spin_lock_blocking(lock);
     free(r->data);
     free(r);
-    spin_unlock(r->core.spin_lock, save);
+    spin_unlock(lock, save);
 }
 
 // ==[ Used, Free, Empty, Full ]================================================
 
 inline uint16_t ring_used_unsafe(ring_t *r) {
     int32_t used = (int32_t) r->wptr - (int32_t) r->rptr;
-    if (used < 0) used += r->size + 1;
+    if (used < 0) used += r->size;
     return (uint16_t) used;
 }
 
@@ -90,6 +91,7 @@ inline bool ring_is_full(ring_t *r) {
 
 static uint16_t
 ring_write_internal(ring_t *r, const void *ptr, uint16_t len, bool block) {
+    const uint8_t *src = (const uint8_t *) ptr;
     do {
         uint32_t save = spin_lock_blocking(r->core.spin_lock);
         uint16_t cnt = ring_free_unsafe(r);
@@ -97,11 +99,11 @@ ring_write_internal(ring_t *r, const void *ptr, uint16_t len, bool block) {
             if (len = MIN(len, cnt)) {
                 uint16_t sip = MIN(r->size - r->wptr, len);
                 if (sip < len) {
-                    memcpy(r->data + r->wptr, ptr, sip);
-                    memcpy(r->data, ptr + sip, len - sip);
+                    memcpy(r->data + r->wptr, src, sip);
+                    memcpy(r->data, src + sip, len - sip);
                     r->wptr = len - sip;
                 } else {
-                    memcpy(r->data + r->wptr, ptr, len);
+                    memcpy(r->data + r->wptr, src, len);
                     r->wptr += len;
                 }
             }
@@ -118,7 +120,8 @@ ring_write_internal(ring_t *r, const void *ptr, uint16_t len, bool block) {
 }
 
 static uint16_t
-ring_read_internal(ring_t *r, const void *ptr, uint16_t len, bool block) {
+ring_read_internal(ring_t *r, void *ptr, uint16_t len, bool block) {
+    uint8_t *dst = (uint8_t *) ptr;
     do {
         uint32_t save = spin_lock_blocking(r->core.spin_lock);
         uint16_t cnt = ring_used_unsafe(r);
@@ -126,11 +129,11 @@ ring_read_internal(ring_t *r, const void *ptr, uint16_t len, bool block) {
             if (len = MIN(len, cnt)) {
                 uint16_t sip = MIN(r->size - r->rptr, len);
                 if (sip < len) {
-                    memcpy((void *) ptr, r->data + r->rptr, sip);
-                    memcpy((void *) ptr + sip, r->data, len - sip);
+                    memcpy(dst, r->data + r->rptr, sip);
+                    memcpy(dst + sip, r->data, len - sip);
                     r->rptr = len - sip;
                 } else {
-                    memcpy((void *) ptr, r->data + r->rptr, len);
+                    memcpy(dst, r->data + r->rptr, len);
                     r->rptr += len;
                 }
             }
