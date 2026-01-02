@@ -70,6 +70,8 @@ void ring_destroy(ring_t *r) {
 
 // ==[ Used, Free, Empty, Full ]================================================
 
+// Returns bytes used. When wptr < rptr (wrapped), add size to get correct count.
+// Example: size=10, wptr=2, rptr=8 → used = 2-8+10 = 4 bytes (indices 8,9,0,1)
 inline uint16_t ring_used_unsafe(ring_t *r) {
     int32_t used = (int32_t) r->wptr - (int32_t) r->rptr;
     if (used < 0) used += r->size;

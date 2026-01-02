@@ -10,6 +10,15 @@
 //  Legal: Same license as the Pico SDK
 // Thanks: btstack_ring_buffer from the Raspberry Pi Pico SDK
 // Thanks: rppicomidi has a nice ring buffer implementation
+//
+// ==[ Capacity Rules ]=========================================================
+//
+//   - ring_new(N) allocates N bytes and capacity IS N (no wasted byte)
+//   - wptr/rptr indices range from 0 to size (inclusive, not size-1)
+//   - Empty: wptr == rptr (used == 0)
+//   - Full:  used == size (free == 0)
+//   - Wrap:  when wptr or rptr reaches size, next write/read wraps to 0
+//
 // =============================================================================
 
 #include <stdint.h>
@@ -17,10 +26,10 @@
 
 typedef struct {
     lock_core_t core;
-    uint8_t    *data;
-    uint16_t    size;
-    uint16_t    wptr;
-    uint16_t    rptr;
+    uint8_t    *data;     // Buffer of 'size' bytes
+    uint16_t    size;     // Capacity in bytes (usable space = size)
+    uint16_t    wptr;     // Write index [0..size], wraps after reaching size
+    uint16_t    rptr;     // Read index  [0..size], wraps after reaching size
 } ring_t;
 
 ring_t  *ring_new(uint size);
