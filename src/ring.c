@@ -22,6 +22,10 @@
 //   - For large transfers, consider chunking to reduce lock hold time
 //   - Typical use: messages < 64 bytes, latency impact minimal
 //
+// LIMITATIONS (standard for spin-lock designs):
+//   - Blocking callers may wake spuriously and re-check
+//   - No fairness: under heavy load, writers may starve readers or vice versa
+//
 // =============================================================================
 
 #include <stdio.h>
