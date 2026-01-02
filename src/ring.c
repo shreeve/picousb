@@ -20,10 +20,12 @@
 void ring_init_with_spin_lock(ring_t *r, uint size, uint spin_lock_num) {
     assert(r);
     assert(!r->data);
+    assert(size <= UINT16_MAX);  // Prevent truncation
     lock_init(&r->core, spin_lock_num);
     r->data = (uint8_t *) calloc(size, 1);
     assert(r->data);  // Fail fast on allocation failure
     r->size = (uint16_t) size;
+    r->used = 0;
     r->wptr = 0;
     r->rptr = 0;
 }
@@ -37,12 +39,14 @@ ring_t *ring_new(uint size) {
 
 void ring_reset(ring_t *r) {
     uint32_t save = spin_lock_blocking(r->core.spin_lock);
+    r->used = 0;
     r->wptr = 0;
     r->rptr = 0;
     spin_unlock(r->core.spin_lock, save);
 }
 
 void ring_destroy(ring_t *r) {
+    // Cache lock pointer before freeing r (Pico spinlocks are static, so this is safe)
     spin_lock_t *lock = r->core.spin_lock;
     uint32_t save = spin_lock_blocking(lock);
     free(r->data);
@@ -70,6 +74,7 @@ ring_write_internal(ring_t *r, const void *ptr, uint16_t len, bool block) {
                     memcpy(r->data + r->wptr, src, len);
                     r->wptr += len;
                 }
+                r->used += len;
             }
             lock_internal_spin_unlock_with_notify(&r->core, save);
             return len;
@@ -101,6 +106,7 @@ ring_read_internal(ring_t *r, void *ptr, uint16_t len, bool block) {
                     memcpy(dst, r->data + r->rptr, len);
                     r->rptr += len;
                 }
+                r->used -= len;
             }
             lock_internal_spin_unlock_with_notify(&r->core, save);
             return len;
@@ -122,7 +128,9 @@ uint16_t ring_printf(ring_t *r, const char *fmt, ...) {
     char buf[128];  // Stack-allocated, thread-safe
     va_list args;
     va_start(args, fmt);
-    uint16_t len = vsnprintf(buf, sizeof(buf), fmt, args);
+    int n = vsnprintf(buf, sizeof(buf), fmt, args);
     va_end(args);
-    return ring_write_blocking(r, buf, MIN(len, sizeof(buf) - 1));
+    if (n < 0) return 0;  // vsnprintf error
+    uint16_t len = (n < (int)(sizeof(buf))) ? n : sizeof(buf) - 1;
+    return ring_write_blocking(r, buf, len);
 }

@@ -14,13 +14,13 @@
 // ==[ Capacity Rules ]=========================================================
 //
 //   - ring_new(N) allocates N bytes and capacity IS N (no wasted byte)
-//   - wptr/rptr indices range from 0 to size (inclusive, not size-1)
-//   - Empty: used == 0 (when wptr == rptr after reads catch up)
-//   - Full:  used == size (free == 0)
-//   - Wrap:  when wptr or rptr reaches size, next write/read wraps to 0
+//   - Uses explicit 'used' counter to track bytes (true counted ring)
+//   - Empty: used == 0
+//   - Full:  used == size
+//   - wptr/rptr wrap when they reach size
 //
-//   NOTE: This is a "counted" ring buffer. You MUST use ring_used() or
-//   ring_free() to detect full/empty — pointer equality alone is ambiguous.
+//   NOTE: This is a "counted" ring buffer with an explicit count field.
+//   Pointer equality (wptr == rptr) is ambiguous; the 'used' field resolves it.
 //
 // ==[ Usage Notes ]============================================================
 //
@@ -50,6 +50,7 @@ typedef struct {
     lock_core_t core;
     uint8_t    *data;     // Buffer of 'size' bytes
     uint16_t    size;     // Capacity in bytes (usable space = size)
+    uint16_t    used;     // Bytes currently in buffer (disambiguates full/empty)
     uint16_t    wptr;     // Write index [0..size], wraps after reaching size
     uint16_t    rptr;     // Read index  [0..size], wraps after reaching size
 } ring_t;
@@ -70,14 +71,12 @@ uint16_t ring_write_internal(ring_t *r, const void *ptr, uint16_t len, bool bloc
 
 // Returns bytes used (no lock - caller must hold lock or accept race)
 static inline uint16_t ring_used_unsafe(ring_t *r) {
-    int32_t used = (int32_t) r->wptr - (int32_t) r->rptr;
-    if (used < 0) used += r->size;
-    return (uint16_t) used;
+    return r->used;
 }
 
 // Returns bytes free (no lock - caller must hold lock or accept race)
 static inline uint16_t ring_free_unsafe(ring_t *r) {
-    return r->size - ring_used_unsafe(r);
+    return r->size - r->used;
 }
 
 // Returns bytes used (thread-safe)
