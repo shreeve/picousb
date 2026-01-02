@@ -24,40 +24,24 @@ set(PICO_SDK_CONFIG_HEADER_PATH ${CMAKE_CURRENT_LIST_DIR}/pico_sdk_config.h)
 
 set(PICO_BOARD pico CACHE STRING "Board type") # NOTE: Use "pico" or "pico_w"
 
-# Disable TinyUSB support more thoroughly
-set(PICO_DISABLE_TINYUSB ON)
-set(PICO_SDK_TINYUSB_PATH "" CACHE INTERNAL "")
-set(ENABLE_USB 0)
-set(PICO_STDIO_USB 0)
-add_compile_definitions(CFG_TUSB_OS=OPT_OS_NONE)
-add_compile_definitions(USB_MAX_ENDPOINTS=0)
-
-# Create empty functions to override TinyUSB inclusion
-function(pico_add_tinyusb_no_op)
-endfunction()
+# Disable TinyUSB (we use our own USB stack)
+set(PICO_TINYUSB_PATH "" CACHE STRING "Disable TinyUSB")
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
 
-# Override SDK functions that might try to include TinyUSB
-if(COMMAND pico_add_subdirectory_tinyusb)
-    function(pico_add_subdirectory_tinyusb)
-        # Do nothing to prevent TinyUSB from being included
-    endfunction()
-endif()
-
-project(piccolo C CXX ASM)
+project(picousb C CXX ASM)
 
 # Initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
 
 # Executable name
-add_executable(piccolo src/main.c)
+add_executable(picousb src/main.c)
 
-pico_set_program_name(piccolo "piccolo")
-pico_set_program_version(piccolo "0.3")
+pico_set_program_name(picousb "picousb")
+pico_set_program_version(picousb "0.3")
 
-target_sources(piccolo PUBLIC
+target_sources(picousb PUBLIC
     ${CMAKE_CURRENT_LIST_DIR}/src/main.c
     ${CMAKE_CURRENT_LIST_DIR}/src/helpers.c
     ${CMAKE_CURRENT_LIST_DIR}/src/picousb.c
@@ -68,27 +52,22 @@ target_sources(piccolo PUBLIC
 )
 
 # Modify the below lines to enable/disable output over UART/USB
-pico_enable_stdio_uart(piccolo 1)
-pico_enable_stdio_usb(piccolo 0)  # Ensure USB stdio is disabled
-
-# Add the standard library to the build
-target_link_libraries(piccolo
-    pico_stdlib
-)
+pico_enable_stdio_uart(picousb 1)
+pico_enable_stdio_usb(picousb 0)  # Ensure USB stdio is disabled
 
 # Add the standard include files to the build
-target_include_directories(piccolo PRIVATE
+target_include_directories(picousb PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/..
     ${CMAKE_CURRENT_LIST_DIR}/src
 )
 
 # Add any user requested libraries
-target_link_libraries(piccolo
+target_link_libraries(picousb
   # pico_cyw43_arch_none # NOTE: Enable this for "pico_w"
     pico_stdlib
     hardware_resets
     hardware_irq
 )
 
-pico_add_extra_outputs(piccolo)
+pico_add_extra_outputs(picousb)

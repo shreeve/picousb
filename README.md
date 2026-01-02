@@ -53,3 +53,42 @@ NOTE: A hardware polled endpoint needs FOUR things to fire:
 ## License
 
 BSD-3-Clause license, the same as code in [pico-examples](https://github.com/raspberrypi/pico-examples/tree/master/usb/device/dev_lowlevel).
+
+## Using Wireshark on macOS
+
+```
+# Reboot your mac in Recovery Mode (instructions online) and launch a
+# terminal. Run the following command to disable SPI. Afterwards, reboot.
+$ csrutil disable
+
+# Reboot as normal and find your USB controller name (mine is "XHC2")
+$ tcpdump -D
+
+1.ap1 [Up, Running, Wireless, Association status unknown]
+2.en1 [Up, Running, Wireless, Associated]
+3.awdl0 [Up, Running, Wireless, Associated]
+4.llw0 [Up, Running, Wireless, Not associated]
+5.utun0 [Up, Running]
+6.utun1 [Up, Running]
+7.utun2 [Up, Running]
+8.utun3 [Up, Running]
+9.lo0 [Up, Running, Loopback]
+10.anpi0 [Up, Running, Disconnected]
+11.anpi1 [Up, Running, Disconnected]
+12.en0 [Up, Running, Disconnected]
+13.en4 [Up, Running, Disconnected]
+14.en5 [Up, Running, Disconnected]
+15.en2 [Up, Running, Disconnected]
+16.en3 [Up, Running, Disconnected]
+17.bridge0 [Up, Running, Disconnected]
+18.gif0 [none]
+19.stf0 [none]
+20.XHC0 [none]
+21.XHC1 [none]
+22.XHC2 [none]
+
+# Enable capturing USB on the XHC2 interface
+sudo ifconfig XHC2 up
+
+# Launch Wireshark and inspect USB traffic on the XHC2 interface
+```
