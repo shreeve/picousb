@@ -60,8 +60,8 @@ typedef struct {
 
 // ==[ Lifecycle ]==============================================================
 
-ring_t  *ring_new(uint size);
-void     ring_init_with_spin_lock(ring_t *r, uint size, uint spin_lock_num);
+ring_t  *ring_new(uint32_t size);
+void     ring_init_with_spin_lock(ring_t *r, uint32_t size, uint32_t spin_lock_num);
 void     ring_reset(ring_t *r);
 void     ring_destroy(ring_t *r);
 
